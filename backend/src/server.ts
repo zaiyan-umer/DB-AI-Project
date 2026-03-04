@@ -1,6 +1,6 @@
 import app from './app'
-import { ENV } from './config/env';
+import { env } from './config/env';
 
-const PORT = ENV.BACKENDPORT || 8000;
+const PORT = env.BACKEND_PORT || 8000;
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
