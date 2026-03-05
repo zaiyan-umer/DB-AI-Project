@@ -9,8 +9,9 @@
     "skipLibCheck": true, // Skips type-checking .d.ts files (faster builds)
     "moduleResolution": "bundler", // How TS finds modules (modern standard)
     "resolveJsonModule": true, // Allows importing .json files
-    "forceConsistentCasingInFileNames": true // Prevents case-sensitivity bugs
+    "forceConsistentCasingInFileNames": true, // Prevents case-sensitivity bugs
+    "jsx": "react-jsx" // Enable JSX for React email templates
   },
-  "include": ["src/**/*.ts"], // Which files to compile
+  "include": ["src/**/*.ts", "src/**/*.tsx"], // Which files to compile
   "exclude": ["node_modules"] // Which files to ignore
 }
