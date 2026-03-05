@@ -4,7 +4,8 @@ dotenv.config({ quiet: true })
 import { z } from 'zod'
 
 const envSchema = z.object({
-    APP_STAGE: z.enum(['dev', 'test', 'prod']).default('dev'),
+    APP_STAGE: z.enum(['dev', 'prod']).default('dev'),
+    NODE_ENV: z.enum(['development', 'production']).default('development'),
     BACKEND_PORT: z.coerce.number().positive().default(8000),
     DATABASE_URL: z.string().startsWith("postgresql://"),
     JWT_SECRET: z.string().min(32),
@@ -43,6 +44,9 @@ catch (error) {
         process.exit(1)
     }
 }
+
+export const isProd = () => env.NODE_ENV === 'production'
+export const isDev = () => env.NODE_ENV === 'development'
 
 export { env }
 export default env
