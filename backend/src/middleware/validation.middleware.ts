@@ -1,25 +1,23 @@
 import type { Request, Response, NextFunction } from "express";
-import { ZodSchema, ZodError, ZodIssue } from "zod/v3";
+import { ZodSchema, ZodError } from "zod";
 
-export const validateBody = async (schema: ZodSchema) => {
+export const validateBody = (schema: ZodSchema) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
-            const validatedData = schema.parse(req.body)
-            req.body = validatedData
-            next()
-        }
-        catch (err) {
+            const validatedData = schema.parse(req.body);
+            req.body = validatedData;
+            next();
+        } catch (err) {
             if (err instanceof ZodError) {
-                const zodError = err as ZodError<any>
                 return res.status(400).json({
-                    error: 'Validation failed',
-                    details: zodError.errors.map((e: ZodIssue) => ({
-                        field: e.path.join('.'),
+                    error: "Validation failed",
+                    details: err.issues.map((e) => ({
+                        field: e.path.join("."),
                         message: e.message,
                     })),
-                })
+                });
             }
-            next(err)
+            next(err);
         }
-    }
-}
+    };
+};
