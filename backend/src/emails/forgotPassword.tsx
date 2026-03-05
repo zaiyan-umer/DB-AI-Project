@@ -14,7 +14,7 @@ import * as React from "react";
 import env from "../config/env";
 
 export function ForgotPassword(username: string, token: string) {
-    const url = `http://localhost:5173/verify-email?token=${token}`;
+    const url = `${env.APP_URL}/verify-email?token=${token}`;
 
     return (
         <Html>

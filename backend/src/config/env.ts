@@ -6,7 +6,7 @@ import { z } from 'zod'
 const envSchema = z.object({
     APP_STAGE: z.enum(['dev', 'prod']).default('dev'),
     NODE_ENV: z.enum(['development', 'production']).default('development'),
-    HOST: z.string().default('localhost'),
+    APP_URL: z.string().default('http://localhost:5173'),
     BACKEND_PORT: z.coerce.number().positive().default(8000),
     DATABASE_URL: z.string().startsWith("postgresql://"),
     JWT_SECRET: z.string().min(32),

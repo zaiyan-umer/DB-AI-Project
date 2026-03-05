@@ -6,9 +6,6 @@ import { checkExistingUser, insertUser, updateUserPassword } from "../services/d
 import { compareHash, hashPassword, hashResetToken } from "../utils/hashing.utils";
 import { generateToken } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/mailer";
-import db from "../db/connection";
-import { reset_tokens } from "../db/schema";
-import { eq } from "drizzle-orm";
 
 
 export const register = async (req: Request<any, any, newUser>, res: Response) => {
