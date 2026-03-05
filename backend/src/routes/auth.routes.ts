@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, register } from '../controllers/auth.controller';
+import { login, logout, register } from '../controllers/auth.controller';
 import { validateBody } from '../middleware/validation.middleware';
 import { loginSchema, registerSchema } from '../zod/schema';
 
@@ -7,5 +7,6 @@ const router = express.Router();
 
 router.post('/register', validateBody(registerSchema), register)
 router.post('/login', validateBody(loginSchema), login)
+router.get('/logout', logout)
 
 export default router;
