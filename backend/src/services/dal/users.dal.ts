@@ -11,13 +11,7 @@ export const insertUser = async (user: newUser, hashedPassword: string) => {
             lastName: user.lastName,
             password: hashedPassword
         })
-            .returning({
-                id: users.id,
-                email: users.email,
-                username: users.username,
-                firstName: users.firstName,
-                lastName: users.lastName,
-            })
+            .returning()
 
         return createdUser
     }
