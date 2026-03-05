@@ -11,3 +11,12 @@ export const registerSchema = insertUserSchema.extend({
     email: z.email().toLowerCase(),
     username: z.string().min(3).max(20).optional()
 })
+
+export const forgotPasswordSchema = z.object({
+    email: z.email()
+})
+
+export const resetPasswordSchema = z.object({
+    token: z.string(),
+    password: z.string().min(6)
+})

@@ -32,3 +32,19 @@ export const checkExistingUser = async (email: string) => {
         throw new Error("Failed to check existing user")
     }
 }
+
+export const updateUserPassword = async (userId: string, hashedPassword: string) => {
+    try {
+        const [updatedUser] = await db
+            .update(users)
+            .set({ password: hashedPassword, updatedAt: new Date() })
+            .where(eq(users.id, userId))
+            .returning()
+
+        return updatedUser
+    }
+    catch (err) {
+        console.error("updateUserPassword failed:", err)
+        throw new Error("Failed to update user password")
+    }
+}

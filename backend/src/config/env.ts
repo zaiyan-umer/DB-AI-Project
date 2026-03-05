@@ -6,11 +6,14 @@ import { z } from 'zod'
 const envSchema = z.object({
     APP_STAGE: z.enum(['dev', 'prod']).default('dev'),
     NODE_ENV: z.enum(['development', 'production']).default('development'),
+    HOST: z.string().default('localhost'),
     BACKEND_PORT: z.coerce.number().positive().default(8000),
     DATABASE_URL: z.string().startsWith("postgresql://"),
     JWT_SECRET: z.string().min(32),
     JWT_EXPIRY: z.string().default('7d'),
     BCRYPT_ROUNDS: z.coerce.number().min(10).max(20).default(12),
+    RESEND_API_KEY: z.string(),
+    MAIL_SENDER: z.email(),
     CORS_ORIGIN: z
         .string()
         .or(z.array(z.string()))
