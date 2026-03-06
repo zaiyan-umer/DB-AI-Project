@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { Request, Response } from "express";
 import { newUser } from "../db/schema/user.schema";
 import { deleteToken, getToken, insertToken } from "../services/dal/tokens.dal";
-import { checkExistingUser, insertUser, updateUserPassword } from "../services/dal/users.dal";
+import { checkExistingUser, getUserById, insertUser, updateUserPassword } from "../services/dal/users.dal";
 import { compareHash, hashPassword, hashResetToken } from "../utils/hashing.utils";
 import { generateToken } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/mailer";
@@ -178,6 +178,29 @@ export const resetPassword = async (req: Request, res: Response) => {
 
         return res.status(500).json({
             message: "Failed to reset password"
+        })
+    }
+}
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+    try {
+        const { user } = req.body
+
+        const currentUser = await getUserById(user.id);
+
+        if (!currentUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        return res.status(200).json({
+            user: currentUser
+        });
+    }
+    catch (err) {
+        console.error(err)
+
+        return res.status(500).json({
+            message: "Current user retrieval failed"
         })
     }
 }

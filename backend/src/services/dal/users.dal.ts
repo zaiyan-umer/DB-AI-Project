@@ -48,3 +48,13 @@ export const updateUserPassword = async (userId: string, hashedPassword: string)
         throw new Error("Failed to update user password")
     }
 }
+
+export const getUserById = async (id: string) => {
+    try {
+        const [user] = await db.select().from(users).where(eq(users.id, id));
+        return user;
+    } catch (err) {
+        console.error("getUserById failed:", err);
+        throw new Error("Failed to get user");
+    }
+};
