@@ -6,11 +6,11 @@ import { verifyToken } from '../middleware/verifyToken.middleware';
 
 const router = express.Router();
 
-router.post('/me', verifyToken, getCurrentUser)
 router.post('/register', validateBody(registerSchema), register)
 router.post('/login', validateBody(loginSchema), login)
 router.post('/logout', logout)
 router.post('/forgot-password', validateBody(forgotPasswordSchema), forgotPassword)
 router.post('/reset-password', validateBody(resetPasswordSchema), resetPassword)
+router.get('/me', verifyToken, getCurrentUser)
 
 export default router;

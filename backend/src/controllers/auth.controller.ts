@@ -181,23 +181,19 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const getCurrentUser = async (req: Request, res: Response) => {
     try {
-        const { user } = req.body
-
-        const currentUser = await getUserById(user.id);
+        if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+        
+        const currentUser = await getUserById(req.user.id);
 
         if (!currentUser) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        return res.status(200).json({
-            user: currentUser
-        });
+        return res.status(200).json({ user: currentUser });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Current user retrieval failed" });
     }
-    catch (err) {
-        console.error(err)
+};
 
-        return res.status(500).json({
-            message: "Current user retrieval failed"
-        })
-    }
-}
+

@@ -9,7 +9,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
     if (!token) return res.status(401).json({ error: "Unauthorized" });
 
     try {
-        const decoded = jwt.verify(token, env.JWT_SECRET) as Express.UserPayload;
+        const decoded = jwt.verify(token, env.JWT_SECRET) as Express.UserPayload;        
         req.user = decoded;
         next();
     } catch (err) {
