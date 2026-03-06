@@ -104,42 +104,39 @@ export const logout = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
     try {
-        const { email } = req.body
+        const { email } = req.body;
 
-        const existingUser = await checkExistingUser(email)
+        const existingUser = await checkExistingUser(email);
 
+        // Don't reveal if the user exists
         if (!existingUser) {
-            return res.status(401).json({
-                message: "Invalid Credentials"
-            })
+            return res.status(200).json({
+                message: "If an account exists, a reset email has been sent"
+            });
         }
 
         const rawToken = crypto.randomBytes(32).toString("hex");
         const hashedToken = hashResetToken(rawToken);
 
-        await insertToken(existingUser.id, hashedToken)
+        await insertToken(existingUser.id, hashedToken);
 
-        const { error } = await sendForgotPasswordEmail('k240771@nu.edu.pk', 'zaiyan', rawToken)
+        // Respond immediately
+        res.status(200).json({
+            message: "If an account exists, a reset email has been sent"
+        });
 
-        if (error) {
-            console.error('Resend error:', error)
-            return res.status(502).json({
-                message: 'Email provider rejected the request',
-                error: error.message
-            })
-        }
+        // Send email in background
+        sendForgotPasswordEmail('k240771@nu.edu.pk', 'zaiyan', rawToken)
+            .catch(err => console.error("Email failed:", err));
 
-        return res.status(200).json({
-            message: 'Forgot-password email sent successfully'
-        })
     } catch (err) {
-        console.error(err)
+        console.error(err);
 
         return res.status(500).json({
-            message: "Failed to send forgot-password email"
-        })
+            message: "Failed to process password reset"
+        });
     }
-}
+};
 
 export const resetPassword = async (req: Request, res: Response) => {
     try {
