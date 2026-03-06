@@ -3,9 +3,12 @@ import cors from 'cors'
 import helmet from 'helmet'
 import authRoutes from "./routes/auth.routes";
 import env from './config/env';
+import cookieParser from 'cookie-parser';
+
 
 const app = express();
 
+app.use(cookieParser());
 app.use(helmet())
 app.use(
     cors({
