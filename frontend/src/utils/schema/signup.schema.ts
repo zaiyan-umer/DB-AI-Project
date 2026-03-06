@@ -2,10 +2,10 @@ import { z } from "zod";
 
 export const signupSchema = z.object({
   firstname: z.string()
-    .min(2, "First name must be at least 2 characters")
+    .min(1, "First name is required")
     .max(50, "First name must be less than 50 characters"),
   lastname: z.string()
-    .min(2, "Last name must be at least 2 characters")
+    .min(1, "Last name is required")
     .max(50, "Last name must be less than 50 characters"),
   username: z.string()
     .min(3, "Username must be at least 3 characters")
@@ -21,22 +21,3 @@ export const signupSchema = z.object({
 });
 
 export type SignupFormData = z.infer<typeof signupSchema>;
-
-export const signupValidation = (data: SignupFormData) => {
-  try {
-    signupSchema.parse(data);
-    return { valid: true, errors: {} };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const errors: Record<string, string> = {};
-      error.issues.forEach((err) => {
-        const path = err.path[0];
-        if (path) {
-          errors[path as string] = err.message;
-        }
-      });
-      return { valid: false, errors };
-    }
-    return { valid: false, errors: { general: "Validation failed" } };
-  }
-};

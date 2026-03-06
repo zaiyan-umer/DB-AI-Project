@@ -26,7 +26,7 @@ export const register = async (req: Request<any, any, newUser>, res: Response) =
 
         return res.status(201).json({
             message: 'User created successfully',
-            newUser: userWithoutPassword
+            user: userWithoutPassword
         })
     }
     catch (err) {

@@ -10,6 +10,7 @@ interface ButtonProps {
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   icon?: ReactNode;
+  className?: string
 }
 
 export function Button({ 
@@ -20,7 +21,8 @@ export function Button({
   fullWidth = false,
   disabled = false,
   type = 'button',
-  icon
+  icon,
+  className = ''
 }: ButtonProps) {
   const baseClasses = "rounded-xl flex items-center justify-center gap-2 transition-all font-medium";
   
@@ -45,6 +47,7 @@ export function Button({
       disabled={disabled}
       type={type}
       className={`
+        ${className}
         ${baseClasses}
         ${variantClasses[variant]}
         ${sizeClasses[size]}

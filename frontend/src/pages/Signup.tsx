@@ -1,28 +1,13 @@
+import type { SignupFormData } from "@/utils/schema/signup.schema";
+import { Lock, Mail, Sparkles, User } from "lucide-react";
+import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { Mail, Lock, User, Sparkles } from "lucide-react";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
-import { motion } from "motion/react";
 import { useSignup } from "../hooks/useAuth";
-import { useForm } from 'react-hook-form'
-
-export type FormFields = {
-    firstname: string,
-    lastname: string,
-    username: string,
-    email: string,
-    password: string,
-    confirmPassword: string
-}
 
 export default function SignupPage() {
-    const { register, handleSubmit, formState: { errors } } = useForm<FormFields>({
-        mode: 'onBlur',
-    })
-    const { mutate: signup, isPending, error } = useSignup()
-
-    // Extract validation errors from mutation error
-    const apiError = (error as any)?.type !== 'validation' ? error : null;
+    const { mutate: signup, isPending, apiError, register, handleSubmit, errors } = useSignup()
 
     return (
         <div className="h-screen w-screen flex overflow-hidden">
@@ -44,7 +29,7 @@ export default function SignupPage() {
             </div>
 
             {/* Right Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-6 py-4">
+            <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-6">
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -69,10 +54,10 @@ export default function SignupPage() {
                             Start your journey to smarter learning
                         </p>
                     </div>
-                    <Form 
+                    <Form
                         register={register}
                         handleSubmit={handleSubmit}
-                        onSubmit={(data) => signup(data)}
+                        onSubmit={(data : SignupFormData) => signup(data)}
                         errors={errors}
                         isPending={isPending}
                         apiError={apiError}
@@ -92,14 +77,14 @@ export default function SignupPage() {
     );
 }
 
-const Form = ({ 
+const Form = ({
     register,
     handleSubmit,
     onSubmit,
-    errors, 
-    isPending, 
-    apiError 
-}: { 
+    errors,
+    isPending,
+    apiError
+}: {
     register: any;
     handleSubmit: any;
     onSubmit: any;
@@ -108,7 +93,7 @@ const Form = ({
     apiError?: any;
 }) => {
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 text-black">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 text-black">
 
             {/* API Error Display */}
             {apiError && (
@@ -117,12 +102,11 @@ const Form = ({
                 </div>
             )}
 
-            {/* first + last row */}
             <div className="grid grid-cols-2 gap-3">
                 <Input
                     label="First Name"
                     placeholder="John"
-                    {...register('firstname', { required: 'First name is required' })}
+                    {...register('firstname')}
                     icon={<User className="w-4 h-4" />}
                     error={errors.firstname?.message}
                     required
@@ -131,7 +115,7 @@ const Form = ({
                 <Input
                     label="Last Name"
                     placeholder="Doe"
-                    {...register('lastname', { required: 'Last name is required' })}
+                    {...register('lastname')}
                     icon={<User className="w-4 h-4" />}
                     error={errors.lastname?.message}
                     required
@@ -143,13 +127,7 @@ const Form = ({
                     label="Email"
                     type="email"
                     placeholder="you@example.com"
-                    {...register('email', { 
-                        required: 'Email is required',
-                        pattern: {
-                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                            message: 'Invalid email address'
-                        }
-                    })}
+                    {...register('email')}
                     icon={<Mail className="w-4 h-4" />}
                     error={errors.email?.message}
                     required
@@ -157,7 +135,7 @@ const Form = ({
                 <Input
                     label="Username"
                     placeholder="johndoe"
-                    {...register('username', { required: 'Username is required' })}
+                    {...register('username')}
                     icon={<User className="w-4 h-4" />}
                     error={errors.username?.message}
                     required
@@ -169,13 +147,7 @@ const Form = ({
                     label="Password"
                     type="password"
                     placeholder="••••••••"
-                    {...register('password', { 
-                        required: 'Password is required',
-                        minLength: {
-                            value: 6,
-                            message: 'Password must be at least 6 characters'
-                        }
-                    })}
+                    {...register('password')}
                     icon={<Lock className="w-4 h-4" />}
                     error={errors.password?.message}
                     required
@@ -185,7 +157,7 @@ const Form = ({
                     label="Confirm Password"
                     type="password"
                     placeholder="••••••••"
-                    {...register('confirmPassword', { required: 'Please confirm password' })}
+                    {...register('confirmPassword')}
                     icon={<Lock className="w-4 h-4" />}
                     error={errors.confirmPassword?.message}
                     required

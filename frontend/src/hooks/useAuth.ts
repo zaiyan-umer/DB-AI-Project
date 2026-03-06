@@ -1,96 +1,142 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/axios'
-import { signupValidation } from '../utils/input-validation/signup.validation'
+import { signupSchema, type SignupFormData } from '../utils/schema/signup.schema'
+import { loginSchema, type LoginFormData } from '../utils/schema/login.schema'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import type { AxiosError } from 'axios'
+import { toast } from 'sonner'
+import { useSetUser } from '../store/user.store'
 
-interface SignupFormData {
-    firstname: string
-    lastname: string
-    username: string
-    email: string
-    password: string
-    confirmPassword: string
-}
+// ---- Types ----------------------------------------------------------------
 
 interface SignupResponse {
     message: string
-    newUser: {
+    user: {
         id: string
         email: string
-        firstname: string
-        lastname: string
+        firstname?: string
+        lastname?: string
         username?: string
     }
 }
 
+interface ApiErrorResponse {
+    message: string
+}
+
+// ---- API calls ------------------------------------------------------------
+
+const createUser = async (formData: SignupFormData): Promise<SignupResponse> => {
+    const res = await api.post<SignupResponse>('/auth/register', {
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+    })
+    return res.data
+}
+
+const loginUser = async (formData: LoginFormData) => {
+    const res = await api.post('/auth/login', {
+        email: formData.email,
+        password: formData.password,
+    })
+    return res.data
+}
+
+// ---- Hooks ----------------------------------------------------------------
+
 export function useSignup() {
     const navigate = useNavigate()
 
-    return useMutation({
-        mutationFn: async (formData: SignupFormData) => {
-            // Validate form data
-            const validationResult = signupValidation(formData)
+    const { register, handleSubmit, formState: { errors } } = useForm<SignupFormData>({
+        mode: 'onBlur',
+        resolver: zodResolver(signupSchema),
+    })
 
-            if (!validationResult.valid) {
-                // Throw structured validation error
-                throw {
-                    type: 'validation',
-                    errors: validationResult.errors,
-                }
-            }
-
-            // Make API request
-            const response = await api.post<SignupResponse>('/auth/register', {
-                firstname: formData.firstname,
-                lastname: formData.lastname,
-                username: formData.username,
-                email: formData.email,
-                password: formData.password,
-            })
-
-            return response.data
-        },
+    const { error, isPending, mutate } = useMutation<
+        SignupResponse,
+        AxiosError<ApiErrorResponse>,
+        SignupFormData
+    >({
+        mutationFn: createUser,
         onSuccess: (data) => {
+            toast.success("Registration successful!")
             console.log('User registered successfully:', data)
             navigate('/dashboard')
         },
-        onError: (error: any) => {
-            console.error('Signup error:', error.response?.data || error.message)
+        onError: (error) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? "Registration failed. Please try again."
+            console.error('Signup error:', errorMessage)
+            toast.error(errorMessage)
         },
     })
+
+    const apiError = error?.response?.data?.message ?? error?.message ?? null
+
+    return { apiError, isPending, mutate, register, handleSubmit, errors }
 }
 
 export function useLogin() {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
+    const setUser = useSetUser()
 
-    return useMutation({
-        mutationFn: async (credentials: { email: string; password: string }) => {
-            const response = await api.post('/auth/login', credentials)
-            return response.data
-        },
+    const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+        mode: 'onBlur',
+        resolver: zodResolver(loginSchema),
+    })
+
+    const { error, isPending, mutate } = useMutation<
+        SignupResponse,
+        AxiosError<ApiErrorResponse>,
+        LoginFormData
+    >({
+        mutationFn: loginUser,
         onSuccess: (data) => {
-            // Store auth token if returned
-            if (data.token) {
-                localStorage.setItem('authToken', data.token)
-            }
+            queryClient.clear()
+
+            toast.success("Login successful!")
+            setUser(data.user)
+            console.log('User logged in successfully:', data)
             navigate('/dashboard')
         },
-        onError: (error: any) => {
-            console.error('Login error:', error.response?.data || error.message)
+        onError: (error) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? "Login failed. Please try again."
+            console.error('Login error:', errorMessage)
+            toast.error(errorMessage)
         },
     })
+
+    const apiError = error?.response?.data?.message ?? error?.message ?? null
+
+    return { apiError, isPending, mutate, register, handleSubmit, errors }
 }
 
 export function useLogout() {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
+    const setUser = useSetUser()
 
     return useMutation({
         mutationFn: async () => {
-            await api.get('/auth/logout')
+            await api.post('/auth/logout')
         },
         onSuccess: () => {
-            localStorage.removeItem('authToken')
+            queryClient.clear() // clear all cached queries on logout
+            toast.success("Logged out successfully!")
+            setUser(null)
             navigate('/')
+        },
+        onError: (error) => {
+            const errorMessage = error instanceof Error 
+                ? error.message 
+                : "Logout failed. Please try again."
+            console.error('Logout error:', errorMessage)
+            toast.error(errorMessage)
         },
     })
 }
