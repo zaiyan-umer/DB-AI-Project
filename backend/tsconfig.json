@@ -12,6 +12,6 @@
     "forceConsistentCasingInFileNames": true, // Prevents case-sensitivity bugs
     "jsx": "react-jsx" // Enable JSX for React email templates
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"], // Which files to compile
+  "include": ["src/**/*", "src/types/**/*.d.ts"],
   "exclude": ["node_modules"] // Which files to ignore
 }
