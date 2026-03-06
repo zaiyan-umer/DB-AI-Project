@@ -1,11 +1,12 @@
+import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
+import { Logo } from "@/components/ui/logo";
+import { useSignup } from "@/hooks/useAuth";
 import type { SignupFormData } from "@/utils/schema/auth.schema";
 import { Lock, Mail, User } from "lucide-react";
 import { motion } from "motion/react";
+import type { FieldErrors, SubmitHandler, UseFormHandleSubmit, UseFormRegister } from "react-hook-form";
 import { Link } from "react-router-dom";
-import { Button } from "../../components/Button";
-import { Input } from "../../components/Input";
-import { useSignup } from "../../hooks/useAuth";
-import { Logo } from "../../components/ui/logo";
 
 
 export default function SignupPage() {
@@ -79,12 +80,12 @@ const Form = ({
     isPending,
     apiError
 }: {
-    register: any;
-    handleSubmit: any;
-    onSubmit: any;
-    errors: any;
+    register: UseFormRegister<SignupFormData>;
+    handleSubmit: UseFormHandleSubmit<SignupFormData>;
+    onSubmit: SubmitHandler<SignupFormData>;
+    errors: FieldErrors<SignupFormData>;
     isPending?: boolean;
-    apiError?: any;
+    apiError?: string | null;
 }) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 text-black">
@@ -92,7 +93,7 @@ const Form = ({
             {/* API Error Display */}
             {apiError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                    {apiError.response?.data?.message || 'Signup failed. Please try again.'}
+                    {apiError || 'Signup failed. Please try again.'}
                 </div>
             )}
 

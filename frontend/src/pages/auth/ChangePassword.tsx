@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Logo } from "../../components/ui/logo";
-import type { changePasswordData } from '@/utils/schema/auth.schema';
+import type { changePasswordData } from '../../utils/schema/auth.schema';
 import { useChangePassword } from "../../hooks/useAuth";
 
 const ChangePassword = () => {

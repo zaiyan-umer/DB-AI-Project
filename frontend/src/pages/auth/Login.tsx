@@ -1,11 +1,17 @@
 import { Lock, Mail } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { Button } from "../../components/Button";
-import { Input } from "../../components/Input";
-import { useLogin } from "../../hooks/useAuth";
-import type { LoginFormData } from "../../utils/schema/auth.schema";
-import { Logo } from "../../components/ui/logo";
+import type {
+    FieldErrors,
+    SubmitHandler,
+    UseFormHandleSubmit,
+    UseFormRegister,
+} from "react-hook-form";
+import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
+import { useLogin } from "@/hooks/useAuth";
+import type { LoginFormData } from "@/utils/schema/auth.schema";
+import { Logo } from "@/components/ui/logo";
 
 export default function LoginPage() {
     const { mutate: login, isPending, apiError, register, handleSubmit, errors } = useLogin()
@@ -78,12 +84,12 @@ const Form = ({
     isPending,
     apiError
 }: {
-    register: any;
-    handleSubmit: any;
-    onSubmit: any;
-    errors: any;
+    register: UseFormRegister<LoginFormData>;
+    handleSubmit: UseFormHandleSubmit<LoginFormData>;
+    onSubmit: SubmitHandler<LoginFormData>;
+    errors: FieldErrors<LoginFormData>;
     isPending?: boolean;
-    apiError?: any;
+    apiError?: string | null;
 }) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-black">
@@ -91,7 +97,7 @@ const Form = ({
             {/* API Error Display */}
             {apiError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                    {apiError.response?.data?.message || 'Login failed. Please try again.'}
+                    {apiError || 'Login failed. Please try again.'}
                 </div>
             )}
 

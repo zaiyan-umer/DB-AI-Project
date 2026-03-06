@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
-import { ProtectedRoute } from '../src/components/ProtectedRoute'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Signup from './pages/auth/Signup'
 import Login from './pages/auth/Login'
 import Dashboard from './pages/Dashboard'
