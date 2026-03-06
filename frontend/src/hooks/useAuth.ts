@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/axios'
-import { forgotPasswordSchema, signupSchema, type forgotPasswordData, type SignupFormData } from '../utils/schema/auth.schema'
+import { changePasswordSchema, forgotPasswordSchema, signupSchema, type changePasswordData, type forgotPasswordData, type SignupFormData } from '../utils/schema/auth.schema'
 import { loginSchema, type LoginFormData } from '../utils/schema/auth.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -146,6 +146,55 @@ export function useForgotPassword() {
         onError: (error) => {
             const errorMessage = error.response?.data?.message ?? error.message ?? "Failed to send email. Please try again."
             console.error('Email error:', errorMessage)
+            toast.error(errorMessage)
+        },
+    })
+
+    const apiError = error?.response?.data?.message ?? error?.message ?? null
+
+    return { apiError, isPending, mutate, register, handleSubmit, errors }
+}
+
+const changePassFn = async ({ password, token }: { password: string; token: string }) => {
+    const res = await api.post('/auth/reset-password', {
+        password,
+        token,
+    })
+
+    return res.data
+}
+
+export function useChangePassword(token: string) {
+    const navigate = useNavigate()
+    const queryClient = useQueryClient()
+
+    const { register, handleSubmit, formState: { errors } } = useForm<changePasswordData>({
+        mode: 'onBlur',
+        resolver: zodResolver(changePasswordSchema),
+    })
+
+    const { mutate, error, isPending } = useMutation<
+        string,
+        AxiosError<ApiErrorResponse>,
+        changePasswordData
+    >({
+        mutationFn: (data) => {
+            if (!token) {
+                throw new Error('Missing reset token')
+            }
+
+            return changePassFn({ password: data.password, token })
+        },
+        onSuccess: (data) => {
+            queryClient.clear()
+
+            toast.success('Password updated successfully!')
+            console.log('Password reset successfully:', data)
+            navigate('/login')
+        },
+        onError: (error) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? 'Failed to update password. Please try again.'
+            console.error('Password reset error:', errorMessage)
             toast.error(errorMessage)
         },
     })

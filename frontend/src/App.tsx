@@ -1,9 +1,10 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '../src/components/ProtectedRoute'
-import Signup from './pages/Signup'
-import Login from './pages/Login'
+import Signup from './pages/auth/Signup'
+import Login from './pages/auth/Login'
 import Dashboard from './pages/Dashboard'
-import ForgotPassword from './pages/ForgotPassword'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ChangePassword from './pages/auth/ChangePassword'
 
 // Create router with proper route definitions
 const router = createBrowserRouter([
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
   {
     path: '/forgot-password',
     element: <ForgotPassword />,
+  },
+  {
+    path: '/verify-email',
+    element: <ChangePassword />
   },
   {
     path: '/dashboard',

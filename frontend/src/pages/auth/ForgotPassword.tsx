@@ -1,10 +1,12 @@
-import { Mail, Sparkles } from "lucide-react";
+import { Mail } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "../components/Button";
-import { Input } from "../components/Input";
-import { useForgotPassword } from "../hooks/useAuth";
+import { Button } from "../../components/Button";
+import { Input } from "../../components/Input";
+import { useForgotPassword } from "../../hooks/useAuth";
+import { Logo } from "../../components/ui/logo";
+
 
 export default function ForgotPasswordPage() {
     const { mutate: sendEmail, register, errors, apiError, isPending, handleSubmit } = useForgotPassword();
@@ -29,14 +31,7 @@ export default function ForgotPasswordPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-lg"
             >
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-linear-to-r from-[#667eea] to-[#764ba2] rounded-lg flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <h1 className="text-xl font-bold bg-linear-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">
-                        StudySync AI
-                    </h1>
-                </div>
+                <Logo />
 
                 <div className="mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Forgot your password?</h2>

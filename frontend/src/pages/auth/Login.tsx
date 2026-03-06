@@ -1,10 +1,11 @@
-import { Lock, Mail, Sparkles } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { Button } from "../components/Button";
-import { Input } from "../components/Input";
-import { useLogin } from "../hooks/useAuth";
-import type { LoginFormData } from "../utils/schema/login.schema";
+import { Button } from "../../components/Button";
+import { Input } from "../../components/Input";
+import { useLogin } from "../../hooks/useAuth";
+import type { LoginFormData } from "../../utils/schema/auth.schema";
+import { Logo } from "../../components/ui/logo";
 
 export default function LoginPage() {
     const { mutate: login, isPending, apiError, register, handleSubmit, errors } = useLogin()
@@ -19,16 +20,7 @@ export default function LoginPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-lg"
                 >
-                    {/* Logo */}
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-linear-to-r from-[#667eea] to-[#764ba2] rounded-lg flex items-center justify-center">
-                            <Sparkles className="w-5 h-5 text-white" />
-                        </div>
-
-                        <h1 className="text-xl font-bold bg-linear-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">
-                            StudySync AI
-                        </h1>
-                    </div>
+                    <Logo />
 
                     <div className="mb-4">
                         <h2 className="text-2xl font-bold text-gray-900">
@@ -38,6 +30,7 @@ export default function LoginPage() {
                             Sign in to continue your smarter learning journey
                         </p>
                     </div>
+                    
                     <Form
                         register={register}
                         handleSubmit={handleSubmit}
