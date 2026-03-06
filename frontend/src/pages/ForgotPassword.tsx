@@ -1,10 +1,27 @@
 import { Mail, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
+import { useForgotPassword } from "../hooks/useAuth";
 
 export default function ForgotPasswordPage() {
+    const { mutate: sendEmail, register, errors, apiError, isPending, handleSubmit } = useForgotPassword();
+    const [cooldown, setCooldown] = useState(0);
+
+    useEffect(() => {
+        if (cooldown <= 0) return;
+
+        const interval = setInterval(() => {
+            setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [cooldown]);
+
+    const isCoolingDown = cooldown > 0;
+
     return (
         <div className="h-screen w-screen flex items-center justify-center bg-white px-6">
             <motion.div
@@ -26,17 +43,37 @@ export default function ForgotPasswordPage() {
                     <p className="text-gray-500 text-sm mt-1">Enter your email and we will send you a reset link.</p>
                 </div>
 
-                <form className="space-y-4 text-black">
+                <form
+                    onSubmit={handleSubmit((data) =>
+                        sendEmail(data, {
+                            onSuccess: () => {
+                                setCooldown(30);
+                            },
+                        })
+                    )}
+                    className="space-y-4 text-black"
+                >
                     <Input
                         label="Email"
                         type="email"
                         placeholder="you@example.com"
                         icon={<Mail className="w-4 h-4" />}
+                        {...register("email")}
+                        error={errors.email?.message}
                         required
+                        disabled={isCoolingDown}
                     />
 
-                    <Button type="submit" fullWidth>
-                        Send reset link
+                    {apiError && <p className="text-sm text-red-500">{apiError}</p>}
+
+                    {isCoolingDown && (
+                        <p className="text-sm text-gray-600">
+                            If you did not receive an email, you can retry in {cooldown}s.
+                        </p>
+                    )}
+
+                    <Button type="submit" fullWidth disabled={isPending || isCoolingDown}>
+                        {isPending ? "Sending..." : isCoolingDown ? `Retry` : "Send reset link"}
                     </Button>
                 </form>
 

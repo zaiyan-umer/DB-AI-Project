@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/axios'
-import { signupSchema, type SignupFormData } from '../utils/schema/signup.schema'
-import { loginSchema, type LoginFormData } from '../utils/schema/login.schema'
+import { forgotPasswordSchema, signupSchema, type forgotPasswordData, type SignupFormData } from '../utils/schema/auth.schema'
+import { loginSchema, type LoginFormData } from '../utils/schema/auth.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import type { AxiosError } from 'axios'
@@ -116,6 +116,45 @@ export function useLogin() {
     return { apiError, isPending, mutate, register, handleSubmit, errors }
 }
 
+const sendEmail = async ({ email }: forgotPasswordData) => {
+    const res = await api.post('/auth/forgot-password', {
+        email
+    })
+
+    return res.data
+}
+
+export function useForgotPassword() {
+    const queryClient = useQueryClient()
+    const { register, handleSubmit, formState: { errors } } = useForm<forgotPasswordData>({
+        mode: 'onBlur',
+        resolver: zodResolver(forgotPasswordSchema)
+    })
+
+    const { mutate, error, isPending } = useMutation<
+        string,
+        AxiosError<ApiErrorResponse>,
+        forgotPasswordData
+    >({
+        mutationFn: sendEmail,
+        onSuccess: (data) => {
+            queryClient.clear()
+
+            toast.success("Email sent successfully!")
+            console.log('Email sent successfully: ', data)
+        },
+        onError: (error) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? "Failed to send email. Please try again."
+            console.error('Email error:', errorMessage)
+            toast.error(errorMessage)
+        },
+    })
+
+    const apiError = error?.response?.data?.message ?? error?.message ?? null
+
+    return { apiError, isPending, mutate, register, handleSubmit, errors }
+}
+
 export function useLogout() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
@@ -132,8 +171,8 @@ export function useLogout() {
             navigate('/')
         },
         onError: (error) => {
-            const errorMessage = error instanceof Error 
-                ? error.message 
+            const errorMessage = error instanceof Error
+                ? error.message
                 : "Logout failed. Please try again."
             console.error('Logout error:', errorMessage)
             toast.error(errorMessage)
