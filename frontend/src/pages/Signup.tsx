@@ -1,39 +1,28 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Mail, Lock, User, Sparkles } from "lucide-react";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { motion } from "motion/react";
-import { signupValidation } from "../utils/input-validation/signup.validation";
+import { useSignup } from "../hooks/useAuth";
+import { useForm } from 'react-hook-form'
+
+export type FormFields = {
+    firstname: string,
+    lastname: string,
+    username: string,
+    email: string,
+    password: string,
+    confirmPassword: string
+}
 
 export default function SignupPage() {
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        firstname: '',
-        lastname: '',
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-    });
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const { register, handleSubmit, formState: { errors } } = useForm<FormFields>({
+        mode: 'onBlur',
+    })
+    const { mutate: signup, isPending, error } = useSignup()
 
-    const handleSignup = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const validationResult = signupValidation(formData);
-
-        if (!validationResult.valid) {
-            setErrors(validationResult.errors);
-            return;
-        }
-
-        // api req
-        // use tanstack query
-
-        setErrors({});
-        navigate('/dashboard');
-    };
+    // Extract validation errors from mutation error
+    const apiError = (error as any)?.type !== 'validation' ? error : null;
 
     return (
         <div className="h-screen w-screen flex overflow-hidden">
@@ -80,7 +69,14 @@ export default function SignupPage() {
                             Start your journey to smarter learning
                         </p>
                     </div>
-                    <Form formData={formData} setFormData={setFormData} handleSignup={handleSignup} errors={errors} />
+                    <Form 
+                        register={register}
+                        handleSubmit={handleSubmit}
+                        onSubmit={(data) => signup(data)}
+                        errors={errors}
+                        isPending={isPending}
+                        apiError={apiError}
+                    />
 
                     <div className="mt-3 text-center text-sm">
                         <p className="text-gray-600">
@@ -96,33 +92,48 @@ export default function SignupPage() {
     );
 }
 
-const Form = ({ formData, setFormData, handleSignup, errors }: { formData: any; setFormData: any; handleSignup: any; errors: any }) => {
+const Form = ({ 
+    register,
+    handleSubmit,
+    onSubmit,
+    errors, 
+    isPending, 
+    apiError 
+}: { 
+    register: any;
+    handleSubmit: any;
+    onSubmit: any;
+    errors: any;
+    isPending?: boolean;
+    apiError?: any;
+}) => {
     return (
-        <form onSubmit={handleSignup} className="space-y-3 text-black">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 text-black">
+
+            {/* API Error Display */}
+            {apiError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                    {apiError.response?.data?.message || 'Signup failed. Please try again.'}
+                </div>
+            )}
 
             {/* first + last row */}
             <div className="grid grid-cols-2 gap-3">
                 <Input
                     label="First Name"
                     placeholder="John"
-                    value={formData.firstname}
-                    onChange={(e) =>
-                        setFormData({ ...formData, firstname: e.target.value })
-                    }
+                    {...register('firstname', { required: 'First name is required' })}
                     icon={<User className="w-4 h-4" />}
-                    error={errors.firstname}
+                    error={errors.firstname?.message}
                     required
                 />
 
                 <Input
                     label="Last Name"
                     placeholder="Doe"
-                    value={formData.lastname}
-                    onChange={(e) =>
-                        setFormData({ ...formData, lastname: e.target.value })
-                    }
+                    {...register('lastname', { required: 'Last name is required' })}
                     icon={<User className="w-4 h-4" />}
-                    error={errors.lastname}
+                    error={errors.lastname?.message}
                     required
                 />
             </div>
@@ -132,23 +143,23 @@ const Form = ({ formData, setFormData, handleSignup, errors }: { formData: any; 
                     label="Email"
                     type="email"
                     placeholder="you@example.com"
-                    value={formData.email}
-                    onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                    }
+                    {...register('email', { 
+                        required: 'Email is required',
+                        pattern: {
+                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                            message: 'Invalid email address'
+                        }
+                    })}
                     icon={<Mail className="w-4 h-4" />}
-                    error={errors.email}
+                    error={errors.email?.message}
                     required
                 />
                 <Input
                     label="Username"
                     placeholder="johndoe"
-                    value={formData.username}
-                    onChange={(e) =>
-                        setFormData({ ...formData, username: e.target.value })
-                    }
+                    {...register('username', { required: 'Username is required' })}
                     icon={<User className="w-4 h-4" />}
-                    error={errors.username}
+                    error={errors.username?.message}
                     required
                 />
             </div>
@@ -158,12 +169,15 @@ const Form = ({ formData, setFormData, handleSignup, errors }: { formData: any; 
                     label="Password"
                     type="password"
                     placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                    }
+                    {...register('password', { 
+                        required: 'Password is required',
+                        minLength: {
+                            value: 6,
+                            message: 'Password must be at least 6 characters'
+                        }
+                    })}
                     icon={<Lock className="w-4 h-4" />}
-                    error={errors.password}
+                    error={errors.password?.message}
                     required
                 />
 
@@ -171,12 +185,9 @@ const Form = ({ formData, setFormData, handleSignup, errors }: { formData: any; 
                     label="Confirm Password"
                     type="password"
                     placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={(e) =>
-                        setFormData({ ...formData, confirmPassword: e.target.value })
-                    }
+                    {...register('confirmPassword', { required: 'Please confirm password' })}
                     icon={<Lock className="w-4 h-4" />}
-                    error={errors.confirmPassword}
+                    error={errors.confirmPassword?.message}
                     required
                 />
             </div>
@@ -188,8 +199,8 @@ const Form = ({ formData, setFormData, handleSignup, errors }: { formData: any; 
                 </span>
             </div>
 
-            <Button type="submit" fullWidth>
-                Create Account
+            <Button type="submit" fullWidth disabled={isPending}>
+                {isPending ? 'Creating Account...' : 'Create Account'}
             </Button>
         </form>
     )

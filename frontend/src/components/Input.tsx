@@ -1,13 +1,8 @@
 import type { ReactNode } from "react";
 
-interface InputProps {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  type?: string;
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   icon?: ReactNode;
-  required?: boolean;
   error?: string;
 }
 
@@ -15,11 +10,10 @@ export function Input({
   label, 
   type = 'text', 
   placeholder, 
-  value, 
-  onChange,
   icon,
   required = false,
-  error
+  error,
+  ...props
 }: InputProps) {
   return (
     <div className="w-full">
@@ -37,8 +31,6 @@ export function Input({
         <input
           type={type}
           placeholder={placeholder}
-          value={value}
-          onChange={onChange}
           required={required}
           className={`
             w-full px-4 py-3 ${icon ? 'pl-12' : ''} rounded-xl border border-gray-200
@@ -46,6 +38,7 @@ export function Input({
             transition-all bg-white
             ${error ? 'border-red-500' : ''}
           `}
+          {...props}
         />
       </div>
       {error && (
