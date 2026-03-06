@@ -11,7 +11,7 @@ const envSchema = z.object({
     DATABASE_URL: z.string().startsWith("postgresql://"),
     JWT_SECRET: z.string().min(32),
     JWT_EXPIRY: z.string().default('7d'),
-    BCRYPT_ROUNDS: z.coerce.number().min(10).max(20).default(12),
+    BCRYPT_ROUNDS: z.coerce.number().min(6).max(12).default(8),
     RESEND_API_KEY: z.string(),
     MAIL_SENDER: z.email(),
     CORS_ORIGIN: z
