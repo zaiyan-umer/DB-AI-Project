@@ -126,7 +126,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         });
 
         // Send email in background
-        sendForgotPasswordEmail('k240771@nu.edu.pk', 'zaiyan', rawToken)
+        sendForgotPasswordEmail(existingUser.email, existingUser.username as string, rawToken)
             .catch(err => console.error("Email failed:", err));
 
     } catch (err) {
