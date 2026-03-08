@@ -1,7 +1,8 @@
 import { Server } from 'socket.io';
 import env from '../config/env';
+import { chatHandler } from '../controllers/chat.controller';
 
-export const initSocket = (server : any) => {
+export const initSocket = (server: any) => {
     const io = new Server(server, {
         cors: {
             origin: env.CORS_ORIGIN,
@@ -12,6 +13,8 @@ export const initSocket = (server : any) => {
     io.on('connection', socket => {
         console.log('user connected: ', socket.id);
 
+        chatHandler(io, socket);
+        
         socket.on('disconnect', () => {
             console.log('user disconnected: ', socket.id);
         })
