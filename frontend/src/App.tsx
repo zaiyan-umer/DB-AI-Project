@@ -1,12 +1,70 @@
+// import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+// import { ProtectedRoute } from '@/components/ProtectedRoute'
+// import Signup from './pages/auth/Signup'
+// import Login from './pages/auth/Login'
+// import Dashboard from './pages/Dashboard'
+// import ForgotPassword from './pages/auth/ForgotPassword'
+// import ChangePassword from './pages/auth/ChangePassword'
+
+// // Create router with proper route definitions
+// const router = createBrowserRouter([
+//   {
+//     path: '/',
+//     element: <Navigate to="/login" />,
+//   },
+//   {
+//     path: '/signup',
+//     element: <Signup />,
+//   },
+//   {
+//     path: '/login',
+//     element: <Login />,
+//   },
+//   {
+//     path: '/forgot-password',
+//     element: <ForgotPassword />,
+//   },
+//   {
+//     path: '/verify-email',
+//     element: <ChangePassword />
+//   },
+//   {
+//     path: '/dashboard',
+//     element: (
+//       <ProtectedRoute>
+//         <Dashboard />
+//       </ProtectedRoute>
+//     ),
+//   },
+// ])
+
+// const App = () => {
+//   return <RouterProvider router={router} />
+// }
+
+// export default App
+
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { DashboardLayout } from '@/components/DashboardLayout'
 import Signup from './pages/auth/Signup'
 import Login from './pages/auth/Login'
-import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ChangePassword from './pages/auth/ChangePassword'
+import Dashboard from './pages/Dashboard'
+import SchedulerPage from './pages/Scheduler'
 
-// Create router with proper route definitions
+
+// Placeholder pages for routes not yet built
+const PlaceholderPage = ({ name }: { name: string }) => (
+  <div className="flex items-center justify-center h-64">
+    <div className="text-center">
+      <h2 className="text-2xl font-bold text-gray-400 mb-2">{name}</h2>
+      <p className="text-gray-400">Coming soon...</p>
+    </div>
+  </div>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -26,15 +84,22 @@ const router = createBrowserRouter([
   },
   {
     path: '/verify-email',
-    element: <ChangePassword />
+    element: <ChangePassword />,
   },
   {
     path: '/dashboard',
     element: (
       <ProtectedRoute>
-        <Dashboard />
+        <DashboardLayout />
       </ProtectedRoute>
     ),
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: 'scheduler', element: <SchedulerPage /> },
+      { path: 'notes', element: <PlaceholderPage name="Notes & Test" /> },
+      { path: 'group-chat', element: <PlaceholderPage name="Group Chat" /> },
+      { path: 'progress', element: <PlaceholderPage name="Progress" /> },
+    ],
   },
 ])
 
