@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import type { AxiosError } from 'axios'
 import { toast } from 'sonner'
-import { useSetUser } from '../store/user.store'
 
 // ---- Types ----------------------------------------------------------------
 
@@ -83,7 +82,6 @@ export function useSignup() {
 export function useLogin() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
-    const setUser = useSetUser()
 
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
         mode: 'onBlur',
@@ -100,7 +98,6 @@ export function useLogin() {
             queryClient.clear()
 
             toast.success("Login successful!")
-            setUser(data.user)
             console.log('User logged in successfully:', data)
             navigate('/dashboard')
         },
@@ -207,7 +204,6 @@ export function useChangePassword(token: string) {
 export function useLogout() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
-    const setUser = useSetUser()
 
     return useMutation({
         mutationFn: async () => {
@@ -216,7 +212,6 @@ export function useLogout() {
         onSuccess: () => {
             queryClient.clear() // clear all cached queries on logout
             toast.success("Logged out successfully!")
-            setUser(null)
             navigate('/')
         },
         onError: (error) => {
