@@ -14,4 +14,5 @@ declare global {
     }
 }
 
-export {};
+// export {};
+export type UserPayload = Express.UserPayload;

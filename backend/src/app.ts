@@ -2,8 +2,10 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import authRoutes from "./routes/auth.routes";
+import schedulerRoutes from "./routes/scheduler.routes";
 import env from './config/env';
 import cookieParser from 'cookie-parser';
+import './jobs/notificationJob';
 
 
 const app = express();
@@ -28,5 +30,6 @@ app.get('/health', (req, res) => {
 })
 
 app.use('/api/auth', authRoutes);
+app.use('/api/scheduler', schedulerRoutes);
 
 export default app;
