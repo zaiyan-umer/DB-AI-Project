@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import {
@@ -11,10 +11,10 @@ import { Button } from '../components/Button'
 import {
     useCourses,
     useFiles, useUploadFile, useDeleteFile,
-    useFlashcards,
-    useMcqs, useSubmitMcqAttempt,
+    useFlashcards, useSeedFlashcards,
+    useMcqs, useSeedMcqs, useSubmitMcqAttempt,
 } from '../hooks/useNotes'
-import { getDownloadUrl } from '../services/notes.service'
+import { getDownloadUrl, type FlashcardSeedItem, type McqSeedItem } from '../services/notes.service'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -32,6 +32,52 @@ const formatRelativeDate = (iso: string) => {
 }
 
 type Tab = 'files' | 'flashcards' | 'mcq'
+
+// ---- Sample Data ----------------------------------------------------------
+// Seeded automatically on mount. Will be REPLACED by AI-generated content in iteration 3.
+// In iteration 3: remove the useEffect auto-seed and call the AI API instead.
+
+const SAMPLE_FLASHCARDS: FlashcardSeedItem[] = [
+    {
+        question: 'What does Big-O notation describe?',
+        answer:
+            'Big-O notation describes the upper bound of an algorithm\'s time or space complexity as the input size grows, focusing on the dominant term and ignoring constants.',
+    },
+    {
+        question: 'What is the difference between a stack and a queue?',
+        answer:
+            'A stack follows Last-In-First-Out (LIFO) — the last element added is the first removed. A queue follows First-In-First-Out (FIFO) — the first element added is the first removed.',
+    },
+    {
+        question: 'What is a closure in programming?',
+        answer:
+            'A closure is a function that retains access to variables from its outer (enclosing) scope even after that outer function has finished executing.',
+    },
+]
+
+const SAMPLE_MCQS: McqSeedItem[] = [
+    {
+        question:      'Which data structure uses LIFO (Last-In, First-Out) ordering?',
+        options:       ['Queue', 'Stack', 'Linked List', 'Binary Tree'],
+        correctOption: 1,
+        explanation:   'A stack is a LIFO structure — elements are pushed and popped from the same end (the top).',
+        difficulty:    'easy',
+    },
+    {
+        question:      'What is the time complexity of binary search on a sorted array?',
+        options:       ['O(n)', 'O(n²)', 'O(log n)', 'O(1)'],
+        correctOption: 2,
+        explanation:   'Binary search halves the search space with each step, giving O(log n) time complexity.',
+        difficulty:    'medium',
+    },
+    {
+        question:      'Which of the following is NOT a principle of Object-Oriented Programming?',
+        options:       ['Encapsulation', 'Polymorphism', 'Compilation', 'Inheritance'],
+        correctOption: 2,
+        explanation:   'The four OOP principles are Encapsulation, Abstraction, Inheritance, and Polymorphism. Compilation is not one of them.',
+        difficulty:    'medium',
+    },
+]
 
 // ---- Page -----------------------------------------------------------------
 
@@ -51,7 +97,7 @@ export default function CourseDetailPage() {
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => navigate('/dashboard/notes')}
-                    className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-purple-50 hover:border-[#667eea]/30 transition-colors"
+                    className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4 text-gray-600" />
                 </button>
@@ -119,10 +165,18 @@ function TabPanel({ children }: { children: React.ReactNode }) {
     )
 }
 
-function EmptyState({ icon, message, hint }: { icon: React.ReactNode; message: string; hint: string }) {
+function EmptyState({
+    icon,
+    message,
+    hint,
+}: {
+    icon:    React.ReactNode
+    message: string
+    hint:    string
+}) {
     return (
-        <div className="text-center py-16">
-            <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 {icon}
             </div>
             <p className="font-semibold text-gray-700 mb-1">{message}</p>
@@ -178,7 +232,7 @@ function FilesTab({ courseId }: { courseId: string }) {
                 </div>
             ) : files.length === 0 ? (
                 <EmptyState
-                    icon={<FileText className="w-8 h-8 text-[#667eea] opacity-60" />}
+                    icon={<FileText className="w-8 h-8 text-gray-400" />}
                     message="No files uploaded yet"
                     hint="Upload PDFs, Word docs, or slides to get started"
                 />
@@ -189,10 +243,10 @@ function FilesTab({ courseId }: { courseId: string }) {
                             key={file.id}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-purple-50 border border-transparent hover:border-[#667eea]/20 transition-colors group"
+                            className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
                         >
-                            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                                <FileText className="w-5 h-5 text-[#667eea]" />
+                            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-900 truncate">{file.originalName}</p>
@@ -238,14 +292,22 @@ function FilesTab({ courseId }: { courseId: string }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FLASHCARDS TAB  — flip card navigation only, no add/delete
+// FLASHCARDS TAB
 // ═══════════════════════════════════════════════════════════════════════════
 
 function FlashcardsTab({ courseId }: { courseId: string }) {
-    const { data: cards = [], isLoading } = useFlashcards(courseId)
+    const { data: cards = [], isLoading }      = useFlashcards(courseId)
+    const { mutate: seed, isPending: seeding } = useSeedFlashcards(courseId)
 
     const [currentIdx, setCurrentIdx] = useState(0)
     const [flipped, setFlipped]       = useState(false)
+
+    // ── ITERATION 3: replace seed(SAMPLE_FLASHCARDS) with your AI API call ──
+    useEffect(() => {
+        if (!isLoading && cards.length === 0) {
+            seed(SAMPLE_FLASHCARDS)
+        }
+    }, [isLoading])
 
     const prev    = () => { setFlipped(false); setCurrentIdx((i) => (i - 1 + cards.length) % cards.length) }
     const next    = () => { setFlipped(false); setCurrentIdx((i) => (i + 1) % cards.length) }
@@ -255,21 +317,15 @@ function FlashcardsTab({ courseId }: { courseId: string }) {
 
     return (
         <TabPanel>
-            {isLoading ? (
+            {isLoading || seeding ? (
                 <div className="flex justify-center py-16">
                     <Loader2 className="w-8 h-8 animate-spin text-[#667eea]" />
                 </div>
-            ) : cards.length === 0 ? (
-                <EmptyState
-                    icon={<Brain className="w-8 h-8 text-[#667eea] opacity-60" />}
-                    message="No flashcards yet"
-                    hint="Flashcards will be generated by AI from your uploaded files in the next iteration"
-                />
             ) : (
                 <div className="flex flex-col items-center gap-8 py-4">
                     {/* Counter */}
                     <p className="text-sm text-gray-500 font-medium">
-                        {currentIdx + 1} <span className="text-gray-300">/</span> {cards.length}
+                        Card {currentIdx + 1} <span className="text-gray-300">/</span> {cards.length}
                     </p>
 
                     {/* Flip Card */}
@@ -291,7 +347,7 @@ function FlashcardsTab({ courseId }: { courseId: string }) {
                             >
                                 <p className="text-xs uppercase tracking-widest mb-4 opacity-60 font-medium">Question</p>
                                 <p className="text-lg font-semibold text-center leading-relaxed">{card?.question}</p>
-                                <p className="text-xs mt-6 opacity-40">Tap to flip</p>
+                                <p className="text-xs mt-6 opacity-40">Click card to flip</p>
                             </div>
 
                             {/* Back — Answer */}
@@ -302,7 +358,7 @@ function FlashcardsTab({ courseId }: { courseId: string }) {
                             >
                                 <p className="text-xs uppercase tracking-widest mb-4 text-[#667eea] opacity-60 font-medium">Answer</p>
                                 <p className="text-lg font-semibold text-center text-gray-900 leading-relaxed">{card?.answer}</p>
-                                <p className="text-xs mt-6 text-gray-300">Tap to flip back</p>
+                                <p className="text-xs mt-6 text-gray-300">Click to flip back</p>
                             </div>
                         </motion.div>
                     </div>
@@ -311,39 +367,25 @@ function FlashcardsTab({ courseId }: { courseId: string }) {
                     <div className="flex items-center gap-4">
                         <button
                             onClick={prev}
-                            className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-purple-50 hover:border-[#667eea]/30 transition-colors"
+                            className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
                         >
                             <ChevronLeft className="w-5 h-5 text-gray-600" />
                         </button>
                         <button
                             onClick={restart}
-                            className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-purple-50 hover:border-[#667eea]/30 transition-colors"
+                            className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
                             title="Restart"
                         >
                             <RotateCcw className="w-4 h-4 text-gray-600" />
                         </button>
                         <button
                             onClick={next}
-                            className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-purple-50 hover:border-[#667eea]/30 transition-colors"
+                            className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
                         >
                             <ChevronRight className="w-5 h-5 text-gray-600" />
                         </button>
                     </div>
 
-                    {/* Progress dots */}
-                    <div className="flex gap-1.5">
-                        {cards.map((_, i) => (
-                            <button
-                                key={i}
-                                onClick={() => { setCurrentIdx(i); setFlipped(false) }}
-                                className={`h-1.5 rounded-full transition-all ${
-                                    i === currentIdx
-                                        ? 'w-6 bg-[#667eea]'
-                                        : 'w-1.5 bg-gray-200 hover:bg-gray-300'
-                                }`}
-                            />
-                        ))}
-                    </div>
                 </div>
             )}
         </TabPanel>
@@ -351,12 +393,13 @@ function FlashcardsTab({ courseId }: { courseId: string }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MCQ TAB  — linear test → score screen, no add/delete
+// MCQ TAB — linear test → score screen
 // ═══════════════════════════════════════════════════════════════════════════
 
 function McqTab({ courseId }: { courseId: string }) {
-    const { data: mcqs = [], isLoading } = useMcqs(courseId)
-    const { mutate: submitAttempt }      = useSubmitMcqAttempt(courseId)
+    const { data: mcqs = [], isLoading }       = useMcqs(courseId)
+    const { mutate: submitAttempt }            = useSubmitMcqAttempt(courseId)
+    const { mutate: seed, isPending: seeding } = useSeedMcqs(courseId)
 
     // Test state
     const [started,  setStarted]  = useState(false)
@@ -365,8 +408,14 @@ function McqTab({ courseId }: { courseId: string }) {
     const [answered, setAnswered] = useState(false)
     const [score,    setScore]    = useState(0)
     const [done,     setDone]     = useState(false)
-    // Track per-question result for the score screen
     const [results,  setResults]  = useState<{ question: string; correct: number; selected: number }[]>([])
+
+    // ── ITERATION 3: replace seed(SAMPLE_MCQS) with your AI API call ──
+    useEffect(() => {
+        if (!isLoading && mcqs.length === 0) {
+            seed(SAMPLE_MCQS)
+        }
+    }, [isLoading])
 
     const resetTest = () => {
         setStarted(false); setTestIdx(0); setSelected(null)
@@ -396,34 +445,33 @@ function McqTab({ courseId }: { courseId: string }) {
         }
     }
 
+    // ── Loading / seeding ──
+    if (isLoading || seeding) {
+        return (
+            <TabPanel>
+                <div className="flex justify-center py-16">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#667eea]" />
+                </div>
+            </TabPanel>
+        )
+    }
+
     // ── Not started yet ──
     if (!started) {
         return (
             <TabPanel>
-                {isLoading ? (
-                    <div className="flex justify-center py-16">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#667eea]" />
+                <div className="flex flex-col items-center py-12 gap-6">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
+                        <Brain className="w-10 h-10 text-white" />
                     </div>
-                ) : mcqs.length === 0 ? (
-                    <EmptyState
-                        icon={<CheckCircle className="w-8 h-8 text-[#667eea] opacity-60" />}
-                        message="No MCQs yet"
-                        hint="MCQs will be generated by AI from your uploaded files in the next iteration"
-                    />
-                ) : (
-                    <div className="flex flex-col items-center py-12 gap-6">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
-                            <CheckCircle className="w-10 h-10 text-white" />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Ready to Test?</h3>
-                            <p className="text-gray-500">{mcqs.length} question{mcqs.length !== 1 ? 's' : ''} • Answer all and see your score</p>
-                        </div>
-                        <Button onClick={() => setStarted(true)}>
-                            Start Test
-                        </Button>
+                    <div className="text-center">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Ready to Test Your Knowledge?</h3>
+                        <p className="text-gray-500">{mcqs.length} question{mcqs.length !== 1 ? 's' : ''} • Answer all and see your score</p>
                     </div>
-                )}
+                    <Button onClick={() => setStarted(true)}>
+                        Start MCQ Test
+                    </Button>
+                </div>
             </TabPanel>
         )
     }
@@ -520,7 +568,7 @@ function McqTab({ courseId }: { courseId: string }) {
                         <motion.div
                             className="h-full bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full"
                             initial={{ width: 0 }}
-                            animate={{ width: `${((testIdx) / mcqs.length) * 100}%` }}
+                            animate={{ width: `${(testIdx / mcqs.length) * 100}%` }}
                             transition={{ duration: 0.3 }}
                         />
                     </div>
@@ -556,7 +604,7 @@ function McqTab({ courseId }: { courseId: string }) {
                     })}
                 </div>
 
-                {/* Explanation + Next button — shown after answering */}
+                {/* Explanation + Next button */}
                 <AnimatePresence>
                     {answered && (
                         <motion.div

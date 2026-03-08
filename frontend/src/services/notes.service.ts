@@ -89,7 +89,7 @@ export const fetchFiles = async (courseId: string): Promise<CourseFile[]> => {
 export const uploadFile = async (courseId: string, file: File): Promise<CourseFile> => {
     const form = new FormData()
     form.append('file', file)
-    
+
     const res = await api.post(`/notes/${courseId}/files`, form, {
         headers: { 'Content-Type': undefined },
     })
@@ -110,6 +110,20 @@ export const fetchFlashcards = async (courseId: string): Promise<Flashcard[]> =>
     return res.data
 }
 
+export interface FlashcardSeedItem {
+    question: string
+    answer:   string
+}
+
+// In iteration 3: replace this with an AI API call that generates cards from uploaded files.
+export const seedFlashcards = async (
+    courseId: string,
+    cards:    FlashcardSeedItem[],
+): Promise<Flashcard[]> => {
+    const res = await api.post(`/notes/${courseId}/flashcards`, { cards })
+    return res.data
+}
+
 // ---- MCQs -----------------------------------------------------------------
 
 export const fetchMcqs = async (courseId: string): Promise<Mcq[]> => {
@@ -117,10 +131,27 @@ export const fetchMcqs = async (courseId: string): Promise<Mcq[]> => {
     return res.data
 }
 
+export interface McqSeedItem {
+    question:      string
+    options:       string[]
+    correctOption: number
+    explanation:   string
+    difficulty:    McqDifficulty
+}
+
+// In iteration 3: replace this with an AI API call that generates MCQs from uploaded files.
+export const seedMcqs = async (
+    courseId:  string,
+    questions: McqSeedItem[],
+): Promise<Mcq[]> => {
+    const res = await api.post(`/notes/${courseId}/mcqs`, { questions })
+    return res.data
+}
+
 export const submitMcqAttempt = async (
     courseId:       string,
     mcqId:          string,
-    selectedOption: number
+    selectedOption: number,
 ): Promise<McqAttemptResult> => {
     const res = await api.post(`/notes/${courseId}/mcqs/${mcqId}/attempt`, { selectedOption })
     return res.data

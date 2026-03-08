@@ -8,8 +8,12 @@ import {
     uploadFile,
     deleteFile,
     fetchFlashcards,
+    seedFlashcards,
     fetchMcqs,
+    seedMcqs,
     submitMcqAttempt,
+    type FlashcardSeedItem,
+    type McqSeedItem,
 } from '../services/notes.service'
 
 // ---- Courses --------------------------------------------------------------
@@ -24,7 +28,7 @@ export const useCourses = () =>
 export const useCreateCourse = () => {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: createCourse,
+        mutationFn: (payload: { name: string; color?: string }) => createCourse(payload),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['courses'] })
             toast.success('Course created!')
@@ -36,7 +40,7 @@ export const useCreateCourse = () => {
 export const useDeleteCourse = () => {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: deleteCourse,
+        mutationFn: (courseId: string) => deleteCourse(courseId),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['courses'] })
             toast.success('Course deleted')
@@ -71,7 +75,7 @@ export const useUploadFile = (courseId: string) => {
 export const useDeleteFile = (courseId: string) => {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: deleteFile,
+        mutationFn: (fileId: string) => deleteFile(fileId),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['files', courseId] })
             qc.invalidateQueries({ queryKey: ['courses'] })
@@ -82,7 +86,7 @@ export const useDeleteFile = (courseId: string) => {
 }
 
 // ---- Flashcards -----------------------------------------------------------
-// Read-only from the UI perspective. AI seeds them in iteration 3.
+// In iteration 3: useSeedFlashcards will call the AI API instead of seeding sample data.
 
 export const useFlashcards = (courseId: string) =>
     useQuery({
@@ -92,8 +96,20 @@ export const useFlashcards = (courseId: string) =>
         staleTime: 2 * 60 * 1000,
     })
 
+export const useSeedFlashcards = (courseId: string) => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: (cards: FlashcardSeedItem[]) => seedFlashcards(courseId, cards),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['flashcards', courseId] })
+            qc.invalidateQueries({ queryKey: ['courses'] })
+        },
+        onError: () => toast.error('Failed to load flashcards'),
+    })
+}
+
 // ---- MCQs -----------------------------------------------------------------
-// Read-only from the UI perspective. AI seeds them in iteration 3.
+// In iteration 3: useSeedMcqs will call the AI API instead of seeding sample data.
 
 export const useMcqs = (courseId: string) =>
     useQuery({
@@ -102,6 +118,18 @@ export const useMcqs = (courseId: string) =>
         enabled:  !!courseId,
         staleTime: 2 * 60 * 1000,
     })
+
+export const useSeedMcqs = (courseId: string) => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: (questions: McqSeedItem[]) => seedMcqs(courseId, questions),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mcqs', courseId] })
+            qc.invalidateQueries({ queryKey: ['courses'] })
+        },
+        onError: () => toast.error('Failed to load MCQs'),
+    })
+}
 
 export const useSubmitMcqAttempt = (courseId: string) =>
     useMutation({
