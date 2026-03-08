@@ -1,20 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import {
-    fetchCourses,
-    createCourse,
-    deleteCourse,
-    fetchFiles,
-    uploadFile,
-    deleteFile,
-    fetchFlashcards,
-    seedFlashcards,
-    fetchMcqs,
-    seedMcqs,
-    submitMcqAttempt,
-    type FlashcardSeedItem,
-    type McqSeedItem,
-} from '../services/notes.service'
+import { fetchCourses, createCourse, deleteCourse, fetchFiles, uploadFile, deleteFile, fetchFlashcards, seedFlashcards, fetchMcqs, seedMcqs, submitMcqAttempt, type FlashcardSeedItem, type McqSeedItem,} from '../services/notes.service'
 
 // ---- Courses --------------------------------------------------------------
 
@@ -86,7 +72,7 @@ export const useDeleteFile = (courseId: string) => {
 }
 
 // ---- Flashcards -----------------------------------------------------------
-// In iteration 3: useSeedFlashcards will call the AI API instead of seeding sample data.
+// useSeedFlashcards will call the AI API instead of seeding sample data.
 
 export const useFlashcards = (courseId: string) =>
     useQuery({
@@ -109,7 +95,7 @@ export const useSeedFlashcards = (courseId: string) => {
 }
 
 // ---- MCQs -----------------------------------------------------------------
-// In iteration 3: useSeedMcqs will call the AI API instead of seeding sample data.
+// useSeedMcqs will call the AI API instead of seeding sample data.
 
 export const useMcqs = (courseId: string) =>
     useQuery({

@@ -3,20 +3,7 @@ import multer from 'multer'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { verifyToken } from '../middleware/verifyToken.middleware'
-import {
-    getCourses,
-    createCourse,
-    deleteCourse,
-    getFiles,
-    uploadFile,
-    downloadFile,
-    deleteFile,
-    getFlashcards,
-    seedFlashcards,
-    getMcqs,
-    seedMcqs,
-    submitMcqAttempt,
-} from '../controllers/notes.controller'
+import { getCourses, createCourse, deleteCourse, getFiles, uploadFile, downloadFile, deleteFile, getFlashcards, seedFlashcards, getMcqs, seedMcqs, submitMcqAttempt,} from '../controllers/notes.controller'
 
 const router = express.Router()
 router.use(verifyToken)

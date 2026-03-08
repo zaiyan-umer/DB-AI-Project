@@ -1,6 +1,4 @@
-import {
-    pgTable, uuid, varchar, integer, boolean, timestamp, text, pgEnum
-} from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, integer, boolean, timestamp, text, pgEnum } from 'drizzle-orm/pg-core'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import users from './user.schema'
 
@@ -22,7 +20,6 @@ export const courses = pgTable('courses', {
                    .references(() => users.id, { onDelete: 'cascade' })
                    .notNull(),
     name:      varchar('name', { length: 150 }).notNull(),
-    // Tailwind gradient class stored as string e.g. "from-blue-500 to-cyan-500"
     color:     varchar('color', { length: 60 }).notNull().default('from-indigo-500 to-purple-500'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -54,7 +51,7 @@ export const courseFiles = pgTable('course_files', {
     storagePath:  varchar('storage_path', { length: 500 }).notNull(),
     mimeType:     varchar('mime_type', { length: 100 }).notNull(),
     sizeBytes:    integer('size_bytes').notNull().default(0),
-    // Ready for AI integration in iteration 3 — set true once AI processes this file
+    // set true once AI processes this file
     aiProcessed:  boolean('ai_processed').notNull().default(false),
     createdAt:    timestamp('created_at').notNull().defaultNow(),
 })
@@ -70,7 +67,7 @@ export const selectCourseFileSchema = createSelectSchema(courseFiles)
 // FK: course_id      → courses.id     (cascade delete)
 // FK: user_id        → users.id       (cascade delete)
 // FK: source_file_id → course_files.id (set null if file deleted)
-//     Kept for AI iteration 3 — tracks which file generated this card
+//     for AI — tracks which file generated this card
 
 export const flashcards = pgTable('flashcards', {
     id:           uuid('id').primaryKey().defaultRandom(),
@@ -98,7 +95,6 @@ export const selectFlashcardSchema = createSelectSchema(flashcards)
 // ---- mcqs -----------------------------------------------------------------
 // Multiple-choice questions.
 // correctOption is 0-based index into the options array.
-// options stored as JSON string to avoid an extra join table.
 // FK: course_id      → courses.id     (cascade delete)
 // FK: user_id        → users.id       (cascade delete)
 // FK: source_file_id → course_files.id (set null if file deleted)
@@ -131,8 +127,7 @@ export const insertMcqSchema = createInsertSchema(mcqs)
 export const selectMcqSchema = createSelectSchema(mcqs)
 
 // ---- mcq_attempts ---------------------------------------------------------
-// Tracks each time a user answers an MCQ.
-// Used for progress analytics in future iterations.
+// Tracks each time a user answers an MCQ. Used for progress analytics in future iterations.
 // FK: mcq_id  → mcqs.id  (cascade delete)
 // FK: user_id → users.id (cascade delete)
 

@@ -8,10 +8,6 @@ import { Plus, BookOpen, FileText, Brain, CheckCircle, Trash2 } from 'lucide-rea
 import { motion } from 'motion/react'
 import { useCourses, useCreateCourse, useDeleteCourse } from '../hooks/useNotes'
 
-// ---- Color map ------------------------------------------------------------
-// Tailwind 4 purges dynamic class strings, so we map color keys to full
-// inline style objects instead. The backend still stores the key string.
-
 const COLOR_STYLES: Record<string, { background: string }> = {
     'from-blue-500 to-cyan-500':       { background: 'linear-gradient(135deg, #3b82f6, #06b6d4)' },
     'from-purple-500 to-pink-500':     { background: 'linear-gradient(135deg, #a855f7, #ec4899)' },

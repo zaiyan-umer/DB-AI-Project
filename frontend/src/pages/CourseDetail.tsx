@@ -1,19 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import {
-    ArrowLeft, Upload, Download, Trash2,
-    ChevronLeft, ChevronRight, RotateCcw,
-    FileText, Loader2, Sparkles, RefreshCw,
-    CheckCircle, XCircle, Brain,
-} from 'lucide-react'
+import { ArrowLeft, Upload, Download, Trash2, ChevronLeft, ChevronRight, RotateCcw, FileText, Loader2, Sparkles, RefreshCw, CheckCircle, XCircle, Brain,} from 'lucide-react'
 import { Button } from '../components/Button'
-import {
-    useCourses,
-    useFiles, useUploadFile, useDeleteFile,
-    useFlashcards, useSeedFlashcards,
-    useMcqs, useSeedMcqs, useSubmitMcqAttempt,
-} from '../hooks/useNotes'
+import { useCourses, useFiles, useUploadFile, useDeleteFile, useFlashcards, useSeedFlashcards, useMcqs, useSeedMcqs, useSubmitMcqAttempt,} from '../hooks/useNotes'
 import { getDownloadUrl, type FlashcardSeedItem, type McqSeedItem } from '../services/notes.service'
 
 // ---- Helpers --------------------------------------------------------------
@@ -34,8 +24,7 @@ const formatRelativeDate = (iso: string) => {
 type Tab = 'files' | 'flashcards' | 'mcq'
 
 // ---- Sample Data ----------------------------------------------------------
-// Seeded automatically on mount. Will be REPLACED by AI-generated content in iteration 3.
-// In iteration 3: remove the useEffect auto-seed and call the AI API instead.
+// Seeded automatically on mount. Will be REPLACED by AI-generated content.
 
 const SAMPLE_FLASHCARDS: FlashcardSeedItem[] = [
     {
@@ -302,7 +291,7 @@ function FlashcardsTab({ courseId }: { courseId: string }) {
     const [currentIdx, setCurrentIdx] = useState(0)
     const [flipped, setFlipped]       = useState(false)
 
-    // ── ITERATION 3: replace seed(SAMPLE_FLASHCARDS) with your AI API call ──
+    // replace seed(SAMPLE_FLASHCARDS) with AI API call 
     useEffect(() => {
         if (!isLoading && cards.length === 0) {
             seed(SAMPLE_FLASHCARDS)
@@ -410,7 +399,7 @@ function McqTab({ courseId }: { courseId: string }) {
     const [done,     setDone]     = useState(false)
     const [results,  setResults]  = useState<{ question: string; correct: number; selected: number }[]>([])
 
-    // ── ITERATION 3: replace seed(SAMPLE_MCQS) with your AI API call ──
+    //  replace seed(SAMPLE_MCQS) with AI API call
     useEffect(() => {
         if (!isLoading && mcqs.length === 0) {
             seed(SAMPLE_MCQS)

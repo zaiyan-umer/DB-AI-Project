@@ -115,7 +115,7 @@ export interface FlashcardSeedItem {
     answer:   string
 }
 
-// In iteration 3: replace this with an AI API call that generates cards from uploaded files.
+// replace this with an AI API call that generates cards from uploaded files.
 export const seedFlashcards = async (
     courseId: string,
     cards:    FlashcardSeedItem[],
@@ -139,7 +139,7 @@ export interface McqSeedItem {
     difficulty:    McqDifficulty
 }
 
-// In iteration 3: replace this with an AI API call that generates MCQs from uploaded files.
+// replace this with an AI API call that generates MCQs from uploaded files.
 export const seedMcqs = async (
     courseId:  string,
     questions: McqSeedItem[],
