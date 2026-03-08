@@ -6,6 +6,7 @@ import { checkExistingUser, getUserById, insertUser, updateUserPassword } from "
 import { compareHash, hashPassword, hashResetToken } from "../utils/hashing.utils";
 import { generateToken } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/mailer";
+import { getEventsByUser, insertEvent, removeEvent, getStudyPlanByUser, upsertStudyPlan, getNotificationsByUser, markNotificationAsRead, removeNotification, } from '../services/dal/scheduler.dal'
 
 
 export const register = async (req: Request<any, any, newUser>, res: Response) => {
@@ -195,3 +196,132 @@ export const getCurrentUser = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Current user retrieval failed" });
     }
 };
+
+
+
+
+// ---- Events ---------------------------------------------------------------
+
+export const getEvents = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const data = await getEventsByUser(userId)
+        return res.status(200).json(data)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to fetch events' })
+    }
+}
+
+export const createEvent = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const { title, course, type, priority, date, time } = req.body
+
+        const event = await insertEvent({
+            userId,
+            title,
+            course,
+            type,
+            priority,
+            date: new Date(date),
+            time,
+        })
+
+        return res.status(201).json(event)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to create event' })
+    }
+}
+
+export const deleteEvent = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const id = req.params.id as string
+
+        const deleted = await removeEvent(id, userId)
+        if (!deleted) return res.status(404).json({ message: 'Event not found' })
+
+        return res.status(200).json({ message: 'Event deleted' })
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to delete event' })
+    }
+}
+
+// ---- Study Plans ----------------------------------------------------------
+
+export const getStudyPlan = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const plan = await getStudyPlanByUser(userId)
+        return res.status(200).json(plan)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to fetch study plan' })
+    }
+}
+
+export const saveStudyPlan = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const { name, courses } = req.body
+
+        if (!Array.isArray(courses)) {
+            return res.status(400).json({ message: 'courses must be an array' })
+        }
+
+        const plan = await upsertStudyPlan(userId, { name, courses })
+        return res.status(200).json(plan)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to save study plan' })
+    }
+}
+
+// ---- Notifications --------------------------------------------------------
+
+export const getNotifications = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const data = await getNotificationsByUser(userId)
+        // Newest first
+        return res.status(200).json(data.sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ))
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to fetch notifications' })
+    }
+}
+
+export const markRead = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const id = req.params.id as string
+
+        const updated = await markNotificationAsRead(id, userId)
+        if (!updated) return res.status(404).json({ message: 'Notification not found' })
+
+        return res.status(200).json(updated)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to mark notification as read' })
+    }
+}
+
+export const deleteNotification = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const id = req.params.id as string
+
+        const deleted = await removeNotification(id, userId)
+        if (!deleted) return res.status(404).json({ message: 'Notification not found' })
+
+        return res.status(200).json({ message: 'Notification deleted' })
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to delete notification' })
+    }
+}
