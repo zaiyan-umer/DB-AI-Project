@@ -12,7 +12,7 @@
  */
 
 import cron from 'node-cron'
-import { getEventsDueTomorrow, insertNotification } from '../services/dal/scheduler.dal'
+import { getEventsDueTomorrow, insertNotification, notificationExistsForEventToday } from '../services/dal/scheduler.dal'
 
 const runJob = async () => {
     try {
@@ -20,6 +20,13 @@ const runJob = async () => {
         console.log(`[NotificationJob] Found ${events.length} event(s) due tomorrow`)
 
         for (const event of events) {
+            // Skip if a notification for this event was already sent today
+            const alreadySent = await notificationExistsForEventToday(event.id)
+            if (alreadySent) {
+                console.log(`[NotificationJob] Skipping duplicate for event: ${event.title}`)
+                continue
+            }
+
             const dateStr = new Date(event.date).toLocaleDateString('en-US', {
                 weekday: 'long', month: 'long', day: 'numeric'
             })

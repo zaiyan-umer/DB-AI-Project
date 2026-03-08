@@ -1,163 +1,3 @@
-// import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-// import { motion } from 'motion/react';
-// import {
-//   LayoutDashboard,
-//   MessageSquare,
-//   FileText,
-//   Calendar,
-//   TrendingUp,
-//   ChevronRight,
-//   Bell,
-//   Sparkles,
-//   LogOut,
-// } from 'lucide-react';
-// import { useLogout } from '../hooks/useAuth';
-// import { useCurrentUser } from '../hooks/useCurrentUser';
-// import { useNotifications } from '../hooks/useScheduler';
-// import { useState } from 'react';
-// import { NotificationPanel } from './NotificationPanel';
-
-// interface NavItem {
-//   name: string;
-//   path: string;
-//   icon: React.ReactNode;
-// }
-
-// const navItems: NavItem[] = [
-//   { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
-//   { name: 'Group Chat', path: '/dashboard/group-chat', icon: <MessageSquare className="w-5 h-5" /> },
-//   { name: 'Notes & Test', path: '/dashboard/notes', icon: <FileText className="w-5 h-5" /> },
-//   { name: 'Scheduler', path: '/dashboard/scheduler', icon: <Calendar className="w-5 h-5" /> },
-//   { name: 'Progress', path: '/dashboard/progress', icon: <TrendingUp className="w-5 h-5" /> },
-// ];
-
-// export function DashboardLayout() {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-//   const { mutate: logout, isPending } = useLogout();
-//   const { data: currentUser } = useCurrentUser();
-//   const { data: notifications = [] } = useNotifications();
-//   const [showNotifications, setShowNotifications] = useState(false);
-
-//   const unreadCount = notifications.filter((n: any) => !n.isRead).length;
-
-//   const initials = currentUser?.user
-//     ? `${currentUser.user.firstName?.[0] ?? ''}${currentUser.user.lastName?.[0] ?? ''}`.toUpperCase() || 'U'
-//     : 'U';
-
-//   const displayName = currentUser?.user
-//     ? `${currentUser.user.firstName ?? ''} ${currentUser.user.lastName ?? ''}`.trim() || currentUser.user.username || 'User'
-//     : 'User';
-
-//   const currentPage = navItems.find(item => item.path === location.pathname)?.name || 'Dashboard';
-
-//   return (
-//     <div className="flex h-screen bg-gray-50 overflow-hidden">
-//       {/* Sidebar */}
-//       <motion.aside
-//         initial={{ x: -300 }}
-//         animate={{ x: 0 }}
-//         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-//         className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0"
-//       >
-//         {/* Logo */}
-//         <div className="p-6 border-b border-gray-200">
-//           <div className="flex items-center gap-3">
-//             <div className="w-10 h-10 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-lg flex items-center justify-center">
-//               <Sparkles className="w-5 h-5 text-white" />
-//             </div>
-//             <h1 className="text-xl font-bold bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">
-//               StudySync AI
-//             </h1>
-//           </div>
-//         </div>
-
-//         {/* Navigation */}
-//         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-//           {navItems.map((item) => {
-//             const isActive = location.pathname === item.path;
-//             return (
-//               <button
-//                 key={item.path}
-//                 onClick={() => navigate(item.path)}
-//                 className={`
-//                   w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-//                   ${isActive
-//                     ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-lg shadow-purple-500/30'
-//                     : 'text-gray-600 hover:bg-gray-100'
-//                   }
-//                 `}
-//               >
-//                 {item.icon}
-//                 <span className="flex-1 text-left font-medium">{item.name}</span>
-//                 {isActive && <ChevronRight className="w-4 h-4" />}
-//               </button>
-//             );
-//           })}
-//         </nav>
-
-//         {/* Logout */}
-//         <div className="p-4 border-t border-gray-200">
-//           <button
-//             onClick={() => logout()}
-//             disabled={isPending}
-//             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all"
-//           >
-//             <LogOut className="w-5 h-5" />
-//             <span className="font-medium">{isPending ? 'Logging out...' : 'Logout'}</span>
-//           </button>
-//         </div>
-//       </motion.aside>
-
-//       {/* Main Content */}
-//       <div className="flex-1 flex flex-col overflow-hidden">
-//         {/* Top Bar */}
-//         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 flex-shrink-0">
-//           <div>
-//             <h2 className="text-xl font-semibold text-gray-900">{currentPage}</h2>
-//           </div>
-//           <div className="flex items-center gap-4">
-//             {/* Notifications */}
-//             <div className="relative">
-//               <button
-//                 onClick={() => setShowNotifications(!showNotifications)}
-//                 className="p-2 hover:bg-gray-100 rounded-lg relative transition-colors"
-//               >
-//                 <Bell className="w-5 h-5 text-gray-600" />
-//                 {unreadCount > 0 && (
-//                   <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
-//                     {unreadCount > 9 ? '9+' : unreadCount}
-//                   </span>
-//                 )}
-//               </button>
-//               {showNotifications && (
-//                 <NotificationPanel
-//                   notifications={notifications}
-//                   onClose={() => setShowNotifications(false)}
-//                 />
-//               )}
-//             </div>
-
-//             {/* User */}
-//             <div className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 rounded-lg cursor-default">
-//               <div className="w-8 h-8 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full flex items-center justify-center text-white text-sm font-semibold">
-//                 {initials}
-//               </div>
-//               <span className="text-sm font-medium text-gray-700">{displayName}</span>
-//             </div>
-//           </div>
-//         </header>
-
-//         {/* Page Content */}
-//         <main className="flex-1 overflow-y-auto p-8">
-//           <Outlet />
-//         </main>
-//       </div>
-//     </div>
-//   );
-// }
-
-
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -381,18 +221,22 @@ export function DashboardLayout() {
                   cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   position: 'relative',
+                  flexShrink: 0,
                 }}
                 onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#f3f4f6'}
                 onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'}
               >
-                <Bell className="w-5 h-5" style={{ color: '#4b5563' }} />
+                {/* Bell icon — always visible, never covered */}
+                <Bell style={{ width: '20px', height: '20px', color: '#4b5563', display: 'block', flexShrink: 0 }} />
                 {unreadCount > 0 && (
                   <span style={{
-                    position: 'absolute', top: '4px', right: '4px',
-                    minWidth: '16px', height: '16px',
+                    position: 'absolute', top: '2px', right: '2px',
+                    minWidth: '15px', height: '15px',
                     backgroundColor: '#ef4444', borderRadius: '9999px',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: '10px', fontWeight: 700, padding: '0 3px',
+                    color: '#fff', fontSize: '9px', fontWeight: 700, padding: '0 3px',
+                    pointerEvents: 'none',   // badge never intercepts clicks
+                    zIndex: 1,
                   }}>
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>

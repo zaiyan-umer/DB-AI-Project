@@ -9,8 +9,9 @@ import {
   fetchNotifications,
   markNotificationRead,
   deleteNotification,
-//   type Event,
-//   type CourseEntry,
+  deleteAllNotifications,
+  type Event,
+  type CourseEntry,
 } from '../services/scheduler.service'
 
 // ---- Events ---------------------------------------------------------------
@@ -74,8 +75,9 @@ export const useNotifications = () =>
   useQuery({
     queryKey: ['notifications'],
     queryFn: fetchNotifications,
-    staleTime: 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,   // poll every 5 min for new deadline alerts
+    staleTime: 20 * 1000,            // consider stale after 20s
+    refetchInterval: 30 * 1000,      // poll every 30 seconds — feels live without hammering server
+    refetchIntervalInBackground: true, // keep polling even when tab is not focused
   })
 
 export const useMarkNotificationRead = () => {
@@ -91,5 +93,17 @@ export const useDeleteNotification = () => {
   return useMutation({
     mutationFn: deleteNotification,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+}
+
+export const useDeleteAllNotifications = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteAllNotifications,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] })
+      toast.success('All notifications cleared')
+    },
+    onError: () => toast.error('Failed to clear notifications'),
   })
 }

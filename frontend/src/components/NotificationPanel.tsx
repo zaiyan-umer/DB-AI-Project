@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { Check, Trash2, Bell, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useMarkNotificationRead, useDeleteNotification } from '../hooks/useScheduler';
+import { useMarkNotificationRead, useDeleteNotification, useDeleteAllNotifications } from '../hooks/useScheduler';
 
 interface Notification {
   id: string;
@@ -20,6 +20,7 @@ export function NotificationPanel({ notifications, onClose }: NotificationPanelP
   const panelRef = useRef<HTMLDivElement>(null);
   const { mutate: markRead } = useMarkNotificationRead();
   const { mutate: deleteNotif } = useDeleteNotification();
+  const { mutate: deleteAll, isPending: deletingAll } = useDeleteAllNotifications();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -39,10 +40,23 @@ export function NotificationPanel({ notifications, onClose }: NotificationPanelP
       exit={{ opacity: 0, y: -10, scale: 0.97 }}
       className="absolute right-0 top-12 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
     >
+      {/* Header */}
       <div className="p-4 border-b border-gray-100 flex items-center gap-2">
         <Bell className="w-4 h-4 text-[#667eea]" />
         <h3 className="font-semibold text-gray-900">Notifications</h3>
-        <span className="ml-auto text-xs text-gray-500">{notifications.length} total</span>
+        <span className="text-xs text-gray-400 ml-1">{notifications.length}</span>
+
+        {/* Delete all — only shown when there are notifications */}
+        {notifications.length > 0 && (
+          <button
+            onClick={() => deleteAll()}
+            disabled={deletingAll}
+            className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-3 h-3" />
+            {deletingAll ? 'Clearing…' : 'Clear all'}
+          </button>
+        )}
       </div>
 
       <div className="max-h-96 overflow-y-auto">
