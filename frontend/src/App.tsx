@@ -5,6 +5,7 @@ import Login from './pages/auth/Login'
 import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ChangePassword from './pages/auth/ChangePassword'
+import Chat from './pages/Chat'
 
 // Create router with proper route definitions
 const router = createBrowserRouter([
@@ -28,11 +29,21 @@ const router = createBrowserRouter([
     path: '/verify-email',
     element: <ChangePassword />
   },
+
   {
     path: '/dashboard',
     element: (
       <ProtectedRoute>
         <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+  
+  {
+    path: '/chat',
+    element: (
+      <ProtectedRoute>
+        <Chat />
       </ProtectedRoute>
     ),
   },
