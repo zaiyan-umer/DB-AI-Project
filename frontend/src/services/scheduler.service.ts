@@ -86,3 +86,7 @@ export const markNotificationRead = async (id: string): Promise<void> => {
 export const deleteNotification = async (id: string): Promise<void> => {
   await api.delete(`/scheduler/notifications/${id}`)
 }
+
+export const deleteAllNotifications = async (): Promise<void> => {
+  await api.delete('/scheduler/notifications')
+}

@@ -6,7 +6,7 @@ import { checkExistingUser, getUserById, insertUser, updateUserPassword } from "
 import { compareHash, hashPassword, hashResetToken } from "../utils/hashing.utils";
 import { generateToken } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/mailer";
-import { getEventsByUser, insertEvent, removeEvent, getStudyPlanByUser, upsertStudyPlan, getNotificationsByUser, markNotificationAsRead, removeNotification, } from '../services/dal/scheduler.dal'
+import { getEventsByUser, insertEvent, removeEvent, getStudyPlanByUser, upsertStudyPlan, getNotificationsByUser, markNotificationAsRead, removeNotification, removeAllNotifications} from '../services/dal/scheduler.dal'
 
 
 export const register = async (req: Request<any, any, newUser>, res: Response) => {
@@ -323,5 +323,16 @@ export const deleteNotification = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to delete notification' })
+    }
+}
+
+export const deleteAllNotifications = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        await removeAllNotifications(userId)
+        return res.status(200).json({ message: 'All notifications cleared' })
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to clear notifications' })
     }
 }

@@ -90,6 +90,27 @@ export const insertNotification = async (
     return created
 }
 
+/**
+ * Returns true if a notification for this event was already inserted today.
+ * Prevents the cron job from creating duplicates if it runs more than once.
+ */
+export const notificationExistsForEventToday = async (eventId: string): Promise<boolean> => {
+    const startOfDay = new Date()
+    startOfDay.setHours(0, 0, 0, 0)
+
+    const results = await db
+        .select()
+        .from(notifications)
+        .where(
+            and(
+                eq(notifications.eventId, eventId),
+                gte(notifications.createdAt, startOfDay)
+            )
+        )
+
+    return results.length > 0
+}
+
 export const markNotificationAsRead = async (notifId: string, userId: string) => {
     const [updated] = await db
         .update(notifications)
@@ -105,4 +126,10 @@ export const removeNotification = async (notifId: string, userId: string) => {
         .where(and(eq(notifications.id, notifId), eq(notifications.userId, userId)))
         .returning()
     return deleted
+}
+
+export const removeAllNotifications = async (userId: string) => {
+    await db
+        .delete(notifications)
+        .where(eq(notifications.userId, userId))
 }
