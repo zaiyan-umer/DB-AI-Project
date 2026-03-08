@@ -5,12 +5,13 @@ interface ButtonProps {
   children: ReactNode;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   fullWidth?: boolean;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   icon?: ReactNode;
-  className?: string
+  className?: string;
+  title?: string;
 }
 
 export function Button({ 
@@ -22,7 +23,8 @@ export function Button({
   disabled = false,
   type = 'button',
   icon,
-  className = ''
+  className = '',
+  title
 }: ButtonProps) {
   const baseClasses = "rounded-xl flex items-center justify-center gap-2 transition-all font-medium";
   
@@ -37,7 +39,8 @@ export function Button({
   const sizeClasses = {
     sm: "px-4 py-2 text-sm",
     md: "px-6 py-3",
-    lg: "px-8 py-4 text-lg"
+    lg: "px-8 py-4 text-lg",
+    icon: "size-10 p-0"
   };
   
   return (
@@ -46,6 +49,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       type={type}
+      title={title}
       className={`
         ${className}
         ${baseClasses}

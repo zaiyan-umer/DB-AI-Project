@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ChangePassword from './pages/auth/ChangePassword'
 import Chat from './pages/Chat'
+import { GroupChatPage } from './pages/GroupChat'
 
 // Create router with proper route definitions
 const router = createBrowserRouter([
@@ -44,6 +45,15 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Chat />
+      </ProtectedRoute>
+    ),
+  },
+
+  {
+    path: '/groupchat',
+    element: (
+      <ProtectedRoute>
+        <GroupChatPage />
       </ProtectedRoute>
     ),
   },
