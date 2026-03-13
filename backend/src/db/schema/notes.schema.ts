@@ -2,13 +2,7 @@ import { pgTable, uuid, varchar, integer, boolean, timestamp, text, pgEnum } fro
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import users from './user.schema'
 
-// ---- Enums ----------------------------------------------------------------
-
-export const mcqDifficultyEnum = pgEnum('mcq_difficulty', [
-    'easy',
-    'medium',
-    'hard'
-])
+export const mcqDifficultyEnum = pgEnum('mcq_difficulty', ['easy', 'medium', 'hard'])
 
 // ---- courses --------------------------------------------------------------
 // One row per course a user creates.
@@ -20,7 +14,6 @@ export const courses = pgTable('courses', {
                    .references(() => users.id, { onDelete: 'cascade' })
                    .notNull(),
     name:      varchar('name', { length: 150 }).notNull(),
-    color:     varchar('color', { length: 60 }).notNull().default('from-indigo-500 to-purple-500'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

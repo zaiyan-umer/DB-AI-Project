@@ -8,21 +8,21 @@ import { Plus, BookOpen, FileText, Brain, CheckCircle, Trash2 } from 'lucide-rea
 import { motion } from 'motion/react'
 import { useCourses, useCreateCourse, useDeleteCourse } from '../hooks/useNotes'
 
-const COLOR_STYLES: Record<string, { background: string }> = {
-    'from-blue-500 to-cyan-500':       { background: 'linear-gradient(135deg, #3b82f6, #06b6d4)' },
-    'from-purple-500 to-pink-500':     { background: 'linear-gradient(135deg, #a855f7, #ec4899)' },
-    'from-orange-500 to-red-500':      { background: 'linear-gradient(135deg, #f97316, #ef4444)' },
-    'from-green-500 to-emerald-500':   { background: 'linear-gradient(135deg, #22c55e, #10b981)' },
-    'from-indigo-500 to-purple-500':   { background: 'linear-gradient(135deg, #6366f1, #a855f7)' },
-    'from-yellow-500 to-orange-500':   { background: 'linear-gradient(135deg, #eab308, #f97316)' },
-    'from-teal-500 to-cyan-500':       { background: 'linear-gradient(135deg, #14b8a6, #06b6d4)' },
-    'from-rose-500 to-pink-500':       { background: 'linear-gradient(135deg, #f43f5e, #ec4899)' },
+const GRADIENTS = [
+    'linear-gradient(135deg, #3b82f6, #06b6d4)',
+    'linear-gradient(135deg, #a855f7, #ec4899)',
+    'linear-gradient(135deg, #f97316, #ef4444)',
+    'linear-gradient(135deg, #22c55e, #10b981)',
+    'linear-gradient(135deg, #6366f1, #a855f7)',
+    'linear-gradient(135deg, #eab308, #f97316)',
+    'linear-gradient(135deg, #14b8a6, #06b6d4)',
+    'linear-gradient(135deg, #f43f5e, #ec4899)',
+]
+
+const getColorStyle = (id: string) => {
+    const sum = id.replace(/-/g, '').split('').reduce((acc, c) => acc + parseInt(c, 16), 0)
+    return { background: GRADIENTS[sum % GRADIENTS.length] }
 }
-
-const getColorStyle = (color: string) =>
-    COLOR_STYLES[color] ?? { background: 'linear-gradient(135deg, #6366f1, #a855f7)' }
-
-// ---------------------------------------------------------------------------
 
 export default function NotesTestPage() {
     const navigate = useNavigate()
@@ -108,7 +108,7 @@ export default function NotesTestPage() {
                                     {/* Colored gradient box — using inline style to bypass Tailwind purge */}
                                     <div
                                         className="h-32 rounded-xl mb-4 flex items-center justify-center"
-                                        style={getColorStyle(course.color)}
+                                        style={getColorStyle(course.id)}
                                     >
                                         <BookOpen className="w-16 h-16 text-white opacity-80" />
                                     </div>
