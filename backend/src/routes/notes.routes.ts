@@ -1,0 +1,61 @@
+import express from 'express'
+import multer from 'multer'
+import path from 'path'
+import { v4 as uuidv4 } from 'uuid'
+import { verifyToken } from '../middleware/verifyToken.middleware'
+import { getCourses, createCourse, deleteCourse, getFiles, uploadFile, downloadFile, deleteFile, getFlashcards, seedFlashcards, getMcqs, seedMcqs, submitMcqAttempt,} from '../controllers/notes.controller'
+
+const router = express.Router()
+router.use(verifyToken)
+
+const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, path.join(process.cwd(), 'uploads')),
+    filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname)
+        cb(null, `${uuidv4()}${ext}`)
+    },
+})
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+        const allowed = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'image/jpeg',
+            'image/png',
+        ]
+        allowed.includes(file.mimetype) ? cb(null, true) : cb(new Error('Unsupported file type'))
+    },
+})
+
+// ── Courses ────────────────────────────────────────────────────────────────
+router.get('/', getCourses)
+router.post('/', createCourse)
+
+// ── Static file routes MUST come before /:courseId wildcard ────────────────
+router.get('/files/:fileId/download', downloadFile)
+router.delete('/files/:fileId', deleteFile)
+
+// ── Course delete (wildcard — must be after static routes above) ───────────
+router.delete('/:courseId', deleteCourse)
+
+// ── Files ──────────────────────────────────────────────────────────────────
+router.get('/:courseId/files', getFiles)
+router.post('/:courseId/files', upload.single('file'), uploadFile)
+
+// ── Flashcards ─────────────────────────────────────────────────────────────
+router.get('/:courseId/flashcards', getFlashcards)
+router.post('/:courseId/flashcards', seedFlashcards)
+
+// ── MCQs ───────────────────────────────────────────────────────────────────
+router.get('/:courseId/mcqs', getMcqs)
+router.post('/:courseId/mcqs', seedMcqs)
+router.post('/:courseId/mcqs/:mcqId/attempt', submitMcqAttempt)
+
+export default router
