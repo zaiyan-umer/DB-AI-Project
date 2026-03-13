@@ -53,6 +53,8 @@ import ForgotPassword from './pages/auth/ForgotPassword'
 import ChangePassword from './pages/auth/ChangePassword'
 import Dashboard from './pages/Dashboard'
 import SchedulerPage from './pages/Scheduler'
+import NotesTestPage from './pages/NotesTest'
+import CourseDetailPage from './pages/CourseDetail'
 
 
 // Placeholder pages for routes not yet built
@@ -96,6 +98,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Dashboard /> },
       { path: 'scheduler', element: <SchedulerPage /> },
+      { path: 'notes', element: <NotesTestPage /> },
+      { path: 'notes/:courseId', element: <CourseDetailPage /> },
       { path: 'notes', element: <PlaceholderPage name="Notes & Test" /> },
       { path: 'group-chat', element: <PlaceholderPage name="Group Chat" /> },
       { path: 'progress', element: <PlaceholderPage name="Progress" /> },
