@@ -33,7 +33,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <h2 className="text-3xl font-bold text-gray-900">
-                                Welcome, {user?.firstname || user?.username}!
+                                Welcome, {user?.firstName || user?.username}!
                             </h2>
                             <p className="text-gray-600">{user?.email}</p>
                         </div>

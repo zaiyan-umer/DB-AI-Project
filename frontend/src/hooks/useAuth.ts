@@ -16,8 +16,8 @@ interface SignupResponse {
     user: {
         id: string
         email: string
-        firstname?: string
-        lastname?: string
+        firstName?: string
+        lastName?: string
         username?: string
     }
 }
@@ -30,8 +30,8 @@ interface ApiErrorResponse {
 
 const createUser = async (formData: SignupFormData): Promise<SignupResponse> => {
     const res = await api.post<SignupResponse>('/auth/register', {
-        firstname: formData.firstname,
-        lastname: formData.lastname,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         username: formData.username,
         email: formData.email,
         password: formData.password,
