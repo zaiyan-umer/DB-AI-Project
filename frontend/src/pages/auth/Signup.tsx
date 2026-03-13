@@ -101,18 +101,18 @@ const Form = ({
                 <Input
                     label="First Name"
                     placeholder="John"
-                    {...register('firstname')}
+                    {...register('firstName')}
                     icon={<User className="w-4 h-4" />}
-                    error={errors.firstname?.message}
+                    error={errors.firstName?.message}
                     required
                 />
 
                 <Input
                     label="Last Name"
                     placeholder="Doe"
-                    {...register('lastname')}
+                    {...register('lastName')}
                     icon={<User className="w-4 h-4" />}
-                    error={errors.lastname?.message}
+                    error={errors.lastName?.message}
                     required
                 />
             </div>

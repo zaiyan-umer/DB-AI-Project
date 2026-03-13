@@ -11,10 +11,10 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 
 
 export const signupSchema = z.object({
-    firstname: z.string()
+    firstName: z.string()
         .min(1, "First name is required")
         .max(50, "First name must be less than 50 characters"),
-    lastname: z.string()
+    lastName: z.string()
         .min(1, "Last name is required")
         .max(50, "Last name must be less than 50 characters"),
     username: z.string()
