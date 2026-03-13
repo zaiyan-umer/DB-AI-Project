@@ -1,23 +1,7 @@
 import type { Request, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
-import {
-    getCoursesByUser,
-    getCourseById,
-    insertCourse,
-    removeCourse,
-    getCourseCounts,
-    getFilesByCourse,
-    getFileById,
-    insertFile,
-    removeFile,
-    getFlashcardsByCourse,
-    insertFlashcard,
-    getMcqsByCourse,
-    getMcqById,
-    insertMcq,
-    insertMcqAttempt,
-} from '../services/dal/notes.dal'
+import { getCoursesByUser, getCourseById, insertCourse, removeCourse, getCourseCounts, getFilesByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, getMcqsByCourse, getMcqById, insertMcq, insertMcqAttempt,} from '../services/dal/notes.dal'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -61,19 +45,15 @@ export const getCourses = async (req: Request, res: Response) => {
 export const createCourse = async (req: Request, res: Response) => {
     try {
         const userId = req.user!.id
-        const { name, color } = req.body
+        const { name } = req.body
 
         if (!name || !name.trim()) {
             return res.status(400).json({ message: 'Course name is required' })
         }
 
-        const existingCourses = await getCoursesByUser(userId)
-        const assignedColor = color ?? pickColor(existingCourses.length)
-
         const course = await insertCourse({
             userId,
             name: name.trim(),
-            color: assignedColor,
         })
 
         return res.status(201).json({ ...course, filesCount: 0, flashcardsCount: 0, mcqsCount: 0 })
@@ -181,7 +161,7 @@ export const deleteFile = async (req: Request, res: Response) => {
 }
 
 // ---- Flashcards -----------------------------------------------------------
-// Cards are fetched and displayed in flip mode. AI generates them in iter 3.
+// Cards are fetched and displayed in flip mode. 
 
 export const getFlashcards = async (req: Request, res: Response) => {
     try {
@@ -199,7 +179,7 @@ export const getFlashcards = async (req: Request, res: Response) => {
     }
 }
 
-// Placeholder endpoint — will be replaced by AI generation in iteration 3.
+// Placeholder endpoint — will be replaced by AI generation later.
 // For now seeds a dummy card so the UI is not empty during development.
 export const seedFlashcards = async (req: Request, res: Response) => {
     try {
@@ -228,7 +208,7 @@ export const seedFlashcards = async (req: Request, res: Response) => {
 }
 
 // ---- MCQs -----------------------------------------------------------------
-// MCQs are fetched and used in the test. AI generates them in iteration 3.
+// MCQs are fetched and used in the test.
 
 export const getMcqs = async (req: Request, res: Response) => {
     try {
@@ -248,7 +228,7 @@ export const getMcqs = async (req: Request, res: Response) => {
     }
 }
 
-// Placeholder endpoint — will be replaced by AI generation in iteration 3.
+// Placeholder endpoint — will be replaced by AI generation later.
 export const seedMcqs = async (req: Request, res: Response) => {
     try {
         const userId = req.user!.id
