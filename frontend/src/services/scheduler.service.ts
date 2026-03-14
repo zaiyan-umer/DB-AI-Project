@@ -4,12 +4,15 @@ import { api } from '../lib/axios'
 
 export type EventType = 'assignment' | 'quiz' | 'mid' | 'final' | 'project' | 'study'
 export type Priority = 'low' | 'medium' | 'high'
+export type StudyStatus = 'complete' | 'missed' | 'less_than' | 'greater_than'
+export type DayStatus = StudyStatus | null
 
 export interface CourseEntry {
   course: string
   preparation: number
   priority: Priority
   color: string
+  confirmed?: boolean
   weeklyPlan: { day: string; hours: number }[]
 }
 
@@ -41,7 +44,19 @@ export interface Notification {
   message: string
   isRead: boolean
   createdAt: string
-  event?: { title: string; date: string }
+  event?: { title: string; date: string; course: string } | null
+}
+
+export interface StudyPlanLog {
+  id: string
+  userId: string
+  studyPlanId: string
+  course: string
+  weekStart: string                // "YYYY-MM-DD"
+  scheduledHours: number[]         // [mon, tue, wed, thu, fri, sat, sun]
+  dayStatuses: DayStatus[]         // [mon, tue, wed, thu, fri, sat, sun]
+  createdAt: string
+  updatedAt: string
 }
 
 // ---- Events ---------------------------------------------------------------
@@ -89,4 +104,35 @@ export const deleteNotification = async (id: string): Promise<void> => {
 
 export const deleteAllNotifications = async (): Promise<void> => {
   await api.delete('/scheduler/notifications')
+}
+
+// ---- Study Plan Logs ------------------------------------------------------
+
+export const fetchPlanLogs = async (): Promise<StudyPlanLog[]> => {
+  const res = await api.get('/scheduler/plan-logs')
+  return res.data
+}
+
+/**
+ * Save weekly log for one course.
+ * dayStatuses: 7-element array (Mon–Sun), null = not set yet.
+ */
+export const savePlanLogs = async (payload: {
+  studyPlanId: string
+  course: string
+  scheduledHours: number[]
+  dayStatuses: DayStatus[]
+}): Promise<StudyPlanLog> => {
+  const res = await api.post('/scheduler/plan-logs', payload)
+  return res.data
+}
+
+/**
+ * Delete all logs + study plan entry for a course.
+ */
+export const deleteCourseData = async (payload: {
+  studyPlanId: string
+  course: string
+}): Promise<void> => {
+  await api.delete('/scheduler/plan-logs/delete-course', { data: payload })
 }
