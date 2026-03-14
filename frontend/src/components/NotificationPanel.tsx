@@ -8,7 +8,7 @@ interface Notification {
   message: string;
   isRead: boolean;
   createdAt: string;
-  event?: { title: string; date: string };
+  event?: { title: string; date: string; course?: string } | null;
 }
 
 interface NotificationPanelProps {
