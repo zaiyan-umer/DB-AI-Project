@@ -1,21 +1,25 @@
 import { Button } from "../components/Button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
     Plus,
     Send,
     Users,
-    Lock,
-    UserCheck,
     MoreVertical,
     Search,
     Hash,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useChat } from "@/hooks/useChat";
+import { useChat, type Message } from "@/hooks/useChat";
 import { useState } from "react";
+
+const mockMessages: Message[] = [
+    { id: "1", createdAt: new Date("2024-01-01T10:30:00"), roomId: "1", senderId: "sarah-chen", senderName: "Sarah Chen", content: "Has anyone finished the assignment yet?" },
+    { id: "2", createdAt: new Date("2024-01-01T10:32:00"), roomId: "1", senderId: "mike-johnson", senderName: "Mike Johnson", content: "I'm still working on problem 3. It's tricky!" },
+    { id: "3", createdAt: new Date("2024-01-01T10:35:00"), roomId: "1", senderId: "you", senderName: "You", content: "I can help with that! The key is to use recursion." },
+    { id: "4", createdAt: new Date("2024-01-01T10:36:00"), roomId: "1", senderId: "sarah-chen", senderName: "Sarah Chen", content: "That would be great! Can you explain?" },
+];
 
 
 export function GroupChatPage() {
@@ -27,7 +31,7 @@ export function GroupChatPage() {
         setShowCreateModal(false);
     };
 
-    const { messages, inputMessage, setInputMessage, setNewGroupData, mockGroups, handleCreateGroup, handleSendMessage, newGroupData, setSelectedGroup, selectedGroup } = useChat()
+    const { inputMessage, setInputMessage, setGroupInput, groups, handleCreateGroup, groupInput, setSelectedGroup, selectedGroup } = useChat()
 
     return (
         <div className="h-screen w-full flex bg-muted/30">
@@ -57,36 +61,28 @@ export function GroupChatPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
-                    {mockGroups.map((group) => {
-                        const isActive = selectedGroup.id === group.id;
+                    {selectedGroup && groups.map((group) => {
+                        const isActive = selectedGroup.roomId === group.roomId;
                         return (
                             <motion.button
-                                key={group.id}
+                                key={group.roomId}
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => setSelectedGroup(group)}
                                 className={`w-full p-3 rounded-lg text-left transition-colors text-white  ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
-
                                     }`}
                             >
                                 <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-2">
                                         <Hash className="w-4 h-4 opacity-70" />
-                                        <span className="font-semibold text-sm">{group.name}</span>
+                                        <span className="font-semibold text-sm">{group.courseName}</span>
                                     </div>
-                                    {group.unread > 0 && !isActive && (
-                                        <span className="px-2 py-0.5 bg-destructive text-destructive-foreground text-xs rounded-full font-medium">
-                                            {group.unread}
-                                        </span>
-                                    )}
                                 </div>
                                 <div className={`flex items-center gap-3 text-xs ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
                                     <span className="flex items-center gap-1">
                                         <Users className="w-3 h-3" />
                                         {group.members}
                                     </span>
-                                    {group.locked && <Lock className="w-3 h-3" />}
-                                    {group.needsApproval && <UserCheck className="w-3 h-3" />}
                                 </div>
                             </motion.button>
                         );
@@ -95,47 +91,55 @@ export function GroupChatPage() {
             </motion.div>
 
             {/* Chat Area */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="flex-1 flex flex-col bg-background">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Hash className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <h3 className="text-base font-semibold text-foreground">{selectedGroup.name}</h3>
-                            <p className="text-xs text-muted-foreground">{selectedGroup.members} members</p>
-                        </div>
-                    </div>
-                    <Button variant="ghost" size="icon">
-                        <MoreVertical className="w-5 h-5" />
-                    </Button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-                    {messages.map((msg) => {
-                        const isOwn = msg.user === "You";
-                        return (
-                            <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                                <div className={`flex gap-2 max-w-[70%] ${isOwn ? "flex-row-reverse" : ""}`}>
-                                    <div className="shrink-0 mt-1">
-                                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold">
-                                            {msg.avatar}
-                                        </div>
-                                    </div>
-                                    <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
-                                        {!isOwn && <span className="text-xs font-medium text-muted-foreground mb-1 ml-1">{msg.user}</span>}
-                                        <div className={`rounded-2xl px-4 py-2.5 ${isOwn ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm"}`}>
-                                            <p className="text-sm leading-relaxed">{msg.message}</p>
-                                            <span className={`text-[10px] mt-1 block text-right ${isOwn ? "opacity-70" : "text-muted-foreground"}`}>{msg.timestamp}</span>
-                                        </div>
-                                    </div>
+            {
+                selectedGroup &&
+                (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="flex-1 flex flex-col bg-background">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <Hash className="w-5 h-5 text-primary" />
                                 </div>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-foreground">{selectedGroup.courseName}</h3>
+                                    <p className="text-xs text-muted-foreground">{selectedGroup.members} members</p>
+                                </div>
+                            </div>
+                            <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-5 h-5" />
+                            </Button>
+                        </div>
 
-                <div className="px-6 py-4 border-t border-border bg-card">
+                        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                            {mockMessages.map((msg) => {
+                                const isOwn = msg.senderId === "You";
+                                return (
+                                    <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                                        <div className={`flex gap-2 max-w-[70%] ${isOwn ? "flex-row-reverse" : ""}`}>
+                                            <div className="shrink-0 mt-1">
+                                                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold">
+                                                    {msg.senderId[0]}
+                                                </div>
+                                            </div>
+                                            <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
+                                                {!isOwn && <span className="text-xs font-medium text-muted-foreground mb-1 ml-1">{msg.senderId}</span>}
+                                                <div className={`rounded-2xl px-4 py-2.5 ${isOwn ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm"}`}>
+                                                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                                                    <span className={`text-[10px] mt-1 block text-right ${isOwn ? "opacity-70" : "text-muted-foreground"}`}>
+                                                        {msg.createdAt instanceof Date
+                                                            ? msg.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                                                            : msg.createdAt
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+
+                        {/* <div className="px-6 py-4 border-t border-border bg-card">
                     <div className="flex gap-3">
                         <Input
                             type="text"
@@ -149,8 +153,10 @@ export function GroupChatPage() {
                             <Send className="w-5 h-5" />
                         </Button>
                     </div>
-                </div>
-            </motion.div>
+                </div> */}
+                    </motion.div>
+                )
+            }
 
             {/* Create Group Modal */}
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
@@ -161,29 +167,7 @@ export function GroupChatPage() {
                     <div className="space-y-4 pt-2">
                         <div className="space-y-2">
                             <Label>Group Name</Label>
-                            <Input placeholder="e.g., Data Structures Study" value={newGroupData.name} onChange={(e) => setNewGroupData({ ...newGroupData, name: e.target.value })} />
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                                <Checkbox id="locked" checked={newGroupData.locked} onCheckedChange={(v) => setNewGroupData({ ...newGroupData, locked: !!v })} />
-                                <div className="grid gap-0.5 leading-none">
-                                    <Label htmlFor="locked" className="cursor-pointer">Password Protected</Label>
-                                    <p className="text-sm text-muted-foreground">Require password to join</p>
-                                </div>
-                            </div>
-                            {newGroupData.locked && (
-                                <div className="space-y-2 pl-7">
-                                    <Label>Password</Label>
-                                    <Input type="password" placeholder="Enter group password" value={newGroupData.password} onChange={(e) => setNewGroupData({ ...newGroupData, password: e.target.value })} />
-                                </div>
-                            )}
-                            <div className="flex items-start gap-3">
-                                <Checkbox id="approval" checked={newGroupData.needsApproval} onCheckedChange={(v) => setNewGroupData({ ...newGroupData, needsApproval: !!v })} />
-                                <div className="grid gap-0.5 leading-none">
-                                    <Label htmlFor="approval" className="cursor-pointer">Admin Approval Required</Label>
-                                    <p className="text-sm text-muted-foreground">Manually approve new members</p>
-                                </div>
-                            </div>
+                            <Input placeholder="e.g., Data Structures Study" value={groupInput} onChange={(e) => setGroupInput(e.target.value)} />
                         </div>
                         <div className="flex gap-3 pt-2">
                             <Button variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1">Cancel</Button>

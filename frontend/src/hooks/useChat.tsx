@@ -1,64 +1,135 @@
-import { useState } from "react";
+import socket from "@/socket";
+import { useEffect, useState } from "react";
+import { useCurrentUser } from "./useCurrentUser";
 
 
 export type Group = {
-    id: string;
-    name: string;
+    roomId: string;
+    courseName: string;
     members: number;
-    unread: number;
-    locked: boolean;
-    needsApproval: boolean;
 }
 
 export type Message = {
     id: string;
-    user: string;
-    avatar: string;
-    message: string;
-    timestamp: string;
+    createdAt: Date | null;
+    roomId: string;
+    senderId: string;
+    content: string;
+    senderName: string
 }
 
-const mockGroups: Group[] = [
-    { id: "1", name: "Data Structures Study", members: 45, unread: 3, locked: false, needsApproval: false },
-    { id: "2", name: "Machine Learning Project", members: 12, unread: 0, locked: true, needsApproval: false },
-    { id: "3", name: "Web Dev Bootcamp", members: 89, unread: 12, locked: false, needsApproval: true },
-    { id: "4", name: "Algorithms Practice", members: 34, unread: 0, locked: false, needsApproval: false },
-];
+// const mockGroups: Group[] = [
+//     { roomId: "1", courseName: "Data Structures", members: 45 },
+//     { roomId: "2", courseName: "Machine Learning", members: 12 },
+//     { roomId: "3", courseName: "Web Dev Bootcamp", members: 89 },
+//     { roomId: "4", courseName: "Algorithms Practice", members: 34 },
+// ];
 
-const mockMessages: Message[] = [
-    { id: "1", user: "Sarah Chen", avatar: "SC", message: "Has anyone finished the assignment yet?", timestamp: "10:30 AM" },
-    { id: "2", user: "Mike Johnson", avatar: "MJ", message: "I'm still working on problem 3. It's tricky!", timestamp: "10:32 AM" },
-    { id: "3", user: "You", avatar: "JD", message: "I can help with that! The key is to use recursion.", timestamp: "10:35 AM" },
-    { id: "4", user: "Sarah Chen", avatar: "SC", message: "That would be great! Can you explain?", timestamp: "10:36 AM" },
-];
+// const mockMessages: Message[] = [
+//     { id: "1", createdAt: new Date("2024-01-01T10:30:00"), roomId: "1", senderId: "sarah-chen", senderName: "Sarah Chen", content: "Has anyone finished the assignment yet?" },
+//     { id: "2", createdAt: new Date("2024-01-01T10:32:00"), roomId: "1", senderId: "mike-johnson", senderName: "Mike Johnson", content: "I'm still working on problem 3. It's tricky!" },
+//     { id: "3", createdAt: new Date("2024-01-01T10:35:00"), roomId: "1", senderId: "you", senderName: "You", content: "I can help with that! The key is to use recursion." },
+//     { id: "4", createdAt: new Date("2024-01-01T10:36:00"), roomId: "1", senderId: "sarah-chen", senderName: "Sarah Chen", content: "That would be great! Can you explain?" },
+// ];
 export function useChat() {
-    const [selectedGroup, setSelectedGroup] = useState<Group>(mockGroups[0]);
-    const [messages, setMessages] = useState<Message[]>(mockMessages);
+    const { data } = useCurrentUser();
+
+    const [groups, setGroups] = useState<Group[]>([]);
+    const [selectedGroup, setSelectedGroup] = useState<Group>();
+    // const [messages, setMessages] = useState<Message[]>(mockMessages);
+
     const [inputMessage, setInputMessage] = useState("");
+    const [groupInput, setGroupInput] = useState('');
 
-    const [newGroupData, setNewGroupData] = useState({
-        name: "",
-        locked: false,
-        needsApproval: false,
-        password: "",
-    });
+    useEffect(() => {
+        setSelectedGroup(groups[0])
+        // console.log(groups);
+        
+    }, [groups]);
 
-    const handleSendMessage = () => {
-        if (!inputMessage.trim()) return;
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            user: "You",
-            avatar: "JD",
-            message: inputMessage,
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+
+    useEffect(() => {
+        socket.emit('rooms:get');
+
+        socket.on('rooms:list', roomsList => {
+            setGroups(roomsList);
+        })
+
+
+        socket.on('room:joined', (group: Group) => {
+            // console.log(group);
+            setGroups(prev => {
+                const exists = prev.find(g => g.roomId === group.roomId);
+                if (exists) {
+                    return prev.map(g => g.roomId === group.roomId ? group : g);
+                }
+                return [...prev, group];
+            });
+            setSelectedGroup(group);
+        });
+
+        socket.on('room:member_joined', (group: Group) => {
+            setGroups(prev => prev.map(g =>
+                g.roomId === group.roomId ? group : g
+            ));
+        })
+
+        socket.on('room:error', (error) => {
+            console.log('room error:', error);
+        });
+
+        socket.on('message:error', (error) => {
+            console.log('message error:', error);
+        });
+
+        return () => {
+            socket.off('room:joined');
+            socket.off('room:member_joined');
+            socket.off('rooms:list')
         };
-        setMessages([...messages, newMessage]);
-        setInputMessage("");
-    };
+    }, []);
 
     const handleCreateGroup = () => {
-        setNewGroupData({ name: "", locked: false, needsApproval: false, password: "" });
+        if (!groupInput || !data.user) return
+        socket.emit('room:join', groupInput, data.user.id)
+        setGroupInput('')
     };
 
-    return { messages, inputMessage, setInputMessage, newGroupData, setNewGroupData, handleCreateGroup, mockGroups, handleSendMessage, setSelectedGroup, selectedGroup }
+    return { inputMessage, setInputMessage, groupInput, setGroupInput, handleCreateGroup, groups, setSelectedGroup, selectedGroup }
 }
+
+
+
+
+
+// const handleSendMessage = () => {
+//     if (!inputMessage.trim() || !data.user) return;
+
+
+//     const { user } = data;
+//     if (!groups || !user?.id || !inputMessage.trim()) {
+//         console.log(user.id);
+
+//         console.log("Input issue");
+//         return;
+//     }
+
+
+//     socket.emit('send_message', {
+//         roomId: selectedGroup.roomId,
+//         senderId: user.id,
+//         content: inputMessage.trim()
+//     })
+//     setInputMessage('')
+
+//     const newMessage: Message = {
+//         id: Date.now().toString(),
+//         senderId: "You",
+//         senderName: "You",
+//         content: inputMessage,
+//         roomId: selectedGroup.roomId,
+//         createdAt: new Date(),
+//     };
+//     setMessages([...messages, newMessage]);
+//     setInputMessage("");
+// };

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm"
 import db from "../../db/connection"
 import { rooms } from "../../db/schema/room.schema"
 import { newMessage, messages } from "../../db/schema/messages.schema"
+import users from "../../db/schema/user.schema"
 
 export const makeOrGetRoom = async (courseName: string) => {
     try {
@@ -34,7 +35,11 @@ export const saveMessage = async (roomId: string, senderId: string, content: str
             .insert(messages)
             .values({ roomId, senderId, content })
             .returning();
-        return msg
+
+        const [sender] = await db.select().from(users).
+            where(eq(users.id, senderId))
+
+        return { ...msg, senderName: sender?.username ?? "Unknown" };
     } catch (error) {
         throw new Error(`Failed to save message in room: ${roomId}. ${(error as Error).message}`)
     }

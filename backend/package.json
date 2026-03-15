@@ -21,6 +21,7 @@
     "@epic-web/remember": "^1.1.0",
     "@react-email/components": "^1.0.8",
     "bcrypt": "^6.0.0",
+    "cookie": "^1.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
