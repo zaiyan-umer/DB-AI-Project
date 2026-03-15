@@ -1,21 +1,21 @@
-import { pgTable, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { rooms } from "./room.schema";
+import { groups } from "./group.schema";
 import users from "./user.schema";
 
+export const roleEnum = pgEnum('role', ['member', 'admin']);
 
-export const roomMembers = pgTable("room_members", {
-    id: uuid("id").primaryKey().defaultRandom(),
-    roomId: uuid("roomId").references(() => rooms.id),
-    userId: uuid("userId").references(() => users.id),
-    joinedAt: timestamp("joinedAt").defaultNow()
-}, (t) => ({
-    unq: unique().on(t.roomId, t.userId)
-}))
+export const groupMembers = pgTable('group_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  groupId: uuid('group_id').references(() => groups.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  role: roleEnum('role').default('member'),
+  joinedAt: timestamp('joined_at').defaultNow(),
+});
 
-export type roomMembers = typeof roomMembers.$inferSelect
-export type newRoomMembers = typeof roomMembers.$inferInsert
+export type groupMembers = typeof groupMembers.$inferSelect
+export type newGroupMembers = typeof groupMembers.$inferInsert
 
-export const roomMemberSchema = createSelectSchema(roomMembers)
-export const newRoomMemberSchema = createInsertSchema(roomMembers)
+export const groupMemberSchema = createSelectSchema(groupMembers)
+export const newGroupMemberSchema = createInsertSchema(groupMembers)
 

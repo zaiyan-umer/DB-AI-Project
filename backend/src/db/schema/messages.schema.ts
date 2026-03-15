@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { rooms } from "./room.schema";
+import { rooms } from "./group.schema";
 import users from "./user.schema";
 
 export const messages = pgTable("messages", {

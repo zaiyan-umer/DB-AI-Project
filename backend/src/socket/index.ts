@@ -6,7 +6,7 @@ import { verifyJWT } from '../middleware/verifyToken.middleware';
 import db from '../db/connection';
 import { roomMembers } from '../db/schema/roomMember.schema';
 import { eq } from 'drizzle-orm';
-import { rooms } from '../db/schema/room.schema';
+import { rooms } from '../db/schema/group.schema';
 
 export const initSocket = (server: any) => {
     const io = new Server(server, {

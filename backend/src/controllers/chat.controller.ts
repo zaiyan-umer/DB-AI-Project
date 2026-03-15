@@ -4,7 +4,7 @@ import { getPreviousRoomMessages, makeOrGetRoom, saveMessage } from "../services
 import db from "../db/connection";
 import { roomMembers } from "../db/schema/roomMember.schema";
 import { eq, sql } from "drizzle-orm";
-import { rooms } from "../db/schema/room.schema";
+import { rooms } from "../db/schema/group.schema";
 
 
 const joinRoomSchema = z.object({

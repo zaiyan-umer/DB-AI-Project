@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm"
 import db from "../../db/connection"
-import { rooms } from "../../db/schema/room.schema"
+import { rooms } from "../../db/schema/group.schema"
 import { newMessage, messages } from "../../db/schema/messages.schema"
 import users from "../../db/schema/user.schema"
 
