@@ -1,14 +1,28 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { DashboardLayout } from '@/components/DashboardLayout'
 import Signup from './pages/auth/Signup'
 import Login from './pages/auth/Login'
-import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ChangePassword from './pages/auth/ChangePassword'
 import Chat from './pages/Chat'
 import { GroupChatPage } from './pages/GroupChat'
+import Dashboard from './pages/Dashboard'
+import SchedulerPage from './pages/Scheduler'
+import NotesTestPage from './pages/NotesTest'
+import CourseDetailPage from './pages/CourseDetail'
 
-// Create router with proper route definitions
+
+// Placeholder pages for routes not yet built
+const PlaceholderPage = ({ name }: { name: string }) => (
+  <div className="flex items-center justify-center h-64">
+    <div className="text-center">
+      <h2 className="text-2xl font-bold text-gray-400 mb-2">{name}</h2>
+      <p className="text-gray-400">Coming soon...</p>
+    </div>
+  </div>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -28,16 +42,25 @@ const router = createBrowserRouter([
   },
   {
     path: '/verify-email',
-    element: <ChangePassword />
+    element: <ChangePassword />,
   },
 
   {
     path: '/dashboard',
     element: (
       <ProtectedRoute>
-        <Dashboard />
+        <DashboardLayout />
       </ProtectedRoute>
     ),
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: 'scheduler', element: <SchedulerPage /> },
+      { path: 'notes', element: <NotesTestPage /> },
+      { path: 'notes/:courseId', element: <CourseDetailPage /> },
+      { path: 'notes', element: <PlaceholderPage name="Notes & Test" /> },
+      { path: 'group-chat', element: <PlaceholderPage name="Group Chat" /> },
+      { path: 'progress', element: <PlaceholderPage name="Progress" /> },
+    ],
   },
   
   {

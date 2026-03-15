@@ -3,7 +3,10 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import env from './config/env';
+import './jobs/notificationJob';
 import authRoutes from "./routes/auth.routes";
+import notesRoutes from "./routes/notes.routes";
+import schedulerRoutes from "./routes/scheduler.routes";
 
 
 const app = express();
@@ -28,5 +31,7 @@ app.get('/health', (req, res) => {
 })
 
 app.use('/api/auth', authRoutes);
+app.use('/api/scheduler', schedulerRoutes);
+app.use('/api/notes', notesRoutes);
 
 export default app;

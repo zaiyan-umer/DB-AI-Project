@@ -13,7 +13,11 @@ export function Card({ children, className = '', onClick, hoverable = false, gra
   const baseClasses = "bg-white rounded-2xl shadow-sm border border-gray-100 p-6";
   const hoverClasses = hoverable ? "cursor-pointer hover:shadow-lg transition-all" : "";
   const gradientClasses = gradient ? "bg-gradient-to-br from-white to-purple-50" : "";
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> main
   return (
     <motion.div
       whileHover={hoverable ? { y: -4 } : {}}
@@ -23,4 +27,8 @@ export function Card({ children, className = '', onClick, hoverable = false, gra
       {children}
     </motion.div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> main
