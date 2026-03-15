@@ -19,3 +19,4 @@ export type newGroupMembers = typeof groupMembers.$inferInsert
 export const groupMemberSchema = createSelectSchema(groupMembers)
 export const newGroupMemberSchema = createInsertSchema(groupMembers)
 
+export default groupMembers

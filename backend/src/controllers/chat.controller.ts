@@ -1,72 +1,72 @@
-import z from "zod";
-import { newMessage, newMessageSchema } from "../db/schema/messages.schema";
-import { getPreviousRoomMessages, makeOrGetRoom, saveMessage } from "../services/dal/chat.dal";
-import db from "../db/connection";
-import { roomMembers } from "../db/schema/roomMember.schema";
-import { eq, sql } from "drizzle-orm";
-import { rooms } from "../db/schema/group.schema";
+// import z from "zod";
+// import { newMessage, newMessageSchema } from "../db/schema/messages.schema";
+// import { getPreviousRoomMessages, makeOrGetRoom, saveMessage } from "../services/dal/chat.dal";
+// import db from "../db/connection";
+// import { groupMembers } from "../db/schema/groupMember.schema";
+// import { eq, sql } from "drizzle-orm";
+// import { groups } from "../db/schema/group.schema";
 
 
-const joinRoomSchema = z.object({
-    courseName: z.string().min(1),
-    userId: z.string().min(1)
-})
+// const joinRoomSchema = z.object({
+//     courseName: z.string().min(1),
+//     userId: z.string().min(1)
+// })
 
-export const chatHandler = (io: any, socket: any) => {
+// export const chatHandler = (io: any, socket: any) => {
 
-    socket.on('room:join', async (courseName: string, userId: string) => {
-        const result = joinRoomSchema.safeParse({ courseName, userId })
+//     socket.on('room:join', async (courseName: string, userId: string) => {
+//         const result = joinRoomSchema.safeParse({ courseName, userId })
 
-        console.log(result);
+//         console.log(result);
 
 
-        if (!result.success) {
-            socket.emit('room:error', result.error.flatten())
-            return
-        }
-        const room = await makeOrGetRoom(courseName)
+//         if (!result.success) {
+//             socket.emit('room:error', result.error.flatten())
+//             return
+//         }
+//         const room = await makeOrGetRoom(courseName)
 
-        const [{ count }] = await db.select({ count: sql<number>`count(*)` })
-            .from(roomMembers)
-            .where(eq(roomMembers.roomId, room.id))
+//         const [{ count }] = await db.select({ count: sql<number>`count(*)` })
+//             .from(groupMembers)
+//             .where(eq(groupMembers.groupId, room.id))
 
-        if (socket.rooms.has(room.id)) {
-            socket.emit('room:joined', { roomId: room.id, courseName: room.courseName, members: count })
-            return
-        }
+//         if (socket.rooms.has(room.id)) {
+//             socket.emit('room:joined', { roomId: room.id, courseName: room.courseName, members: count })
+//             return
+//         }
 
-        socket.join(room.id);
+//         socket.join(room.id);
 
-        await db.insert(roomMembers).values({ roomId: room.id, userId })
-            .returning().onConflictDoNothing()
+//         await db.insert(groupMembers).values({ groupId: room.id, userId })
+//             .returning().onConflictDoNothing()
 
-        // recount after insert
-        const [{ count: updatedCount }] = await db.select({ count: sql<number>`count(*)` })
-            .from(roomMembers)
-            .where(eq(roomMembers.roomId, room.id))
+//         // recount after insert
+//         const [{ count: updatedCount }] = await db.select({ count: sql<number>`count(*)` })
+//             .from(groupMembers)
+//             .where(eq(groupMembers.groupId, room.id))
 
-        socket.emit('room:joined', { roomId: room.id, courseName: room.courseName, members: updatedCount })
-        io.to(room.id).emit('room:member_joined', { roomId: room.id, courseName: room.courseName, members: updatedCount })
-    })
+//         socket.emit('room:joined', { roomId: room.id, courseName: room.courseName, members: updatedCount })
+//         io.to(room.id).emit('room:member_joined', { roomId: room.id, courseName: room.courseName, members: updatedCount })
+//     })
 
-    socket.on('rooms:get', async () => {
-        const user = socket.data.user
+//     socket.on('rooms:get', async () => {
+//         const user = socket.data.user
 
-        const userRooms = await db.select({
-            roomId: rooms.id,
-            courseName: rooms.courseName,
-            members: sql<number>`(select count(*) from ${roomMembers} where ${roomMembers.roomId} = ${rooms.id})`
-        })
-            .from(roomMembers)
-            .where(eq(roomMembers.userId, user.id))
-            .innerJoin(rooms, eq(roomMembers.roomId, rooms.id))
+//         const userRooms = await db.select({
+//             roomId: groups.id,
+//             courseName: groups.name,
+//             members: sql<number>`(select count(*) from ${groupMembers} where ${groupMembers.groupId} = ${groups.id})`
+//         })
+//             .from(groupMembers)
+//             .where(eq(groupMembers.userId, user.id))
+//             .innerJoin(groups, eq(groupMembers.groupId, groups.id))
 
-        console.log(userRooms, user.username);
+//         console.log(userRooms, user.username);
 
-        socket.emit('rooms:list', userRooms)
-    })
+//         socket.emit('rooms:list', userRooms)
+//     })
 
-}
+// }
 
 
 

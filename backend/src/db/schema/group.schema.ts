@@ -14,3 +14,5 @@ export type newRoom = typeof groups.$inferInsert
 
 export const groupSchema = createSelectSchema(groups)
 export const newGroupSchema = createInsertSchema(groups)
+
+export default groups
