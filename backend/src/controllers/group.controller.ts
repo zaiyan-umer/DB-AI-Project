@@ -6,19 +6,7 @@ import { addMember, checkExistingGroupById, checkExistingGroupByName, checkIfMem
 export const createGroup = async (req: Request, res: Response) => {
     const userId = req.user!.id;
 
-    const parsed = newGroupSchema
-        .pick({ name: true })        // only expose fields the user should send
-        .safeParse(req.body);
-
-    if (!parsed.success) {
-        console.log(parsed.error.format());
-        return res.status(400).json({
-            message: 'Invalid input',
-            errors: parsed.error.flatten().fieldErrors
-        });
-    }
-
-    const { name } = parsed.data;
+    const { name } = req.body;
 
     // Check for duplicate name before insert
     const existing = await checkExistingGroupByName(name)
@@ -34,22 +22,8 @@ export const createGroup = async (req: Request, res: Response) => {
 
 
 export const searchGroups = async (req: Request, res: Response) => {
-    // Validate and parse req.query against the insert schema
-    const parsed = newGroupSchema
-        .pick({ name: true })
-        .safeParse(req.query);
+    const name = req.query.name as string;
 
-    if (!parsed.success) {
-        console.log(parsed.error.format());
-        return res.status(400).json({
-            message: 'Invalid input',
-            errors: parsed.error.flatten().fieldErrors
-        });
-    }
-
-    const { name } = parsed.data;
-
-    // the next line removes quotes from the name
     const cleanedName = name.trim().replace(/^(["'])(.*)\1$/, '$2').trim();
 
     const results = await searchGroupsByName(cleanedName)
@@ -60,21 +34,8 @@ export const searchGroups = async (req: Request, res: Response) => {
 
 export const joinGroup = async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    console.log(req.user);
 
-    const parsed = z
-        .object({ groupId: z.string().uuid() })
-        .safeParse(req.params);
-
-    if (!parsed.success) {
-        console.log(parsed.error.format());
-        return res.status(400).json({
-            message: 'Invalid input',
-            errors: parsed.error.flatten().fieldErrors
-        });
-    }
-
-    const { groupId } = parsed.data;
+    const groupId = req.params.groupId as string;
 
     // Confirm the group exists
     const group = await checkExistingGroupById(groupId)
@@ -96,19 +57,7 @@ export const joinGroup = async (req: Request, res: Response) => {
 };
 
 export const getGroupMembers = async (req: Request, res: Response) => {
-    const parsed = z
-        .object({ groupId: z.string().uuid() })
-        .safeParse(req.params);
-
-    if (!parsed.success) {
-        console.log(parsed.error.format());
-        return res.status(400).json({
-            message: 'Invalid input',
-            errors: parsed.error.flatten().fieldErrors
-        });
-    }
-
-    const { groupId } = parsed.data;
+    const groupId = req.params.groupId as string;
 
     // Confirm group exists
     const group = await checkExistingGroupById(groupId)

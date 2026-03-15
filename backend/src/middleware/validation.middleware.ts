@@ -41,3 +41,24 @@ export const validateParams = (schema: ZodSchema) => {
         }
     };
 };
+
+export const validateQuery = (schema: ZodSchema) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const validatedQuery = schema.parse(req.query) as Request["query"];
+            req.query = validatedQuery;
+            next();
+        } catch (err) {
+            if (err instanceof ZodError) {
+                return res.status(400).json({
+                    error: "Validation failed",
+                    details: err.issues.map((e) => ({
+                        field: e.path.join("."),
+                        message: e.message,
+                    })),
+                });
+            }
+            next(err);
+        }
+    };
+};
