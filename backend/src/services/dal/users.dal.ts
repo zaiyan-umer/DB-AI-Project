@@ -58,3 +58,16 @@ export const getUserById = async (id: string) => {
         throw new Error("Failed to get user");
     }
 };
+
+export const deleteUserById = async (userId: string) => {
+    try {
+        const [deleted] = await db
+            .delete(users)
+            .where(eq(users.id, userId))
+            .returning()
+        return deleted
+    } catch (err) {
+        console.error("deleteUserById failed:", err)
+        throw new Error("Failed to delete user")
+    }
+}
