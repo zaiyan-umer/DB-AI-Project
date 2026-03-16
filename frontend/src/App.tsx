@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import SchedulerPage from './pages/Scheduler'
 import NotesTestPage from './pages/NotesTest'
 import CourseDetailPage from './pages/CourseDetail'
+import { ChatPage } from './pages/ChatPage'
 
 
 // Placeholder pages for routes not yet built
@@ -57,7 +58,7 @@ const router = createBrowserRouter([
       { path: 'notes', element: <NotesTestPage /> },
       { path: 'notes/:courseId', element: <CourseDetailPage /> },
       { path: 'notes', element: <PlaceholderPage name="Notes & Test" /> },
-      { path: 'group-chat', element: <PlaceholderPage name="Group Chat" /> },
+      { path: 'group-chat', element: <ChatPage /> },
       { path: 'progress', element: <PlaceholderPage name="Progress" /> },
     ],
   },
