@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { Request, Response } from "express";
 import { newUser } from "../db/schema/user.schema";
 import { deleteToken, getToken, insertToken } from "../services/dal/tokens.dal";
-import { checkExistingUser, getUserById, insertUser, updateUserPassword } from "../services/dal/users.dal";
+import { checkExistingUser, getUserById, insertUser, updateUserPassword, deleteUserById } from "../services/dal/users.dal";
 import { compareHash, hashPassword, hashResetToken } from "../utils/hashing.utils";
 import { generateToken } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/mailer";
@@ -193,6 +193,27 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "Current user retrieval failed" });
+    }
+};
+
+// DELETE /api/auth/account Permanently deletes the authenticated user and all their data (cascade).
+export const deleteAccount = async (req: Request, res: Response) => {
+    try {
+        if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+ 
+        const deleted = await deleteUserById(req.user.id);
+ 
+        if (!deleted) {
+            return res.status(404).json({ message: "User not found" });
+        }
+ 
+        // Clear the auth cookie so the client is immediately logged out
+        res.clearCookie("token");
+ 
+        return res.status(200).json({ message: "Account deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to delete account" });
     }
 };
 
