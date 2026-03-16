@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import { toast } from 'sonner';
 import { createGroup, searchGroups, joinGroup, getGroupMembers, getMyGroups } from '../services/chat.services';
+
+interface ApiErrorResponse {
+    message: string;
+}
 
 export const useSearchGroups = (name: string) => {
     return useQuery({
@@ -24,6 +30,11 @@ export const useCreateGroup = () => {
         mutationFn: (name: string) => createGroup(name),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['groups'] });
+            toast.success('Group created successfully');
+        },
+        onError: (error: AxiosError<ApiErrorResponse>) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? 'Failed to create group';
+            toast.error(errorMessage);
         },
     });
 };
@@ -34,6 +45,11 @@ export const useJoinGroup = () => {
         mutationFn: (groupId: string) => joinGroup(groupId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['groups'] });
+            toast.success('Joined group successfully');
+        },
+        onError: (error: AxiosError<ApiErrorResponse>) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? 'Failed to join group';
+            toast.error(errorMessage);
         },
     });
 };
