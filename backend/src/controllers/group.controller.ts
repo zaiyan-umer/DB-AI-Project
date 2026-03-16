@@ -1,6 +1,4 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { newGroupSchema } from '../db/schema/group.schema';
 import { addMember, checkExistingGroupById, checkExistingGroupByName, checkIfMember, createGroupAndSetAdmin, getAllMembers, searchGroupsByName } from '../services/dal/groups.dal';
 
 export const createGroup = async (req: Request, res: Response) => {
