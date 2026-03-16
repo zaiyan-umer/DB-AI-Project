@@ -11,7 +11,6 @@ export const registerPresenceHandlers = (
 ) => {
   const userId = socket.data.user.id;
 
-  // ─── Join Room ─────────────────────────────────────────────────────────────
   // Client emits this when user opens a group chat
   socket.on('join_group', async (groupId: string) => {
     // Verify the user is actually a member of this group
@@ -47,7 +46,6 @@ export const registerPresenceHandlers = (
     console.log(`${socket.data.user.username} joined room ${groupId}`);
   });
 
-  // ─── Leave Room ────────────────────────────────────────────────────────────
   // Client emits this when user navigates away from a group chat
   socket.on('leave_group', (groupId: string) => {
     socket.leave(groupId);
@@ -61,7 +59,6 @@ export const registerPresenceHandlers = (
     console.log(`${socket.data.user.username} left room ${groupId}`);
   });
 
-  // ─── Disconnect ────────────────────────────────────────────────────────────
   // Fires automatically when socket connection drops
   // We need to remove the user from ALL rooms they were in
   socket.on('disconnect', () => {

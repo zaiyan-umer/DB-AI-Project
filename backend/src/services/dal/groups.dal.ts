@@ -83,9 +83,30 @@ export const getAllMembers = async (groupId: string) => {
 
 export const getMyGroupsFromDB = async (userId: string) => {
     return await db
-        .select({ id: groups.id, name: groups.name })
+        .select({
+            id: groups.id,
+            name: groups.name,
+            role: groupMembers.role,
+        })
         .from(groupMembers)
         .innerJoin(groups, eq(groupMembers.groupId, groups.id))
         .where(eq(groupMembers.userId, userId));
+}
+
+export const leaveGroupFromDB = async (groupId: string, userId: string) => {
+    return await db
+        .delete(groupMembers)
+        .where(
+            and(
+                eq(groupMembers.groupId, groupId),
+                eq(groupMembers.userId, userId)
+            )
+        );
+}
+
+export const deleteGroupFromDB = async (groupId: string) => {
+    return await db
+        .delete(groups)
+        .where(eq(groups.id, groupId));
 }
 

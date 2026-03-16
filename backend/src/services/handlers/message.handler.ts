@@ -11,7 +11,6 @@ export const registerMessageHandlers = (
 ) => {
   const userId = socket.data.user.id;
 
-  // ─── Send Message ──────────────────────────────────────────────────────────
   // Client saves to DB via REST first, then emits this with the saved message
   // Server just broadcasts it to the room — no DB write here
   socket.on('send_message', (message: {
@@ -31,7 +30,6 @@ export const registerMessageHandlers = (
     io.to(message.groupId).emit('new_message', message);
   });
 
-  // ─── Delete For Everyone ───────────────────────────────────────────────────
   // Client calls REST DELETE first, then emits this to broadcast the deletion
   socket.on('delete_message_everyone', async (data: {
     messageId: string;

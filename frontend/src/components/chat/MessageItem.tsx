@@ -10,10 +10,11 @@ interface Sender {
 
 interface Message {
   id: string;
+  userId?: string;
   content: string;
   createdAt: string;
   deletedAt: string | null;
-  sender: Sender;
+  sender?: Sender;
 }
 
 interface Props {
@@ -28,7 +29,9 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
   const deleteMe = useDeleteForMe(groupId);
   const deleteEveryone = useDeleteForEveryone(groupId);
 
-  const isOwn = message.sender.id === currentUserId;
+  const senderId = message.sender?.id ?? message.userId ?? '';
+  const senderUsername = message.sender?.username ?? 'Unknown user';
+  const isOwn = senderId === currentUserId;
   const isDeleted = !!message.deletedAt;
 
   return (
@@ -41,7 +44,7 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
         {/* Sender name — only show for others' messages */}
         {!isOwn && (
           <span className="text-xs text-gray-500 mb-1 ml-1">
-            {message.sender.username}
+            {senderUsername}
 
           </span>
         )}

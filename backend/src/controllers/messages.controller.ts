@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addNewMessage, checkAdminAuthority, checkGroupMembership, checkIfAlreadyDeleted, checkMessageDeletionAuthority, checkMessageExists, deleteMessageForEveryone, deleteMsgForMe, fetchMessages, filterDeletedMessages } from "../services/dal/messages.dal";
+import { addNewMessage, checkAdminAuthority, checkGroupMembership, checkIfAlreadyDeleted, checkMessageDeletionAuthority, checkMessageExists, deleteMessageForEveryone, deleteMsgForMe, fetchMessages, filterDeletedMessages, getMessageByIdWithSender } from "../services/dal/messages.dal";
 
 export const sendMessage = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -13,7 +13,9 @@ export const sendMessage = async (req: Request, res: Response) => {
         return res.status(403).json({ message: "You are not a member of this group" });
     }
 
-    const [message] = await addNewMessage(groupId, userId, req.body.content)
+    const [createdMessage] = await addNewMessage(groupId, userId, req.body.content)
+
+    const [message] = await getMessageByIdWithSender(createdMessage.id)
 
     return res.status(201).json({ message });
 };

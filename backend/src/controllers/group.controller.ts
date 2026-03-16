@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { addMember, checkExistingGroupById, checkExistingGroupByName, checkIfMember, createGroupAndSetAdmin, getAllMembers, getMyGroupsFromDB, searchGroupsByName } from '../services/dal/groups.dal';
+import { addMember, checkExistingGroupById, checkExistingGroupByName, checkIfMember, createGroupAndSetAdmin, deleteGroupFromDB, getAllMembers, getMyGroupsFromDB, leaveGroupFromDB, searchGroupsByName } from '../services/dal/groups.dal';
+import { checkGroupMembership } from '../services/dal/messages.dal';
 
 export const createGroup = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -77,4 +78,38 @@ export const getMyGroups = async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const result = await getMyGroupsFromDB(userId)
     return res.status(200).json({ groups: result });
+};
+
+export const leaveGroup = async (req: Request, res: Response) => {
+    const groupId = req.params.groupId as string;
+    const userId = req.user!.id;
+
+    const membership = await checkGroupMembership(groupId, userId)
+
+    if (membership.length === 0) {
+        return res.status(400).json({ message: 'You are not a member of this group' });
+    }
+
+    // Admin cannot leave — they must transfer ownership or delete the group
+    if (membership[0].role === 'admin') {
+        return res.status(400).json({ message: 'Admins cannot leave. Delete the group.' });
+    }
+
+    await leaveGroupFromDB(groupId, userId)
+
+    return res.status(200).json({ message: 'Left group successfully' });
+};
+
+export const deleteGroup = async (req: Request, res: Response) => {
+    const groupId = req.params.groupId as string;
+
+    const group = await checkExistingGroupById(groupId)
+
+    if (group.length === 0) {
+        return res.status(404).json({ message: 'Group not found' });
+    }
+
+    await deleteGroupFromDB(groupId)
+
+    return res.status(200).json({ message: 'Group deleted successfully' });
 };

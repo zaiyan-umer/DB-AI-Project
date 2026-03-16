@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { toast } from 'sonner';
-import { createGroup, searchGroups, joinGroup, getGroupMembers, getMyGroups } from '../services/chat.services';
+import { createGroup, searchGroups, joinGroup, getGroupMembers, getMyGroups, leaveGroup, deleteGroup } from '../services/chat.services';
 
 interface ApiErrorResponse {
     message: string;
@@ -61,3 +61,43 @@ export const useMyGroups = () => {
         staleTime: 30_000,
     });
 }
+
+export const useLeaveGroup = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (groupId: string) => leaveGroup(groupId),
+        onSuccess: (_, groupId) => {
+            queryClient.setQueryData(['groups', 'mine'], (old: any[] | undefined) => {
+                if (!old) return old;
+                return old.filter((group) => group.id !== groupId);
+            });
+
+            queryClient.invalidateQueries({ queryKey: ['groups'] });
+            toast.success('Left group successfully');
+        },
+        onError: (error: AxiosError<ApiErrorResponse>) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? 'Failed to leave group';
+            toast.error(errorMessage);
+        },
+    });
+};
+
+export const useDeleteGroup = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (groupId: string) => deleteGroup(groupId),
+        onSuccess: (_, groupId) => {
+            queryClient.setQueryData(['groups', 'mine'], (old: any[] | undefined) => {
+                if (!old) return old;
+                return old.filter((group) => group.id !== groupId);
+            });
+
+            queryClient.invalidateQueries({ queryKey: ['groups'] });
+            toast.success('Group deleted successfully');
+        },
+        onError: (error: AxiosError<ApiErrorResponse>) => {
+            const errorMessage = error.response?.data?.message ?? error.message ?? 'Failed to delete group';
+            toast.error(errorMessage);
+        },
+    });
+};

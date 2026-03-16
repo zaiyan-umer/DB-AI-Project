@@ -48,3 +48,14 @@ export const getMyGroups = async () => {
     const { data } = await api.get(`/chat/groups/my-groups`);
     return data.groups;
 }
+
+export const leaveGroup = async (groupId: string) => {
+    const { data } = await api.delete(`/chat/groups/${groupId}/leave`)
+    return data;
+}
+
+export const deleteGroup = async (groupId: string) => {
+    const { data } = await api.delete(`/chat/groups/${groupId}`)
+    return data;
+}
+

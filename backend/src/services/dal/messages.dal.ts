@@ -5,7 +5,7 @@ import messages, { Message, messageDeletions } from "../../db/schema/messages.sc
 
 export const checkGroupMembership = async (groupId: string, userId: string) => {
     return await db
-        .select({ id: groupMembers.id })
+        .select({ id: groupMembers.id, role: groupMembers.role })
         .from(groupMembers)
         .where(
             and(
@@ -21,6 +21,27 @@ export const addNewMessage = async (groupId: string, userId: string, content: st
         .insert(messages)
         .values({ groupId, userId, content })
         .returning();
+}
+
+export const getMessageByIdWithSender = async (messageId: string) => {
+    return await db
+        .select({
+            id: messages.id,
+            groupId: messages.groupId,
+            content: messages.content,
+            createdAt: messages.createdAt,
+            deletedAt: messages.deletedAt,
+            sender: {
+                id: users.id,
+                username: users.username,
+                firstName: users.firstName,
+                lastName: users.lastName,
+            },
+        })
+        .from(messages)
+        .innerJoin(users, eq(messages.userId, users.id))
+        .where(eq(messages.id, messageId))
+        .limit(1);
 }
 
 export const fetchMessages = async (groupId: string, userId: string, cursor: string, limit: number) => {

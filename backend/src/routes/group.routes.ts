@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import {
     createGroup,
+    deleteGroup,
     getGroupMembers,
     getMyGroups,
     joinGroup,
+    leaveGroup,
     searchGroups,
 } from '../controllers/group.controller';
 import { verifyToken } from '../middleware/verifyToken.middleware';
@@ -22,6 +24,9 @@ router.get('/my-groups', getMyGroups);
 router.get('/search', validateQuery(searchGroupQuerySchema), searchGroups);
 router.post('/:groupId/join', validateParams(groupParamsSchema), joinGroup);
 router.get('/:groupId/members', validateParams(groupParamsSchema), requireGroupAdmin, getGroupMembers);
+router.delete('/:groupId/leave', validateParams(groupParamsSchema), leaveGroup);
+router.delete('/:groupId', validateParams(groupParamsSchema), requireGroupAdmin, deleteGroup);
+
 router.use('/:groupId/messages', messagesRoutes);
 
 export default router;

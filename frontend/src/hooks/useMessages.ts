@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMessages, sendMessage, deleteForMe, deleteForEveryone } from '../services/chat.services';
+import { deleteForEveryone, deleteForMe, getMessages, sendMessage } from '../services/chat.services';
+import { getSocket } from '../socket';
 
-// Infinite query — each page uses the nextCursor from the previous page
 export const useMessages = (groupId: string) => {
   return useInfiniteQuery({
     queryKey: ['messages', groupId],
@@ -14,12 +14,12 @@ export const useMessages = (groupId: string) => {
 };
 
 export const useSendMessage = (groupId: string) => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (content: string) => sendMessage(groupId, content),
-    onSuccess: () => {
-      // Refetch messages after send so new message appears
-      queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+    onSuccess: (savedMessage) => {
+      // REST saved to DB, socket delivers to room
+      // No invalidateQueries — socket event handles cache update for everyone
+      getSocket().emit('send_message', savedMessage);
     },
   });
 };
@@ -29,17 +29,18 @@ export const useDeleteForMe = (groupId: string) => {
   return useMutation({
     mutationFn: (messageId: string) => deleteForMe(groupId, messageId),
     onSuccess: () => {
+      // Delete for me is local only — no socket needed, just refetch for this user
       queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
     },
   });
 };
 
 export const useDeleteForEveryone = (groupId: string) => {
-  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (messageId: string) => deleteForEveryone(groupId, messageId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+    mutationFn: (messageId: string) => deleteForEveryone(groupId, messageId), // keep groupId
+    onSuccess: (_, messageId) => {
+      // REST soft deleted in DB, socket broadcasts to room
+      getSocket().emit('delete_message_everyone', { messageId, groupId });
     },
   });
 };

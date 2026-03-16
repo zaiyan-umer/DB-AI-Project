@@ -18,18 +18,17 @@ export interface AuthenticatedSocket extends Socket {
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: 'http://localhost:5173', // your frontend URL
-      credentials: true,              // required — allows cookies
+      origin: 'http://localhost:5173',
+      credentials: true,
     },
   });
 
-  // ─── Auth Middleware ───────────────────────────────────────────────────────
   // Runs once per connection before any events are processed
   io.use((socket: AuthenticatedSocket, next) => {
     try {
-      // Read JWT from HTTP-only cookie — same as your REST middleware
+      // Read JWT from HTTP-only cookie — same as REST middleware
       const cookies = parse(socket.handshake.headers.cookie ?? '');
-      const token = cookies['token']; // match your cookie name exactly
+      const token = cookies['token'];
 
       if (!token) {
         return next(new Error('Authentication required'));
@@ -48,7 +47,7 @@ export const initSocket = (httpServer: HttpServer) => {
     }
   });
 
-  // ─── Register Handlers Per Connection ─────────────────────────────────────
+  // Register Handlers Per Connection
   io.on('connection', (socket: AuthenticatedSocket) => {
     console.log(`User connected: ${socket.data.user.username}`);
 

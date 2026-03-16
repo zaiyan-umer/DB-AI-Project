@@ -5,7 +5,6 @@ import Signup from './pages/auth/Signup'
 import Login from './pages/auth/Login'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ChangePassword from './pages/auth/ChangePassword'
-import { GroupChatPage } from './pages/GroupChat'
 import Dashboard from './pages/Dashboard'
 import SchedulerPage from './pages/Scheduler'
 import NotesTestPage from './pages/NotesTest'
@@ -61,15 +60,6 @@ const router = createBrowserRouter([
       { path: 'group-chat', element: <ChatPage /> },
       { path: 'progress', element: <PlaceholderPage name="Progress" /> },
     ],
-  },
-
-  {
-    path: '/groupchat',
-    element: (
-      <ProtectedRoute>
-        <GroupChatPage />
-      </ProtectedRoute>
-    ),
   },
 ])
 

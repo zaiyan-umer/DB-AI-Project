@@ -1,5 +1,5 @@
 // Simple in-memory store — Maps groupId to a Set of userIds
-// This lives in server memory, not DB — resets on server restart which is fine
+// This lives in server memory, not DB
 
 const onlineUsers = new Map<string, Set<string>>();
 

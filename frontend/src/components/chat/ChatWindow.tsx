@@ -7,9 +7,10 @@ interface Props {
   groupName: string;
   currentUserId: string;
   isAdmin: boolean;
+  onlineCount: number
 }
 
-export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin }: Props) => {
+export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineCount }: Props) => {
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +56,10 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin }: Props
         <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold text-sm">
           {groupName[0].toUpperCase()}
         </div>
-        <span className="font-medium text-gray-800">{groupName}</span>
+        <div className="flex flex-col">
+          <span className="font-medium text-gray-800">{groupName}</span>
+          <span className="text-xs text-green-500">{onlineCount} online</span>
+        </div>
       </div>
 
       {/* Messages */}
