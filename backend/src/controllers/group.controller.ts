@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addMember, checkExistingGroupById, checkExistingGroupByName, checkIfMember, createGroupAndSetAdmin, getAllMembers, searchGroupsByName } from '../services/dal/groups.dal';
+import { addMember, checkExistingGroupById, checkExistingGroupByName, checkIfMember, createGroupAndSetAdmin, getAllMembers, getMyGroupsFromDB, searchGroupsByName } from '../services/dal/groups.dal';
 
 export const createGroup = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -71,4 +71,10 @@ export const getGroupMembers = async (req: Request, res: Response) => {
         members,
         total: members.length,
     });
+};
+
+export const getMyGroups = async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const result = await getMyGroupsFromDB(userId)
+    return res.status(200).json({ groups: result });
 };

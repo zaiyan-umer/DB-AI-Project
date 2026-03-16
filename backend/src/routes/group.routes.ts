@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
     createGroup,
     getGroupMembers,
+    getMyGroups,
     joinGroup,
     searchGroups,
 } from '../controllers/group.controller';
@@ -17,6 +18,7 @@ const router = Router();
 router.use(verifyToken);
 
 router.post('/', validateBody(createGroupBodySchema), createGroup);
+router.get('/my-groups', getMyGroups);
 router.get('/search', validateQuery(searchGroupQuerySchema), searchGroups);
 router.post('/:groupId/join', validateParams(groupParamsSchema), joinGroup);
 router.get('/:groupId/members', validateParams(groupParamsSchema), requireGroupAdmin, getGroupMembers);

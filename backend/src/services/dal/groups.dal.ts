@@ -80,3 +80,12 @@ export const getAllMembers = async (groupId: string) => {
         .where(eq(groupMembers.groupId, groupId))
         .orderBy(groupMembers.joinedAt);
 }
+
+export const getMyGroupsFromDB = async (userId: string) => {
+    return await db
+        .select({ id: groups.id, name: groups.name })
+        .from(groupMembers)
+        .innerJoin(groups, eq(groupMembers.groupId, groups.id))
+        .where(eq(groupMembers.userId, userId));
+}
+
