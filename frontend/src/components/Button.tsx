@@ -1,62 +1,132 @@
-import { motion } from "motion/react";
-import type { ReactNode } from "react";
+import { motion } from 'motion/react'
+import type { ReactNode } from 'react'
 
 interface ButtonProps {
-  children: ReactNode;
-  onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
-  fullWidth?: boolean;
-  disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
-  icon?: ReactNode;
-  className?: string
+    children: ReactNode
+    onClick?: () => void
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
+    size?: 'sm' | 'md' | 'lg'
+    fullWidth?: boolean
+    disabled?: boolean
+    type?: 'button' | 'submit' | 'reset'
+    icon?: ReactNode
+    className?: string
 }
 
-export function Button({ 
-  children, 
-  onClick, 
-  variant = 'primary', 
-  size = 'md',
-  fullWidth = false,
-  disabled = false,
-  type = 'button',
-  icon,
-  className = ''
+export function Button({
+    children,
+    onClick,
+    variant = 'primary',
+    size = 'md',
+    fullWidth = false,
+    disabled = false,
+    type = 'button',
+    icon,
+    className = '',
 }: ButtonProps) {
-  const baseClasses = "rounded-xl flex items-center justify-center gap-2 transition-all font-medium";
-  
-  const variantClasses = {
-    primary: "bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:shadow-lg hover:shadow-purple-500/10",
-    secondary: "bg-gradient-to-r from-[#f093fb] to-[#f5576c] text-white hover:shadow-lg hover:shadow-pink-500/10",
-    outline: "border-2 border-[#667eea] text-[#667eea] hover:bg-[#667eea] hover:text-white",
-    ghost: "text-gray-700 hover:bg-gray-100",
-    danger: "bg-red-500 text-white hover:bg-red-600"
-  };
-  
-  const sizeClasses = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3",
-    lg: "px-8 py-4 text-lg"
-  };
-  
-  return (
-    <motion.button
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-      onClick={onClick}
-      disabled={disabled}
-      type={type}
-      className={`
-        ${className}
-        ${baseClasses}
-        ${variantClasses[variant]}
-        ${sizeClasses[size]}
-        ${fullWidth ? 'w-full' : ''}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-      `}
-    >
-      {icon && <span>{icon}</span>}
-      {children}
-    </motion.button>
-  );
+
+    // ── size ──────────────────────────────────────────────────────────────────
+    const sizeStyle: React.CSSProperties =
+        size === 'sm'
+            ? { padding: '8px 16px', fontSize: '14px' }
+            : size === 'lg'
+            ? { padding: '16px 32px', fontSize: '18px' }
+            : { padding: '12px 24px', fontSize: '15px' }
+
+    // ── variant ───────────────────────────────────────────────────────────────
+    const variantStyle: React.CSSProperties = (() => {
+        switch (variant) {
+            case 'primary':
+                return {
+                    background: 'linear-gradient(to right, #667eea, #764ba2)',
+                    color: '#ffffff',
+                    border: '2px solid transparent',
+                }
+            case 'secondary':
+                return {
+                    background: 'linear-gradient(to right, #f093fb, #f5576c)',
+                    color: '#ffffff',
+                    border: '2px solid transparent',
+                }
+            case 'outline':
+                return {
+                    background: '#ffffff',
+                    color: '#667eea',
+                    border: '2px solid #667eea',
+                }
+            case 'ghost':
+                return {
+                    background: 'transparent',
+                    color: '#374151',
+                    border: '2px solid transparent',
+                }
+            case 'danger':
+                return {
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    border: '2px solid transparent',
+                }
+        }
+    })()
+
+    return (
+        <motion.button
+            whileTap={{ scale: disabled ? 1 : 0.98 }}
+            onClick={onClick}
+            disabled={disabled}
+            type={type}
+            className={className}
+            style={{
+                // Layout
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                borderRadius: '12px',
+                fontWeight: 600,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.5 : 1,
+                transition: 'all 0.15s ease',
+                width: fullWidth ? '100%' : undefined,
+                fontFamily: 'inherit',
+                lineHeight: 1.25,
+                // variant-specific overrides applied last
+                ...sizeStyle,
+                ...variantStyle,
+            }}
+            // Hover: darken / invert outline
+            onMouseEnter={(e) => {
+                if (disabled) return
+                const btn = e.currentTarget as HTMLButtonElement
+                if (variant === 'outline') {
+                    btn.style.background = 'linear-gradient(to right, #667eea, #764ba2)'
+                    btn.style.color = '#ffffff'
+                } else if (variant === 'primary') {
+                    btn.style.boxShadow = '0 4px 16px rgba(102,126,234,0.45)'
+                } else if (variant === 'secondary') {
+                    btn.style.boxShadow = '0 4px 16px rgba(240,147,251,0.45)'
+                } else if (variant === 'ghost') {
+                    btn.style.backgroundColor = '#f3f4f6'
+                } else if (variant === 'danger') {
+                    btn.style.backgroundColor = '#dc2626'
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (disabled) return
+                const btn = e.currentTarget as HTMLButtonElement
+                btn.style.boxShadow = 'none'
+                if (variant === 'outline') {
+                    btn.style.background = '#ffffff'
+                    btn.style.color = '#667eea'
+                } else if (variant === 'ghost') {
+                    btn.style.backgroundColor = 'transparent'
+                } else if (variant === 'danger') {
+                    btn.style.backgroundColor = '#ef4444'
+                }
+            }}
+        >
+            {icon && <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>}
+            {children}
+        </motion.button>
+    )
 }

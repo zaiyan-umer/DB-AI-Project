@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface ModalProps {
   isOpen: boolean;
@@ -18,7 +19,18 @@ const sizeMap = {
 };
 
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
-  // Lock body scroll when open
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const surface    = isDark ? '#1a1d27' : '#ffffff';
+  const border     = isDark ? '#2e3347' : '#f3f4f6';
+  const textPri    = isDark ? '#f9fafb' : '#111827';
+  const textMut    = isDark ? '#9ca3af' : '#6b7280';
+  const hoverBg    = isDark ? '#252836' : '#f3f4f6';
+  const shadow     = isDark
+    ? '0 25px 60px rgba(0,0,0,0.6)'
+    : '0 25px 60px rgba(0,0,0,0.2)';
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -32,7 +44,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop — covers full viewport */}
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -40,23 +52,35 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             onClick={onClose}
             style={{
               position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)',
               backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
               zIndex: 100,
             }}
           />
 
-          {/* Centering wrapper — also fixed, above backdrop */}
+          {/* Centering wrapper */}
           <div style={{
             position: 'fixed',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
             zIndex: 101,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '16px',
-            pointerEvents: 'none',   // let clicks pass through to backdrop except on panel
+            pointerEvents: 'none',
+            boxSizing: 'border-box',
           }}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -66,9 +90,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
               onClick={e => e.stopPropagation()}
               style={{
                 pointerEvents: 'auto',
-                backgroundColor: '#ffffff',
+                backgroundColor: surface,
                 borderRadius: '16px',
-                boxShadow: '0 25px 60px rgba(0,0,0,0.2)',
+                boxShadow: shadow,
                 width: '100%',
                 maxWidth: sizeMap[size],
                 maxHeight: '90vh',
@@ -83,10 +107,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '20px 24px',
-                borderBottom: '1px solid #f3f4f6',
+                borderBottom: `1px solid ${border}`,
                 flexShrink: 0,
               }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#111827' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: textPri }}>
                   {title}
                 </h3>
                 <button
@@ -96,15 +120,15 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
                     background: 'transparent', cursor: 'pointer', display: 'flex',
                     alignItems: 'center', justifyContent: 'center',
                   }}
-                  onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#f3f4f6'}
+                  onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = hoverBg}
                   onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'}
                 >
-                  <X className="w-5 h-5" style={{ color: '#6b7280' }} />
+                  <X className="w-5 h-5" style={{ color: textMut }} />
                 </button>
               </div>
 
               {/* Scrollable body */}
-              <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+              <div style={{ padding: '24px', overflowY: 'auto', flex: 1, backgroundColor: surface }}>
                 {children}
               </div>
             </motion.div>
