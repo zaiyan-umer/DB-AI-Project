@@ -6,7 +6,6 @@ export interface Course {
     id:              string
     userId:          string
     name:            string
-    color:           string
     filesCount:      number
     flashcardsCount: number
     mcqsCount:       number
@@ -79,6 +78,11 @@ export const deleteCourse = async (courseId: string): Promise<void> => {
     await api.delete(`/notes/${courseId}`)
 }
 
+export const renameCourse = async (courseId: string, name: string): Promise<Course> => {
+    const res = await api.patch(`/notes/${courseId}`, { name })
+    return res.data
+}
+
 // ---- Files ----------------------------------------------------------------
 
 export const fetchFiles = async (courseId: string): Promise<CourseFile[]> => {
@@ -101,7 +105,7 @@ export const deleteFile = async (fileId: string): Promise<void> => {
 }
 
 export const getDownloadUrl = (fileId: string): string =>
-    `http://localhost:8000/api/notes/files/${fileId}/download`
+    `/api/notes/files/${fileId}/download`
 
 // ---- Flashcards -----------------------------------------------------------
 
@@ -115,12 +119,49 @@ export interface FlashcardSeedItem {
     answer:   string
 }
 
+export interface FlashcardSession {
+    id:              string
+    userId:          string
+    courseId:        string
+    familiarCount:   number
+    unfamiliarCount: number
+    totalCards:      number
+    startedAt:       string
+    completedAt:     string | null
+    expiresAt:       string
+}
+
 // replace this with an AI API call that generates cards from uploaded files.
 export const seedFlashcards = async (
     courseId: string,
     cards:    FlashcardSeedItem[],
 ): Promise<Flashcard[]> => {
     const res = await api.post(`/notes/${courseId}/flashcards`, { cards })
+    return res.data
+}
+
+export const regenerateFlashcards = async (
+    courseId: string,
+    cards:    FlashcardSeedItem[],
+): Promise<Flashcard[]> => {
+    const res = await api.post(`/notes/${courseId}/flashcards/regenerate`, { cards })
+    return res.data
+}
+
+export const startFlashcardSession = async (courseId: string): Promise<FlashcardSession> => {
+    const res = await api.post(`/notes/${courseId}/flashcards/session`)
+    return res.data
+}
+
+export const finishFlashcardSession = async (
+    sessionId:       string,
+    familiarCount:   number,
+    unfamiliarCount: number,
+    totalCards:      number,
+): Promise<FlashcardSession> => {
+    const res = await api.patch(`/notes/sessions/${sessionId}/complete`, {
+        familiarCount, unfamiliarCount, totalCards,
+    })
     return res.data
 }
 
@@ -145,6 +186,14 @@ export const seedMcqs = async (
     questions: McqSeedItem[],
 ): Promise<Mcq[]> => {
     const res = await api.post(`/notes/${courseId}/mcqs`, { questions })
+    return res.data
+}
+
+export const regenerateMcqs = async (
+    courseId:  string,
+    questions: McqSeedItem[],
+): Promise<Mcq[]> => {
+    const res = await api.post(`/notes/${courseId}/mcqs/regenerate`, { questions })
     return res.data
 }
 

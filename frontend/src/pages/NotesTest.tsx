@@ -4,9 +4,9 @@ import { Card } from '../components/Card'
 import { Modal } from '../components/Modal'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
-import { Plus, BookOpen, FileText, Brain, CheckCircle, Trash2 } from 'lucide-react'
+import { Plus, BookOpen, FileText, Brain, CheckCircle, Trash2, Pencil } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useCourses, useCreateCourse, useDeleteCourse } from '../hooks/useNotes'
+import { useCourses, useCreateCourse, useDeleteCourse, useRenameCourse } from '../hooks/useNotes'
 
 const GRADIENTS = [
     'linear-gradient(135deg, #3b82f6, #06b6d4)',
@@ -16,7 +16,7 @@ const GRADIENTS = [
     'linear-gradient(135deg, #6366f1, #a855f7)',
     'linear-gradient(135deg, #eab308, #f97316)',
     'linear-gradient(135deg, #14b8a6, #06b6d4)',
-    'linear-gradient(135deg, #f43f5e, #ec4899)',
+    'linear-gradient(135deg, #f43f5e, rgb(0, 0, 0))',
 ]
 
 const getColorStyle = (id: string) => {
@@ -30,9 +30,12 @@ export default function NotesTestPage() {
     const { data: courses = [], isLoading } = useCourses()
     const { mutate: createCourse, isPending: creating } = useCreateCourse()
     const { mutate: deleteCourse } = useDeleteCourse()
+    const { mutate: renameCourse, isPending: renaming } = useRenameCourse()
 
     const [showAddModal, setShowAddModal]   = useState(false)
     const [newCourseName, setNewCourseName] = useState('')
+    const [renamingId, setRenamingId]       = useState<string | null>(null)
+    const [renameValue, setRenameValue]     = useState('')
 
     const handleAddCourse = () => {
         if (!newCourseName.trim()) return
@@ -60,10 +63,10 @@ export default function NotesTestPage() {
         <>
             <div className="space-y-8">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Notes & Test</h1>
-                        <p className="text-gray-600">Manage your course materials and practice tests</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Notes & Test</h1>
+                        <p className="text-gray-600 text-sm sm:text-base">Manage your course materials and practice tests</p>
                     </div>
                     <Button onClick={() => setShowAddModal(true)} icon={<Plus className="w-5 h-5" />}>
                         Add Course
@@ -72,7 +75,7 @@ export default function NotesTestPage() {
 
                 {/* Skeleton while loading */}
                 {isLoading && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
                                 <div className="h-32 bg-indigo-50 rounded-xl mb-4" />
@@ -87,7 +90,7 @@ export default function NotesTestPage() {
 
                 {/* Courses Grid */}
                 {!isLoading && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                         {courses.map((course, index) => (
                             <motion.div
                                 key={course.id}
@@ -96,24 +99,35 @@ export default function NotesTestPage() {
                                 transition={{ delay: index * 0.1 }}
                                 className="relative group"
                             >
-                                
-                            <button
-                                onClick={(e) => handleDeleteCourse(e, course.id)}
-                                title="Delete"
-                                className="absolute top-8 right-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600"
-                                >
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
                                 <Card hoverable onClick={() => handleCourseClick(course.id)}>
-                                    {/* Colored gradient box — using inline style to bypass Tailwind purge */}
+                                    {/* Gradient box */}
                                     <div
-                                        className="h-32 rounded-xl mb-4 flex items-center justify-center"
+                                        className="h-24 sm:h-32 rounded-xl mb-4 flex items-center justify-center"
                                         style={getColorStyle(course.id)}
                                     >
-                                        <BookOpen className="w-16 h-16 text-white opacity-80" />
+                                        <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-white opacity-80" />
                                     </div>
 
-                                    <h3 className="text-xl font-semibold text-gray-900 mb-4">{course.name}</h3>
+                                    {/* Course name row with action buttons */}
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-base sm:text-xl font-semibold text-gray-900 truncate pr-2">{course.name}</h3>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setRenamingId(course.id); setRenameValue(course.name) }}
+                                                title="Rename"
+                                                className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-400 hover:text-blue-600"
+                                            >
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteCourse(e, course.id)}
+                                                title="Delete"
+                                                className="p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
 
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between text-sm">
@@ -151,7 +165,7 @@ export default function NotesTestPage() {
                             <Card
                                 hoverable
                                 onClick={() => setShowAddModal(true)}
-                                className="border-2 border-dashed border-gray-300 flex items-center justify-center min-h-[323px] cursor-pointer hover:border-[#667eea] hover:bg-indigo-50"
+                                className="border-2 border-dashed border-gray-300 flex items-center justify-center min-h-[260px] sm:min-h-[323px] cursor-pointer hover:border-[#667eea] hover:bg-indigo-50"
                             >
                                 <div className="text-center">
                                     <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#667eea]/10">
@@ -165,38 +179,78 @@ export default function NotesTestPage() {
                     </div>
                 )}
             </div>
+
             {/* Add Course Modal */}
-                <Modal
-                    isOpen={showAddModal}
-                    onClose={() => { setShowAddModal(false); setNewCourseName('') }}
-                    title="Add New Course"
-                >
-                    <div className="space-y-4">
-                        <Input
-                            label="Course Name"
-                            placeholder="e.g., Data Structures & Algorithms"
-                            value={newCourseName}
-                            onChange={(e) => setNewCourseName(e.target.value)}
-                            required
-                        />
-                        <div className="flex gap-3 pt-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => { setShowAddModal(false); setNewCourseName('') }}
-                                fullWidth
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={handleAddCourse}
-                                disabled={creating || !newCourseName.trim()}
-                                fullWidth
-                            >
-                                {creating ? 'Creating...' : 'Create Course'}
-                            </Button>
-                        </div>
+            <Modal
+                isOpen={showAddModal}
+                onClose={() => { setShowAddModal(false); setNewCourseName('') }}
+                title="Add New Course"
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="Course Name"
+                        placeholder="e.g., Data Structures & Algorithms"
+                        value={newCourseName}
+                        onChange={(e) => setNewCourseName(e.target.value)}
+                        required
+                    />
+                    <div className="flex gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => { setShowAddModal(false); setNewCourseName('') }}
+                            fullWidth
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleAddCourse}
+                            disabled={creating || !newCourseName.trim()}
+                            fullWidth
+                        >
+                            {creating ? 'Creating...' : 'Create Course'}
+                        </Button>
                     </div>
-                </Modal>
+                </div>
+            </Modal>
+
+            {/* Rename Course Modal */}
+            <Modal
+                isOpen={!!renamingId}
+                onClose={() => { setRenamingId(null); setRenameValue('') }}
+                title="Rename Course"
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="New Name"
+                        placeholder="e.g., Operating Systems"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        required
+                    />
+                    <div className="flex gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => { setRenamingId(null); setRenameValue('') }}
+                            fullWidth
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (!renamingId || !renameValue.trim()) return
+                                renameCourse(
+                                    { courseId: renamingId, name: renameValue.trim() },
+                                    { onSuccess: () => { setRenamingId(null); setRenameValue('') } }
+                                )
+                            }}
+                            disabled={renaming || !renameValue.trim()}
+                            fullWidth
+                        >
+                            {renaming ? 'Saving...' : 'Save'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </>
     )
 }

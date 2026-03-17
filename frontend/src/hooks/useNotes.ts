@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { fetchCourses, createCourse, deleteCourse, fetchFiles, uploadFile, deleteFile, fetchFlashcards, seedFlashcards, fetchMcqs, seedMcqs, submitMcqAttempt, type FlashcardSeedItem, type McqSeedItem,} from '../services/notes.service'
+import { fetchCourses, createCourse, deleteCourse, renameCourse, fetchFiles, uploadFile, deleteFile, fetchFlashcards, seedFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, fetchMcqs, seedMcqs, regenerateMcqs, submitMcqAttempt, type FlashcardSeedItem, type McqSeedItem,} from '../services/notes.service'
 
 // ---- Courses --------------------------------------------------------------
 
@@ -19,7 +19,7 @@ export const useCreateCourse = () => {
             qc.invalidateQueries({ queryKey: ['courses'] })
             toast.success('Course created!')
         },
-        onError: () => toast.error('Failed to create course'),
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to create course'),
     })
 }
 
@@ -32,6 +32,18 @@ export const useDeleteCourse = () => {
             toast.success('Course deleted')
         },
         onError: () => toast.error('Failed to delete course'),
+    })
+}
+
+export const useRenameCourse = () => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: ({ courseId, name }: { courseId: string; name: string }) => renameCourse(courseId, name),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['courses'] })
+            toast.success('Course renamed!')
+        },
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to rename course'),
     })
 }
 
@@ -94,6 +106,34 @@ export const useSeedFlashcards = (courseId: string) => {
     })
 }
 
+export const useRegenerateFlashcards = (courseId: string) => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: (cards: FlashcardSeedItem[]) => regenerateFlashcards(courseId, cards),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['flashcards', courseId] })
+            toast.success('Flashcards regenerated!')
+        },
+        onError: () => toast.error('Failed to regenerate flashcards'),
+    })
+}
+
+export const useStartFlashcardSession = (courseId: string) =>
+    useMutation({
+        mutationFn: () => startFlashcardSession(courseId),
+        onError: () => toast.error('Failed to start session'),
+    })
+
+export const useFinishFlashcardSession = () =>
+    useMutation({
+        mutationFn: ({
+            sessionId, familiarCount, unfamiliarCount, totalCards,
+        }: {
+            sessionId: string; familiarCount: number; unfamiliarCount: number; totalCards: number
+        }) => finishFlashcardSession(sessionId, familiarCount, unfamiliarCount, totalCards),
+        onError: () => toast.error('Failed to save session'),
+    })
+
 // ---- MCQs -----------------------------------------------------------------
 // useSeedMcqs will call the AI API instead of seeding sample data.
 
@@ -114,6 +154,18 @@ export const useSeedMcqs = (courseId: string) => {
             qc.invalidateQueries({ queryKey: ['courses'] })
         },
         onError: () => toast.error('Failed to load MCQs'),
+    })
+}
+
+export const useRegenerateMcqs = (courseId: string) => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: (questions: McqSeedItem[]) => regenerateMcqs(courseId, questions),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['mcqs', courseId] })
+            toast.success('MCQs regenerated!')
+        },
+        onError: () => toast.error('Failed to regenerate MCQs'),
     })
 }
 
