@@ -9,4 +9,4 @@ export { default as groups } from './group.schema'
 export { default as groupMembers } from './groupMember.schema'
 
 // Notes & Test
-export { default as courses, mcqDifficultyEnum, courseFiles, flashcards, mcqs, mcqAttempts, } from './notes.schema'
+export { default as courses, mcqDifficultyEnum, courseFiles, flashcards, mcqs, mcqAttempts, flashcardSessions} from './notes.schema'
