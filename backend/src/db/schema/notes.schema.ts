@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, integer, boolean, timestamp, text, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, integer, boolean, timestamp, text, pgEnum, unique } from 'drizzle-orm/pg-core'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import users from './user.schema'
 
@@ -16,7 +16,9 @@ export const courses = pgTable('courses', {
     name:      varchar('name', { length: 150 }).notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
+}, (t) => ({
+    uniqueUserCourseName: unique().on(t.userId, t.name),
+}))
 
 export type Course    = typeof courses.$inferSelect
 export type NewCourse = typeof courses.$inferInsert
@@ -85,6 +87,34 @@ export type NewFlashcard = typeof flashcards.$inferInsert
 export const insertFlashcardSchema = createInsertSchema(flashcards)
 export const selectFlashcardSchema = createSelectSchema(flashcards)
 
+// ---- flashcard_sessions ---------------------------------------------------
+// One row per study session (created when user starts, closed when done).
+// Counts are written when the session ends. Auto-deleted after 30 days via expiresAt (cleanup job / cron).
+// FK: course_id → courses.id (cascade delete)
+// FK: user_id   → users.id   (cascade delete)
+ 
+export const flashcardSessions = pgTable('flashcard_sessions', {
+    id:          uuid('id').primaryKey().defaultRandom(),
+    userId:      uuid('user_id')
+                     .references(() => users.id, { onDelete: 'cascade' })
+                     .notNull(),
+    courseId:    uuid('course_id')
+                     .references(() => courses.id, { onDelete: 'cascade' })
+                     .notNull(),
+    familiarCount:   integer('familiar_count').notNull().default(0),
+    unfamiliarCount: integer('unfamiliar_count').notNull().default(0),
+    totalCards:      integer('total_cards').notNull().default(0),
+    startedAt:   timestamp('started_at').notNull().defaultNow(),
+    completedAt: timestamp('completed_at'),         // null = session still in progress
+    expiresAt:   timestamp('expires_at').notNull(), // startedAt + 30 days — used for cleanup
+})
+
+export type FlashcardSession    = typeof flashcardSessions.$inferSelect
+export type NewFlashcardSession = typeof flashcardSessions.$inferInsert
+ 
+export const insertFlashcardSessionSchema = createInsertSchema(flashcardSessions)
+export const selectFlashcardSessionSchema = createSelectSchema(flashcardSessions)
+ 
 // ---- mcqs -----------------------------------------------------------------
 // Multiple-choice questions.
 // correctOption is 0-based index into the options array.

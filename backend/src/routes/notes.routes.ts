@@ -3,7 +3,7 @@ import multer from 'multer'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { verifyToken } from '../middleware/verifyToken.middleware'
-import { getCourses, createCourse, deleteCourse, getFiles, uploadFile, downloadFile, deleteFile, getFlashcards, seedFlashcards, getMcqs, seedMcqs, submitMcqAttempt,} from '../controllers/notes.controller'
+import { getCourses, createCourse, deleteCourse, renameCourse, getFiles, uploadFile, downloadFile, deleteFile, getFlashcards, seedFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, getMcqs, seedMcqs, regenerateMcqs, submitMcqAttempt} from '../controllers/notes.controller'
 
 const router = express.Router()
 router.use(verifyToken)
@@ -42,8 +42,13 @@ router.post('/', createCourse)
 router.get('/files/:fileId/download', downloadFile)
 router.delete('/files/:fileId', deleteFile)
 
-// ── Course delete (wildcard — must be after static routes above) ───────────
+
+// ── Sessions (static segment — before /:courseId wildcard) ─────────────────
+router.patch('/sessions/:sessionId/complete', finishFlashcardSession)
+ 
+// ── Course delete / rename (wildcard — must be after static routes above) ──
 router.delete('/:courseId', deleteCourse)
+router.patch('/:courseId', renameCourse)
 
 // ── Files ──────────────────────────────────────────────────────────────────
 router.get('/:courseId/files', getFiles)
@@ -51,10 +56,14 @@ router.post('/:courseId/files', upload.single('file'), uploadFile)
 
 // ── Flashcards ─────────────────────────────────────────────────────────────
 router.get('/:courseId/flashcards', getFlashcards)
+router.post('/:courseId/flashcards/regenerate', regenerateFlashcards)
+router.post('/:courseId/flashcards/session', startFlashcardSession)
+// router.post('/:courseId/flashcards/:flashcardId/review', submitFlashcardReview)
 router.post('/:courseId/flashcards', seedFlashcards)
 
 // ── MCQs ───────────────────────────────────────────────────────────────────
 router.get('/:courseId/mcqs', getMcqs)
+router.post('/:courseId/mcqs/regenerate', regenerateMcqs)
 router.post('/:courseId/mcqs', seedMcqs)
 router.post('/:courseId/mcqs/:mcqId/attempt', submitMcqAttempt)
 
