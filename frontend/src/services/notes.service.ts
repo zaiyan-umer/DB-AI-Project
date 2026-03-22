@@ -90,6 +90,11 @@ export const fetchFiles = async (courseId: string): Promise<CourseFile[]> => {
     return res.data
 }
 
+export const fetchFile = async (fileId: string, courseId: string): Promise<CourseFile> => {
+    const res = await api.get(`/notes/${courseId}/file/${fileId}`)
+    return res.data
+}
+
 export const uploadFile = async (courseId: string, file: File): Promise<CourseFile> => {
     const form = new FormData()
     form.append('file', file)
@@ -105,7 +110,10 @@ export const deleteFile = async (fileId: string): Promise<void> => {
 }
 
 export const getDownloadUrl = (fileId: string): string =>
-    `/api/notes/files/${fileId}/download`
+    `${api.defaults.baseURL}/notes/files/${fileId}/download`
+
+export const getPreviewUrl = (fileId: string): string =>
+    `${api.defaults.baseURL}/notes/files/${fileId}/preview`
 
 // ---- Flashcards -----------------------------------------------------------
 

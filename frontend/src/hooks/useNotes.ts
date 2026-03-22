@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { fetchCourses, createCourse, deleteCourse, renameCourse, fetchFiles, uploadFile, deleteFile, fetchFlashcards, seedFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, fetchMcqs, seedMcqs, regenerateMcqs, submitMcqAttempt, type FlashcardSeedItem, type McqSeedItem,} from '../services/notes.service'
+import { fetchCourses, createCourse, deleteCourse, renameCourse, fetchFiles, uploadFile, deleteFile, fetchFlashcards, seedFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, fetchMcqs, seedMcqs, regenerateMcqs, submitMcqAttempt, type FlashcardSeedItem, type McqSeedItem, fetchFile,} from '../services/notes.service'
 
 // ---- Courses --------------------------------------------------------------
 
@@ -54,6 +54,14 @@ export const useFiles = (courseId: string) =>
         queryKey: ['files', courseId],
         queryFn:  () => fetchFiles(courseId),
         enabled:  !!courseId,
+        staleTime: 2 * 60 * 1000,
+    })
+
+export const useFile = (fileId:string, courseId: string) =>
+    useQuery({
+        queryKey: ['file', courseId, fileId],
+        queryFn:  () => fetchFile(fileId, courseId),
+        enabled:  !!courseId && !!fileId,
         staleTime: 2 * 60 * 1000,
     })
 

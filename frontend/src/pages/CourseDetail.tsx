@@ -1,10 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { ArrowLeft, Upload, Download, Trash2, RotateCcw, FileText, Loader2, Sparkles, RefreshCw, CheckCircle, XCircle, Brain,} from 'lucide-react'
+import { ArrowLeft, Upload, Download, Trash2, RotateCcw, FileText, Loader2, Sparkles, RefreshCw, CheckCircle, XCircle, Brain, Eye, ChevronLeft, ChevronRight, X, } from 'lucide-react'
+import { Document, Page, pdfjs } from 'react-pdf'
 import { Button } from '../components/Button'
-import { useCourses, useFiles, useUploadFile, useDeleteFile, useFlashcards, useSeedFlashcards, useRegenerateFlashcards, useStartFlashcardSession, useFinishFlashcardSession, useMcqs, useSeedMcqs, useRegenerateMcqs, useSubmitMcqAttempt,} from '../hooks/useNotes'
-import { getDownloadUrl, type FlashcardSeedItem, type McqSeedItem } from '../services/notes.service'
+import { useCourses, useFiles, useFile, useUploadFile, useDeleteFile, useFlashcards, useSeedFlashcards, useRegenerateFlashcards, useStartFlashcardSession, useFinishFlashcardSession, useMcqs, useSeedMcqs, useRegenerateMcqs, useSubmitMcqAttempt,} from '../hooks/useNotes'
+import { getDownloadUrl, getPreviewUrl, type CourseFile, type FlashcardSeedItem, type McqSeedItem } from '../services/notes.service'
+import 'react-pdf/dist/Page/AnnotationLayer.css'
+import 'react-pdf/dist/Page/TextLayer.css'
+
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -221,6 +226,44 @@ function FilesTab({ courseId }: { courseId: string }) {
     const { mutate: upload, isPending: uploading }  = useUploadFile(courseId)
     const { mutate: remove }                        = useDeleteFile(courseId)
     const fileInputRef                              = useRef<HTMLInputElement>(null)
+    const pdfContainerRef                           = useRef<HTMLDivElement>(null)
+    const [selectedFileId, setSelectedFileId]       = useState<string | null>(null)
+    const [numPages, setNumPages]                   = useState(0)
+    const [pageNumber, setPageNumber]               = useState(1)
+    const [viewerWidth, setViewerWidth]             = useState(800)
+    const { data: fetchedFile, isLoading: loadingFile } = useFile(selectedFileId ?? '', courseId)
+
+    const viewerFile = fetchedFile ?? (selectedFileId ? files.find((f) => f.id === selectedFileId) ?? null : null)
+
+    const isPdfFile = (file: CourseFile) =>
+        file.mimeType === 'application/pdf' || file.originalName.toLowerCase().endsWith('.pdf')
+
+    const openViewer = (file: CourseFile) => {
+        if (!isPdfFile(file)) return
+
+        setSelectedFileId(file.id)
+        setPageNumber(1)
+        setNumPages(0)
+    }
+
+    const closeViewer = () => {
+        setSelectedFileId(null)
+        setPageNumber(1)
+        setNumPages(0)
+    }
+
+    useEffect(() => {
+        if (!viewerFile) return
+
+        const setWidth = () => {
+            const containerWidth = pdfContainerRef.current?.clientWidth ?? 860
+            setViewerWidth(Math.max(300, Math.min(960, containerWidth - 24)))
+        }
+
+        setWidth()
+        window.addEventListener('resize', setWidth)
+        return () => window.removeEventListener('resize', setWidth)
+    }, [selectedFileId])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -280,6 +323,18 @@ function FilesTab({ courseId }: { courseId: string }) {
                                 <p className="text-xs text-gray-500">{formatBytes(file.sizeBytes)} • {formatRelativeDate(file.createdAt)}</p>
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => openViewer(file)}
+                                    disabled={!isPdfFile(file)}
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                                        isPdfFile(file)
+                                            ? 'hover:bg-red-50 cursor-pointer'
+                                            : 'opacity-40 cursor-not-allowed'
+                                    }`}
+                                    title={isPdfFile(file) ? 'View PDF' : 'Preview available for PDF only'}
+                                >
+                                    <Eye className="w-4 h-4 text-gray-600" />
+                                </button>
                                 <a
                                     href={getDownloadUrl(file.id)}
                                     download={file.originalName}
@@ -314,6 +369,94 @@ function FilesTab({ courseId }: { courseId: string }) {
                     </div>
                 </div>
             )}
+
+            <AnimatePresence>
+                {selectedFileId && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm p-4 md:p-8"
+                    >
+                        <div className="h-full w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-sm text-gray-500">PDF Preview</p>
+                                    <p className="font-semibold text-gray-900 truncate">{viewerFile?.originalName ?? 'Loading...'}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={closeViewer}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                    title="Close"
+                                >
+                                    <X className="w-4 h-4 text-gray-700" />
+                                </button>
+                            </div>
+
+                            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+                                        disabled={pageNumber <= 1}
+                                        className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                                        title="Previous page"
+                                    >
+                                        <ChevronLeft className="w-4 h-4 text-gray-700" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageNumber((p) => Math.min(numPages || 1, p + 1))}
+                                        disabled={numPages === 0 || pageNumber >= numPages}
+                                        className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                                        title="Next page"
+                                    >
+                                        <ChevronRight className="w-4 h-4 text-gray-700" />
+                                    </button>
+                                    <span className="text-sm text-gray-600 ml-1">
+                                        Page {pageNumber}{numPages ? ` / ${numPages}` : ''}
+                                    </span>
+                                </div>
+
+                                <a
+                                    href={getDownloadUrl(selectedFileId)}
+                                    download={viewerFile?.originalName ?? 'file.pdf'}
+                                    className="text-sm text-[#667eea] font-medium hover:underline"
+                                >
+                                    Download file
+                                </a>
+                            </div>
+
+                            <div ref={pdfContainerRef} className="flex-1 overflow-auto bg-gray-100 p-3 md:p-6">
+                                {loadingFile ? (
+                                    <div className="h-full w-full flex items-center justify-center text-sm text-gray-500">
+                                        Validating file access...
+                                    </div>
+                                ) : (
+                                    <Document
+                                        file={{ url: getPreviewUrl(selectedFileId), withCredentials: true }}
+                                        loading={<div className="text-sm text-gray-500">Loading PDF...</div>}
+                                        error={<div className="text-sm text-red-500">Failed to load PDF preview.</div>}
+                                        onLoadSuccess={({ numPages: loadedPages }) => {
+                                            setNumPages(loadedPages)
+                                            setPageNumber(1)
+                                        }}
+                                    >
+                                        <Page
+                                            pageNumber={pageNumber}
+                                            width={viewerWidth}
+                                            renderTextLayer
+                                            renderAnnotationLayer
+                                            className="mx-auto shadow-md"
+                                        />
+                                    </Document>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </TabPanel>
     )
 }
