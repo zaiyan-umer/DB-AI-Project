@@ -97,6 +97,9 @@ export const getFiles = async (req: Request, res: Response) => {
 }
 
 export const uploadFile = async (req: Request, res: Response) => {
+    const multerFile = (req as any).file
+    if (!multerFile) return res.status(400).json({ message: 'No file uploaded' })
+        
     try {
         const userId = req.user!.id
         const courseId = req.params.courseId as string
@@ -104,8 +107,6 @@ export const uploadFile = async (req: Request, res: Response) => {
         const course = await getCourseById(courseId, userId)
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
-        const multerFile = (req as any).file
-        if (!multerFile) return res.status(400).json({ message: 'No file uploaded' })
 
         const file = await insertFile({
             courseId,
@@ -119,6 +120,7 @@ export const uploadFile = async (req: Request, res: Response) => {
         return res.status(201).json(file)
     } catch (err) {
         console.error(err)
+        fs.unlinkSync(path.join(process.cwd(), 'uploads', multerFile.filename))
         return res.status(500).json({ message: 'Failed to upload file' })
     }
 }
