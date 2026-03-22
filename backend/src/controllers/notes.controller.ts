@@ -1,22 +1,9 @@
 import type { Request, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
-import { getCoursesByUser, getCourseById, insertCourse, removeCourse, getCourseCounts, getFilesByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, getMcqsByCourse, getMcqById, insertMcq, insertMcqAttempt,} from '../services/dal/notes.dal'
+import { getCoursesByUser, getCourseById, insertCourse, removeCourse, updateCourse, getCourseCounts, getFilesByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, replaceFlashcardContent, insertFlashcardSession, completeFlashcardSession, getMcqsByCourse, getMcqById, insertMcq, replaceMcqContent, insertMcqAttempt,} from '../services/dal/notes.dal'
 
 // ---- Helpers --------------------------------------------------------------
-
-const COURSE_COLORS = [
-    'from-blue-500 to-cyan-500',
-    'from-purple-500 to-pink-500',
-    'from-orange-500 to-red-500',
-    'from-green-500 to-emerald-500',
-    'from-indigo-500 to-purple-500',
-    'from-yellow-500 to-orange-500',
-    'from-teal-500 to-cyan-500',
-    'from-rose-500 to-pink-500',
-]
-
-const pickColor = (index: number) => COURSE_COLORS[index % COURSE_COLORS.length]
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads')
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true })
@@ -28,12 +15,15 @@ export const getCourses = async (req: Request, res: Response) => {
         const userId = req.user!.id
         const userCourses = await getCoursesByUser(userId)
 
-        const coursesWithCounts = await Promise.all(
-            userCourses.map(async (course) => {
-                const counts = await getCourseCounts(course.id)
-                return { ...course, ...counts }
-            })
-        )
+        // 3 queries total: 1 to get file counts, 1 to get flashcard counts, 1 to get mcq counts 
+        const { fileMap, flashcardMap, mcqMap } = await getCourseCounts(userId)
+
+        const coursesWithCounts = userCourses.map((course) => ({
+            ...course,
+            filesCount:      fileMap[course.id]      ?? 0, // if no files for this course, default to 0
+            flashcardsCount: flashcardMap[course.id] ?? 0,
+            mcqsCount:       mcqMap[course.id]       ?? 0,
+        }))
 
         return res.status(200).json(coursesWithCounts)
     } catch (err) {
@@ -57,7 +47,10 @@ export const createCourse = async (req: Request, res: Response) => {
         })
 
         return res.status(201).json({ ...course, filesCount: 0, flashcardsCount: 0, mcqsCount: 0 })
-    } catch (err) {
+    } catch (err: any) {
+        if (err?.cause?.code === '23505') {
+            return res.status(409).json({ message: 'You already have a course with this name' })
+        }
         console.error(err)
         return res.status(500).json({ message: 'Failed to create course' })
     }
@@ -68,6 +61,13 @@ export const deleteCourse = async (req: Request, res: Response) => {
         const userId = req.user!.id
         const courseId = req.params.courseId as string
 
+        // ── Delete physical files from disk before removing DB row ──
+        const files = await getFilesByCourse(courseId, userId)
+        for (const file of files) {
+            const fullPath = path.join(process.cwd(), file.storagePath)
+            if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
+        }
+
         const deleted = await removeCourse(courseId, userId)
         if (!deleted) return res.status(404).json({ message: 'Course not found' })
 
@@ -75,6 +75,29 @@ export const deleteCourse = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to delete course' })
+    }
+}
+
+export const renameCourse = async (req: Request, res: Response) => {
+    try {
+        const userId   = req.user!.id
+        const courseId = req.params.courseId as string
+        const { name } = req.body
+
+        if (!name || !name.trim()) {
+            return res.status(400).json({ message: 'Course name is required' })
+        }
+
+        const updated = await updateCourse(courseId, userId, { name: name.trim() })
+        if (!updated) return res.status(404).json({ message: 'Course not found' })
+
+        return res.status(200).json(updated)
+    } catch (err: any) {
+        if (err?.cause?.code === '23505') {
+            return res.status(409).json({ message: 'You already have a course with this name' })
+        }
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to rename course' })
     }
 }
 
@@ -182,16 +205,15 @@ export const getFlashcards = async (req: Request, res: Response) => {
 }
 
 // Placeholder endpoint — will be replaced by AI generation later.
-// For now seeds a dummy card so the UI is not empty during development.
 export const seedFlashcards = async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.id
+        const userId   = req.user!.id
         const courseId = req.params.courseId as string
 
         const course = await getCourseById(courseId, userId)
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
-        const { cards } = req.body   // [{ question, answer }]
+        const { cards } = req.body
         if (!Array.isArray(cards) || cards.length === 0) {
             return res.status(400).json({ message: 'cards array is required' })
         }
@@ -206,6 +228,77 @@ export const seedFlashcards = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to seed flashcards' })
+    }
+}
+
+// Regenerate — replaces content of existing cards in-place.
+export const regenerateFlashcards = async (req: Request, res: Response) => {
+    try {
+        const userId   = req.user!.id
+        const courseId = req.params.courseId as string
+
+        const course = await getCourseById(courseId, userId)
+        if (!course) return res.status(404).json({ message: 'Course not found' })
+
+        const existing    = await getFlashcardsByCourse(courseId, userId)
+        const { cards }   = req.body
+
+        if (!Array.isArray(cards) || cards.length !== existing.length) {
+            return res.status(400).json({ message: `Expected ${existing.length} cards, got ${cards?.length ?? 0}` })
+        }
+        
+        const updated = await Promise.all(
+            existing.map((card, i) =>
+                replaceFlashcardContent(card.id, userId, {
+                    question: cards[i].question,
+                    answer:   cards[i].answer,
+                })
+            )
+        )
+
+        return res.status(200).json(updated)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to regenerate flashcards' })
+    }
+}
+
+// ---- Flashcard Sessions ---------------------------------------------------
+// Called when user opens the flashcards tab and starts a new session.
+export const startFlashcardSession = async (req: Request, res: Response) => {
+    try {
+        const userId   = req.user!.id
+        const courseId = req.params.courseId as string
+
+        const course = await getCourseById(courseId, userId)
+        if (!course) return res.status(404).json({ message: 'Course not found' })
+
+        const session = await insertFlashcardSession({ userId, courseId })
+        return res.status(201).json(session)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to start session' })
+    }
+}
+
+// Called when user finishes all cards — finalises the session with counts.
+export const finishFlashcardSession = async (req: Request, res: Response) => {
+    try {
+        const userId    = req.user!.id
+        const sessionId = req.params.sessionId as string
+        const { familiarCount, unfamiliarCount, totalCards } = req.body
+
+        if (typeof familiarCount !== 'number' || typeof unfamiliarCount !== 'number' || typeof totalCards !== 'number') {
+            return res.status(400).json({ message: 'familiarCount, unfamiliarCount, totalCards are required' })
+        }
+
+        const session = await completeFlashcardSession(sessionId, userId, { familiarCount, unfamiliarCount, totalCards })
+        if (!session) return res.status(404).json({ message: 'Session not found' })
+
+        return res.status(200).json(session)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to complete session' })
     }
 }
 
@@ -233,13 +326,13 @@ export const getMcqs = async (req: Request, res: Response) => {
 // Placeholder endpoint — will be replaced by AI generation later.
 export const seedMcqs = async (req: Request, res: Response) => {
     try {
-        const userId = req.user!.id
+        const userId   = req.user!.id
         const courseId = req.params.courseId as string
 
         const course = await getCourseById(courseId, userId)
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
-        const { questions } = req.body  // [{ question, options, correctOption, explanation?, difficulty? }]
+        const { questions } = req.body
         if (!Array.isArray(questions) || questions.length === 0) {
             return res.status(400).json({ message: 'questions array is required' })
         }
@@ -270,6 +363,42 @@ export const seedMcqs = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to seed MCQs' })
+    }
+}
+
+// Regenerate — replaces content of existing MCQ rows in-place.
+export const regenerateMcqs = async (req: Request, res: Response) => {
+    try {
+        const userId   = req.user!.id
+        const courseId = req.params.courseId as string
+
+        const course = await getCourseById(courseId, userId)
+        if (!course) return res.status(404).json({ message: 'Course not found' })
+
+        const existing      = await getMcqsByCourse(courseId, userId)
+        const { questions } = req.body
+
+        if (!Array.isArray(questions) || questions.length !== existing.length) {
+            return res.status(400).json({ message: `Expected ${existing.length} questions, got ${questions?.length ?? 0}` })
+        }
+
+        const updated = await Promise.all(
+            existing.map((mcq, i) =>
+                replaceMcqContent(mcq.id, userId, {
+                    question:      questions[i].question,
+                    options:       JSON.stringify(questions[i].options),
+                    correctOption: questions[i].correctOption,
+                    explanation:   questions[i].explanation ?? null,
+                    difficulty:    questions[i].difficulty ?? 'medium',
+                })
+            )
+        )
+
+        const parsed = updated.map((m) => ({ ...m, options: JSON.parse(m.options) }))
+        return res.status(200).json(parsed)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to regenerate MCQs' })
     }
 }
 
