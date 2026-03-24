@@ -97,7 +97,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
         <h2 className="font-semibold text-gray-800">Chats</h2>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="text-green-500 hover:text-green-600 text-xl font-light"
+          className="text-green-500 hover:text-green-600 text-xl font-light cursor-pointer"
           title="Create group"
         >
           +
@@ -173,7 +173,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
           <div key={group.id} className="relative group/item">
             <button
               onClick={() => onSelectGroup(group)}
-              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors bg-white! ${activeGroupId === group.id ? 'bg-green-50 border-r-2 border-green-500' : ''
+              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${activeGroupId === group.id ? 'bg-green-50 border-r-2 border-green-500' : ''
                 }`}
             >
               <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
@@ -187,7 +187,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
               <button
                 onClick={(e) => handleDelete(e, group)}
                 disabled={deleteGroup.isPending}
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 text-xs text-red-500 hover:text-red-700 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 text-xs text-red-500 hover:text-red-700 transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Delete
               </button>
