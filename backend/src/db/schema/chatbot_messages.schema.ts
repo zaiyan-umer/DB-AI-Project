@@ -1,8 +1,9 @@
 import {
-    pgTable,
     pgEnum,
+    pgTable,
+    text,
     timestamp,
-    uuid, varchar
+    uuid
 } from 'drizzle-orm/pg-core'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import users from './user.schema'
@@ -13,7 +14,7 @@ export const chatbot_messages = pgTable("chatbot_messages", {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull().references(() => users.id),
     role: chatbotMessageRoleEnum("role").notNull(),
-    content: varchar("content", { length: 255 }).notNull(),
+    content: text("content").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow()
 })
 

@@ -10,8 +10,8 @@ export const groups = pgTable('groups', {
     createdBy: uuid('created_by').references(() => users.id),
 });
 
-export type Room = typeof groups.$inferSelect
-export type newRoom = typeof groups.$inferInsert
+export type Group = typeof groups.$inferSelect
+export type newGroup = typeof groups.$inferInsert
 
 export const groupSchema = createSelectSchema(groups)
 export const newGroupSchema = createInsertSchema(groups)

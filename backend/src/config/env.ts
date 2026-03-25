@@ -13,6 +13,8 @@ const envSchema = z.object({
     JWT_EXPIRY: z.string().default('7d'),
     BCRYPT_ROUNDS: z.coerce.number().min(6).max(12).default(8),
     RESEND_API_KEY: z.string(),
+    GEMINI_API_KEY: z.string(),
+    GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
     MAIL_SENDER: z.email(),
     CORS_ORIGIN: z
         .string()
