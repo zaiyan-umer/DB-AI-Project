@@ -175,3 +175,27 @@ export async function handleChatbotMessage(req: Request, res: Response) {
         }
     }
 }
+
+export async function getCopilotHistory(req: Request, res: Response) {
+    try {
+        const user = req.user
+
+        if (!user) {
+            return res.status(401).json({ message: 'User not authenticated' })
+        }
+
+        const messages = await getPreviousMessages(user.id)
+
+        return res.status(200).json({
+            messages: messages.map((message) => ({
+                id: message.id,
+                role: message.role,
+                content: message.content,
+                createdAt: message.createdAt,
+            })),
+        })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ message: 'Failed to fetch copilot history' })
+    }
+}
