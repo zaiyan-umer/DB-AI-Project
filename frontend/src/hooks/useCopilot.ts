@@ -74,7 +74,7 @@ export const useCopilot = () => {
 		setIsStreaming(true)
 
 		try {
-			const response = await fetch('/api/ai/chatbot', {
+			const response = await fetch('http://localhost:8000/api/ai/chatbot', {
 				method: 'POST',
 				credentials: 'include',
 				headers: {
@@ -104,7 +104,7 @@ export const useCopilot = () => {
 					const line = rawLine.trim()
 					if (!line.startsWith('data:')) continue
 
-					const payload = line.replace(/^data:\s?/, '')
+					const payload = line.replace(/^data:\s?/, '').replace(/\\n/g, '\n')
 
 					if (payload === '[DONE]') {
 						shouldStop = true
@@ -115,7 +115,7 @@ export const useCopilot = () => {
 						setMessages((prev) =>
 							prev.map((m) =>
 								m.id === placeholderId
-									? { ...m, content: 'Something went wrong, please try again' }
+									? { ...m, content: 'Something went wrong, Please try again' }
 									: m,
 							),
 						)

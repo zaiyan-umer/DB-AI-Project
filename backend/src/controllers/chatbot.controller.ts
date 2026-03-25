@@ -149,7 +149,7 @@ export async function handleChatbotMessage(req: Request, res: Response) {
 
         for await (const chunk of generateAIResponseStream(systemPrompt, messages)) {
             fullResponse += chunk
-            res.write(`data: ${chunk}\n\n`)
+            res.write(`data: ${chunk.replace(/\n/g, '\\n')}\n\n`)
         }
 
         await saveChatbotMessage(userId, 'assistant', fullResponse)
