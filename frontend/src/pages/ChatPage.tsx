@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { GroupSidebar } from '../components/chat/GroupSidebar';
 import { ChatWindow } from '../components/chat/ChatWindow';
 import { useMyGroups } from '../hooks/useGroup';
@@ -40,20 +41,38 @@ export const ChatPage = () => {
                 onSelectGroup={setActiveGroup}
             />
 
-            <div className="flex-1 flex flex-col">
-                {activeGroup ? (
-                    <ChatWindow
-                        groupId={activeGroup.id}
-                        groupName={activeGroup.name}
-                        currentUserId={currentUserId}
-                        isAdmin={!!isAdmin}
-                        onlineCount={onlineCount}
-                    />
-                ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-400">
-                        Select a group to start chatting
-                    </div>
-                )}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <AnimatePresence mode="wait">
+                    {activeGroup ? (
+                        <motion.div
+                            key={activeGroup.id}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 8 }}
+                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                            className="flex flex-col h-full"
+                        >
+                            <ChatWindow
+                                groupId={activeGroup.id}
+                                groupName={activeGroup.name}
+                                currentUserId={currentUserId}
+                                isAdmin={!!isAdmin}
+                                onlineCount={onlineCount}
+                            />
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="empty"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex-1 flex items-center justify-center text-gray-400"
+                        >
+                            Select a group to start chatting
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

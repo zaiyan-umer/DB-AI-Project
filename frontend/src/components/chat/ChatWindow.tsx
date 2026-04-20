@@ -103,7 +103,7 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
         <button
           onClick={handleSend}
           disabled={!input.trim() || sendMessage.isPending}
-          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-full px-4 py-2 text-sm font-medium"
+          className="cursor-pointer bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-full px-4 py-2 text-sm font-medium"
         >
           Send
         </button>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useSearchGroups, useCreateGroup, useJoinGroup, useLeaveGroup, useDeleteGroup } from '../../hooks/useGroup';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -105,23 +106,33 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
       </div>
 
       {/* Create group input */}
-      {showCreate && (
-        <div className="px-4 py-2 border-b flex gap-2">
-          <input
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            placeholder="Group name..."
-            className="flex-1 text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
-          <button
-            onClick={handleCreate}
-            disabled={createGroup.isPending}
-            className="text-sm bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 disabled:opacity-50"
+      <AnimatePresence>
+        {showCreate && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden border-b"
           >
-            Create
-          </button>
-        </div>
-      )}
+            <div className="px-4 py-2 flex gap-2">
+              <input
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Group name..."
+                className="flex-1 text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <button
+                onClick={handleCreate}
+                disabled={createGroup.isPending}
+                className="cursor-pointer text-sm bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600 disabled:opacity-50"
+              >
+                Create
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Search */}
       <div className="px-4 py-2 border-b">
