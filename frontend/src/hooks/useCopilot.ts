@@ -69,7 +69,6 @@ export const useCopilot = () => {
 		setMessages((prev) => [
 			...prev,
 			{ id: userMessageId, role: 'user', content: trimmedContent },
-			{ id: placeholderId, role: 'assistant', content: '' },
 		])
 		setIsStreaming(true)
 
@@ -112,34 +111,58 @@ export const useCopilot = () => {
 					}
 
 					if (payload.startsWith('[ERROR]')) {
-						setMessages((prev) =>
-							prev.map((m) =>
-								m.id === placeholderId
-									? { ...m, content: 'Something went wrong, Please try again' }
-									: m,
-							),
-						)
+						setMessages((prev) => {
+							const hasPlaceholder = prev.some((m) => m.id === placeholderId)
+							if (hasPlaceholder) {
+								return prev.map((m) =>
+									m.id === placeholderId
+										? { ...m, content: 'Something went wrong, Please try again' }
+										: m,
+								)
+							}
+
+							return [
+								...prev,
+								{ id: placeholderId, role: 'assistant', content: 'Something went wrong, Please try again' },
+							]
+						})
 						shouldStop = true
-						break
 					}
 
-					setMessages((prev) =>
-						prev.map((m) =>
-							m.id === placeholderId
-								? { ...m, content: m.content + payload }
-								: m,
-						),
-					)
+					setMessages((prev) => {
+						const hasPlaceholder = prev.some((m) => m.id === placeholderId)
+
+						if (hasPlaceholder) {
+							return prev.map((m) =>
+								m.id === placeholderId
+									? { ...m, content: m.content + payload }
+									: m,
+							)
+						}
+
+						return [
+							...prev,
+							{ id: placeholderId, role: 'assistant', content: payload },
+						]
+					})
 				}
 			}
 		} catch {
-			setMessages((prev) =>
-				prev.map((m) =>
-					m.id === placeholderId
-						? { ...m, content: 'Something went wrong, please try again' }
-						: m,
-				),
-			)
+			setMessages((prev) => {
+				const hasPlaceholder = prev.some((m) => m.id === placeholderId)
+				if (hasPlaceholder) {
+					return prev.map((m) =>
+						m.id === placeholderId
+							? { ...m, content: 'Something went wrong, please try again' }
+							: m,
+					)
+				}
+
+				return [
+					...prev,
+					{ id: placeholderId, role: 'assistant', content: 'Something went wrong, please try again' },
+				]
+			})
 		} finally {
 			setIsStreaming(false)
 		}
