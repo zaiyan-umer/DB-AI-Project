@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes";
 import notesRoutes from "./routes/notes.routes";
 import schedulerRoutes from "./routes/scheduler.routes";
 import groupRoutes from "./routes/group.routes";
+import chatbotRoutes from "./routes/chatbot.routes";
 
 
 const app = express();
@@ -35,5 +36,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/scheduler', schedulerRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/chat/groups', groupRoutes)
+app.use('/api/ai/chatbot', chatbotRoutes)
 
 export default app;

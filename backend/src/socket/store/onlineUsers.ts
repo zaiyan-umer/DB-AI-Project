@@ -1,7 +1,7 @@
 // Simple in-memory store — Maps groupId to a Set of userIds
 // This lives in server memory, not DB
 
-const onlineUsers = new Map<string, Set<string>>();
+export const onlineUsers = new Map<string, Set<string>>();
 
 export const addUser = (groupId: string, userId: string) => {
   if (!onlineUsers.has(groupId)) {

@@ -3,7 +3,7 @@ import multer from 'multer'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { verifyToken } from '../middleware/verifyToken.middleware'
-import { getCourses, createCourse, deleteCourse, renameCourse, getFiles, uploadFile, downloadFile, deleteFile, getFlashcards, seedFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, getMcqs, seedMcqs, regenerateMcqs, submitMcqAttempt} from '../controllers/notes.controller'
+import { getCourses, createCourse, deleteCourse, renameCourse, getFiles, uploadFile, downloadFile, previewFile, deleteFile, getFlashcards, seedFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, getMcqs, seedMcqs, regenerateMcqs, submitMcqAttempt, getFile} from '../controllers/notes.controller'
 
 const router = express.Router()
 router.use(verifyToken)
@@ -40,6 +40,7 @@ router.post('/', createCourse)
 
 // ── Static file routes MUST come before /:courseId wildcard ────────────────
 router.get('/files/:fileId/download', downloadFile)
+router.get('/files/:fileId/preview', previewFile)
 router.delete('/files/:fileId', deleteFile)
 
 
@@ -52,6 +53,7 @@ router.patch('/:courseId', renameCourse)
 
 // ── Files ──────────────────────────────────────────────────────────────────
 router.get('/:courseId/files', getFiles)
+router.get('/:courseId/file/:fileId', getFile)
 router.post('/:courseId/files', upload.single('file'), uploadFile)
 
 // ── Flashcards ─────────────────────────────────────────────────────────────

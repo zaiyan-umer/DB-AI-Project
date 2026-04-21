@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { useDeleteForMe, useDeleteForEveryone } from '../../hooks/useMessages';
+import { Bot } from 'lucide-react';
+import ReactMarkdown from 'react-markdown'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Sender {
   id: string;
@@ -15,6 +20,7 @@ interface Message {
   createdAt: string;
   deletedAt: string | null;
   sender?: Sender;
+  senderType?: 'user' | 'ai';
 }
 
 interface Props {
@@ -35,17 +41,18 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
   const isDeleted = !!message.deletedAt;
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}
-      onMouseEnter={() => setShowOptions(true)}
-      onMouseLeave={() => setShowOptions(false)}
     >
-      <div className={`relative max-w-xs lg:max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
+      <div className={`relative max-w-xs lg:max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}
+        onMouseEnter={() => setShowOptions(true)}
+        onMouseLeave={() => setShowOptions(false)}>
         {/* Sender name — only show for others' messages */}
         {!isOwn && (
           <span className="text-xs text-gray-500 mb-1 ml-1">
-            {senderUsername}
-
+            {message.senderType === 'ai' ? <Bot size={22} /> : senderUsername}
           </span>
         )}
 
@@ -57,7 +64,14 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
               : 'bg-white text-gray-800 shadow-sm'
             }`}
         >
-          {isDeleted ? 'This message was deleted' : message.content}
+          {isDeleted ? 'This message was deleted' : (
+            <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+            >
+              {message.content}
+            </ReactMarkdown>
+          )}
         </div>
 
         {/* Timestamp */}
@@ -69,28 +83,33 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
         </span>
 
         {/* Delete options — shown on hover, hidden for deleted messages */}
-        {showOptions && !isDeleted && (
-          <div
-            className={`absolute -top-2 z-10 ${isOwn ? 'right-0' : 'left-0'} flex items-center gap-1 rounded-md border border-gray-200 bg-white/95 p-0.5 shadow-md backdrop-blur`}
-          >
-            <button
-              onClick={() => deleteMe.mutate(message.id)}
-              className="h-auto! min-h-0! whitespace-nowrap rounded-md border border-gray-200 px-2! py-0.5! text-[11px]! leading-4! font-medium text-gray-600 transition-colors bg-white! hover:bg-red-50 hover:text-red-600"
+        <AnimatePresence>
+          {showOptions && !isDeleted && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 5 }}
+              className={`absolute -top-4 z-10 ${isOwn ? 'right-0' : 'left-0'} flex items-center gap-1 rounded-md border border-gray-200 bg-white/95 p-0.5 shadow-md backdrop-blur`}
             >
-              Delete for me
-            </button>
-            {/* Delete for everyone — own messages always, any message if admin */}
-            {(isOwn || isAdmin) && (
               <button
-                onClick={() => deleteEveryone.mutate(message.id)}
-                className="h-auto! min-h-0! whitespace-nowrap rounded-md px-2! py-0.5! text-[11px]! leading-4! font-semibold text-white! transition-colors bg-red-500! hover:bg-red-600"
+                onClick={() => deleteMe.mutate(message.id)}
+                className="cursor-pointer h-auto! min-h-0! whitespace-nowrap rounded-md border border-gray-200 px-2! py-0.5! text-[11px]! leading-4! font-medium text-gray-600 transition-colors bg-white! hover:bg-red-50 hover:text-red-600"
               >
-                Delete for all
+                Delete for me
               </button>
-            )}
-          </div>
-        )}
+              {/* Delete for everyone — own messages always, any message if admin */}
+              {(isOwn || isAdmin) && (
+                <button
+                  onClick={() => deleteEveryone.mutate(message.id)}
+                  className="cursor-pointer h-auto! min-h-0! whitespace-nowrap rounded-md px-2! py-0.5! text-[11px]! leading-4! font-semibold text-white! transition-colors bg-red-500! hover:bg-red-600"
+                >
+                  Delete for all
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };

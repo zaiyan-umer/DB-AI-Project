@@ -71,6 +71,19 @@ export const getFilesByCourse = async (courseId: string, userId: string) => {
         .where(and(eq(courseFiles.courseId, courseId), eq(courseFiles.userId, userId)))
 }
 
+export const getFileByCourse = async (fileId: string, courseId: string, userId: string) => {
+    return db
+        .select()
+        .from(courseFiles)
+        .where(
+            and(
+                eq(courseFiles.id, fileId),
+                eq(courseFiles.courseId, courseId),
+                eq(courseFiles.userId, userId)
+            )
+        )
+}
+
 export const getFileById = async (fileId: string, userId: string) => {
     const [file] = await db
         .select()

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useSearchGroups, useCreateGroup, useJoinGroup, useLeaveGroup, useDeleteGroup } from '../../hooks/useGroup';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -97,7 +98,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
         <h2 className="font-semibold text-gray-800">Chats</h2>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="text-green-500 hover:text-green-600 text-xl font-light"
+          className="text-green-500 hover:text-green-600 text-xl font-light cursor-pointer"
           title="Create group"
         >
           +
@@ -105,23 +106,33 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
       </div>
 
       {/* Create group input */}
-      {showCreate && (
-        <div className="px-4 py-2 border-b flex gap-2">
-          <input
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            placeholder="Group name..."
-            className="flex-1 text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
-          <button
-            onClick={handleCreate}
-            disabled={createGroup.isPending}
-            className="text-sm bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 disabled:opacity-50"
+      <AnimatePresence>
+        {showCreate && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden border-b"
           >
-            Create
-          </button>
-        </div>
-      )}
+            <div className="px-4 py-2 flex gap-2">
+              <input
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Group name..."
+                className="flex-1 text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <button
+                onClick={handleCreate}
+                disabled={createGroup.isPending}
+                className="cursor-pointer text-sm bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600 disabled:opacity-50"
+              >
+                Create
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Search */}
       <div className="px-4 py-2 border-b">
@@ -173,7 +184,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
           <div key={group.id} className="relative group/item">
             <button
               onClick={() => onSelectGroup(group)}
-              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors bg-white! ${activeGroupId === group.id ? 'bg-green-50 border-r-2 border-green-500' : ''
+              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${activeGroupId === group.id ? 'bg-green-50 border-r-2 border-green-500' : ''
                 }`}
             >
               <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
@@ -187,7 +198,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
               <button
                 onClick={(e) => handleDelete(e, group)}
                 disabled={deleteGroup.isPending}
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 text-xs text-red-500 hover:text-red-700 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 text-xs text-red-500 hover:text-red-700 transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Delete
               </button>

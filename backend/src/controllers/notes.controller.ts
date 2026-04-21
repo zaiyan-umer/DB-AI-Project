@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
-import { getCoursesByUser, getCourseById, insertCourse, removeCourse, updateCourse, getCourseCounts, getFilesByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, replaceFlashcardContent, insertFlashcardSession, completeFlashcardSession, getMcqsByCourse, getMcqById, insertMcq, replaceMcqContent, insertMcqAttempt,} from '../services/dal/notes.dal'
+import { getCoursesByUser, getCourseById, insertCourse, removeCourse, updateCourse, getCourseCounts, getFilesByCourse, getFileByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, replaceFlashcardContent, insertFlashcardSession, completeFlashcardSession, getMcqsByCourse, getMcqById, insertMcq, replaceMcqContent, insertMcqAttempt,} from '../services/dal/notes.dal'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -119,7 +119,29 @@ export const getFiles = async (req: Request, res: Response) => {
     }
 }
 
+export const getFile = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const courseId = req.params.courseId as string
+        const fileId = req.params.fileId as string
+
+        const course = await getCourseById(courseId, userId)
+        if (!course) return res.status(404).json({ message: 'Course not found' })
+
+        const [file] = await getFileByCourse(fileId, courseId, userId)
+        if (!file) return res.status(404).json({ message: 'File not found' })
+
+        return res.status(200).json(file)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to fetch file' })
+    }
+}
+
 export const uploadFile = async (req: Request, res: Response) => {
+    const multerFile = (req as any).file
+    if (!multerFile) return res.status(400).json({ message: 'No file uploaded' })
+        
     try {
         const userId = req.user!.id
         const courseId = req.params.courseId as string
@@ -127,8 +149,6 @@ export const uploadFile = async (req: Request, res: Response) => {
         const course = await getCourseById(courseId, userId)
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
-        const multerFile = (req as any).file
-        if (!multerFile) return res.status(400).json({ message: 'No file uploaded' })
 
         const file = await insertFile({
             courseId,
@@ -142,6 +162,7 @@ export const uploadFile = async (req: Request, res: Response) => {
         return res.status(201).json(file)
     } catch (err) {
         console.error(err)
+        fs.unlinkSync(path.join(process.cwd(), 'uploads', multerFile.filename))
         return res.status(500).json({ message: 'Failed to upload file' })
     }
 }
@@ -161,6 +182,31 @@ export const downloadFile = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to download file' })
+    }
+}
+
+export const previewFile = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id
+        const fileId = req.params.fileId as string
+
+        const file = await getFileById(fileId, userId)
+        if (!file) return res.status(404).json({ message: 'File not found' })
+
+        if (file.mimeType !== 'application/pdf') {
+            return res.status(400).json({ message: 'Preview is only available for PDF files' })
+        }
+
+        const fullPath = path.join(process.cwd(), file.storagePath)
+        if (!fs.existsSync(fullPath)) return res.status(404).json({ message: 'File missing from storage' })
+
+        res.setHeader('Content-Type', 'application/pdf')
+        res.setHeader('Content-Disposition', `inline; filename="${file.originalName}"`)
+
+        return res.sendFile(fullPath)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to preview file' })
     }
 }
 

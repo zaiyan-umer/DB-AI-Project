@@ -32,9 +32,8 @@ export const useGroupSocket = (groupId: string | null) => {
     // Join the room
     socket.emit('join_group', groupId);
 
-    // ─── New Message ──────────────────────────────────────────────────────
+    // New Message
     // Instead of invalidating and refetching, append directly to cache
-    // This is what makes it feel instant — no round trip to server
     socket.on('new_message', (message: Message) => {
       queryClient.setQueryData(
         ['messages', groupId],
@@ -55,7 +54,7 @@ export const useGroupSocket = (groupId: string | null) => {
       );
     });
 
-    // ─── Message Deleted For Everyone ─────────────────────────────────────
+    // Message Deleted For Everyone
     // Find the message in cache and mark it as deleted
     socket.on('message_deleted', ({ messageId }: { messageId: string; groupId: string }) => {
       queryClient.setQueryData(
@@ -77,9 +76,16 @@ export const useGroupSocket = (groupId: string | null) => {
       );
     });
 
-    // ─── Online Count ─────────────────────────────────────────────────────
+    // Online Count
     socket.on('online_count', ({ count }: { groupId: string; count: number }) => {
       queryClient.setQueryData(['online_count', groupId], count);
+    });
+
+    // AI Typing State
+    socket.on('ai_typing', ({ groupId: eventGroupId, isTyping }: { groupId: string; isTyping: boolean }) => {
+      if (eventGroupId === groupId) {
+        queryClient.setQueryData(['ai_typing', groupId], isTyping);
+      }
     });
 
     return () => {
@@ -88,6 +94,7 @@ export const useGroupSocket = (groupId: string | null) => {
       socket.off('new_message');
       socket.off('message_deleted');
       socket.off('online_count');
+      socket.off('ai_typing');
     };
   }, [groupId, userId]);
 };
