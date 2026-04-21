@@ -1,8 +1,10 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from 'zod';
 import groups from "./group.schema";
 import users from "./user.schema";
+
+export const senderTypeEnum = pgEnum("sender_type", ["user", "ai"]);
 
 export const messages = pgTable("messages", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -10,8 +12,8 @@ export const messages = pgTable("messages", {
         .notNull()
         .references(() => groups.id, { onDelete: "cascade" }),
     userId: uuid("user_id")
-        .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
+    senderType: senderTypeEnum("sender_type").notNull(),
     content: text("content").notNull(),
     deletedAt: timestamp("deleted_at"), // null = not deleted, set = soft deleted for everyone (admin)
     createdAt: timestamp("created_at").defaultNow(),
