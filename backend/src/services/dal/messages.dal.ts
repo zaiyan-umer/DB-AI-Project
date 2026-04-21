@@ -16,12 +16,18 @@ export const checkGroupMembership = async (groupId: string, userId: string) => {
         .limit(1);
 }
 
-export const addNewMessage = async (groupId: string, userId: string, content: string) => {
+export const addNewMessage = async (
+  groupId: string, 
+  userId: string | null, 
+  content: string, 
+  senderType: 'user' | 'ai' = 'user'
+) => {
     return await db
         .insert(messages)
-        .values({ groupId, userId, content })
+        .values({ groupId, userId, content, senderType })
         .returning();
 }
+
 
 export const getMessageByIdWithSender = async (messageId: string) => {
     return await db
