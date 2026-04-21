@@ -3,7 +3,7 @@ import { Server } from 'socket.io';
 import { db } from '../../db/connection';
 import { groupMembers } from '../../db/schema/groupMember.schema';
 import { AuthenticatedSocket } from '../../socket';
-import { addUser, getOnlineCount, removeUser } from '../../socket/store/onlineUsers';
+import { addUser, getOnlineCount, onlineUsers, removeUser } from '../../socket/store/onlineUsers';
 
 export const registerPresenceHandlers = (
   io: Server,
@@ -62,16 +62,12 @@ export const registerPresenceHandlers = (
   // Fires automatically when socket connection drops
   // We need to remove the user from ALL rooms they were in
   socket.on('disconnect', () => {
-    // socket.rooms is empty by disconnect time — we track rooms manually
-    // Get all rooms this socket was in via socket.io's internal rooms
-    const rooms = Array.from(socket.rooms);
-
-    rooms.forEach((groupId) => {
-      removeUser(groupId, userId);
-      io.to(groupId).emit('online_count', {
-        groupId,
-        count: getOnlineCount(groupId),
-      });
-    });
+    // Loop through all groups, remove this user wherever they appear
+    for (const [groupId, users] of onlineUsers.entries()) {
+      if (users.has(userId)) {
+        users.delete(userId);
+        io.to(groupId).emit('online_count', { groupId, count: users.size });
+      }
+    }
   });
 };

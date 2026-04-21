@@ -18,6 +18,7 @@ export interface AuthenticatedSocket extends Socket {
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
+      // Need to change this in prod
       origin: 'http://localhost:5173',
       credentials: true,
     },
