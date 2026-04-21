@@ -81,12 +81,20 @@ export const useGroupSocket = (groupId: string | null) => {
       queryClient.setQueryData(['online_count', groupId], count);
     });
 
+    // AI Typing State
+    socket.on('ai_typing', ({ groupId: eventGroupId, isTyping }: { groupId: string; isTyping: boolean }) => {
+      if (eventGroupId === groupId) {
+        queryClient.setQueryData(['ai_typing', groupId], isTyping);
+      }
+    });
+
     return () => {
       // Leave room when user navigates away
       socket.emit('leave_group', groupId);
       socket.off('new_message');
       socket.off('message_deleted');
       socket.off('online_count');
+      socket.off('ai_typing');
     };
   }, [groupId, userId]);
 };

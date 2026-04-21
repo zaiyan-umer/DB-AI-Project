@@ -15,8 +15,17 @@ export interface AuthenticatedSocket extends Socket {
   };
 }
 
+export let io: Server;
+
+export const getIO = () => {
+  if (!io) {
+    throw new Error('Socket.io not initialized!');
+  }
+  return io;
+};
+
 export const initSocket = (httpServer: HttpServer) => {
-  const io = new Server(httpServer, {
+  io = new Server(httpServer, {
     cors: {
       // Need to change this in prod
       origin: 'http://localhost:5173',

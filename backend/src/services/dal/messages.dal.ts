@@ -37,6 +37,7 @@ export const getMessageByIdWithSender = async (messageId: string) => {
             content: messages.content,
             createdAt: messages.createdAt,
             deletedAt: messages.deletedAt,
+            senderType: messages.senderType,
             sender: {
                 id: users.id,
                 username: users.username,
@@ -45,7 +46,7 @@ export const getMessageByIdWithSender = async (messageId: string) => {
             },
         })
         .from(messages)
-        .innerJoin(users, eq(messages.userId, users.id))
+        .leftJoin(users, eq(messages.userId, users.id))
         .where(eq(messages.id, messageId))
         .limit(1);
 }
@@ -57,6 +58,7 @@ export const fetchMessages = async (groupId: string, userId: string, cursor: str
             content: messages.content,
             createdAt: messages.createdAt,
             deletedAt: messages.deletedAt, // non-null = deleted for everyone
+            senderType: messages.senderType,
             sender: {
                 id: users.id,
                 username: users.username,
@@ -65,7 +67,7 @@ export const fetchMessages = async (groupId: string, userId: string, cursor: str
             },
         })
         .from(messages)
-        .innerJoin(users, eq(messages.userId, users.id))
+        .leftJoin(users, eq(messages.userId, users.id))
         // Exclude messages this user deleted for themselves
         .where(
             and(

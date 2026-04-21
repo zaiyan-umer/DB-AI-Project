@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMessages, useSendMessage } from '../../hooks/useMessages';
 import { MessageItem } from './MessageItem';
+import { useAITyping } from '../../hooks/useAITyping';
+import { Bot } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
   groupId: string;
@@ -18,14 +21,15 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
     useMessages(groupId);
 
   const sendMessage = useSendMessage(groupId);
+  const isAITyping = useAITyping(groupId);
 
   // Flatten all pages into a single message array
   const allMessages = data?.pages.flatMap((page) => page.messages) ?? [];
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages or when AI starts typing
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [allMessages.length]);
+  }, [allMessages.length, isAITyping]);
 
   const handleSend = () => {
     const trimmed = input.trim();
@@ -86,6 +90,26 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
             isAdmin={isAdmin}
           />
         ))}
+
+        <AnimatePresence>
+          {isAITyping && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="flex justify-start mb-2"
+            >
+              <div className="relative max-w-xs lg:max-w-md items-start flex flex-col">
+                <span className="text-xs text-gray-500 mb-1 ml-1"><Bot size={22}/></span>
+                <div className="bg-white text-gray-800 border rounded-2xl px-3 py-1 shadow-sm rounded-bl-sm flex gap-1 items-center h-8">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div ref={bottomRef} />
       </div>
