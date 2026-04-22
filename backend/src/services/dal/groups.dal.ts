@@ -28,6 +28,7 @@ export const getGroupById = async (groupId: string) => {
         .limit(1);
 }
 
+// transaction
 export const createGroupAndSetAdmin = async (name: string, userId: string) => {
     return await db.transaction(async (tx) => {
         const [group] = await tx

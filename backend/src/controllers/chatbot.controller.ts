@@ -1,22 +1,15 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Request, Response } from "express";
-import env from "../config/env";
+import { getGeminiModel } from '../config/gemini';
 import { getPreviousMessages, saveChatbotMessage } from "../services/dal/chatbot.dal";
 import { getMyGroupsFromDB } from "../services/dal/groups.dal";
 import { getCoursesByUser } from "../services/dal/notes.dal";
 import { AIMessageType, SAMPLE_CONVERSATION, STATIC_PROMPT, withRetry } from '../utils/ai-chatbot';
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
-
-
 const generateAIResponseStream = async function* (
-    systemPrompt: string, 
+    systemPrompt: string,
     messages: AIMessageType[]
 ): AsyncGenerator<string> {
-    const model = genAI.getGenerativeModel({
-        model: env.GEMINI_MODEL,
-        systemInstruction: systemPrompt,
-    })
+    const model = getGeminiModel(systemPrompt);
 
     const history = messages.slice(0, -1).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',

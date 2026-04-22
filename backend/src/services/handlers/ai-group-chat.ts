@@ -1,9 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getGeminiModel } from "../../config/gemini";
+import { getIO } from "../../socket";
 import { AIMessageType, SAMPLE_CONVERSATION, STATIC_PROMPT, withRetry } from "../../utils/ai-chatbot";
 import { getGroupById } from "../dal/groups.dal";
-import env from "../../config/env";
 import { addNewMessage } from "../dal/messages.dal";
-import { getIO } from "../../socket";
 
 export const aiChatHandler = async (groupId: string, content: string) => {
     try {
@@ -48,13 +47,8 @@ export const aiChatHandler = async (groupId: string, content: string) => {
 }
 
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
-
 const generateAIChatResponse = async (messages: AIMessageType[], prompt: string) => {
-    const model = genAI.getGenerativeModel({
-        model: env.GEMINI_MODEL,
-        systemInstruction: prompt,
-    })
+    const model = getGeminiModel(prompt);
 
     const history = messages.slice(0, -1).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
