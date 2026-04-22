@@ -1,6 +1,6 @@
-import { getGeminiModel } from "../../config/gemini";
 import { getIO } from "../../socket";
-import { AIMessageType, SAMPLE_CONVERSATION, STATIC_PROMPT, withRetry } from "../../utils/ai-chatbot";
+import { AIMessageType, initializeChatSession, SAMPLE_CONVERSATION, withRetry } from "../../utils/ai-chatbot.utils";
+import { STATIC_PROMPT } from "../../utils/data";
 import { getGroupById } from "../dal/groups.dal";
 import { addNewMessage } from "../dal/messages.dal";
 
@@ -20,12 +20,12 @@ export const aiChatHandler = async (groupId: string, content: string) => {
 
         const response = await withRetry(() => generateAIChatResponse(messages, prompt));
 
-        
+
         const [savedMessage] = await addNewMessage(groupId, null, response, 'ai');
-        
+
         // console.log("AI RESPONSE: ", response);
         // console.log("SAVED: ", savedMessage);
-        
+
         const messagePayload = {
             id: savedMessage.id,
             groupId: savedMessage.groupId,
@@ -48,15 +48,7 @@ export const aiChatHandler = async (groupId: string, content: string) => {
 
 
 const generateAIChatResponse = async (messages: AIMessageType[], prompt: string) => {
-    const model = getGeminiModel(prompt);
-
-    const history = messages.slice(0, -1).map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
-    }))
-
-    const lastMessage = messages[messages.length - 1].content
-    const chat = model.startChat({ history })
+    const [chat, lastMessage] = initializeChatSession(prompt, messages)
 
     const result = await chat.sendMessage(lastMessage)
     return result.response.text()
