@@ -1,8 +1,16 @@
 import { NextFunction, Request, Response } from "express";
 
-const activeLimits = new Map<string, number>();
+const BUCKET_CAPACITY = 3;       // max tokens a user can hold
+const REFILL_RATE_MS = 10000;    // 1 token refilled every 10 seconds
 
-export const aiRateLimiter = async (req: Request, res: Response, next: NextFunction) => {
+interface BucketState {
+  tokens: number;
+  lastRefill: number;
+}
+
+const buckets = new Map<string, BucketState>();
+
+export const aiRateLimiter = (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user?.id;
 
   if (!userId) {
@@ -10,25 +18,45 @@ export const aiRateLimiter = async (req: Request, res: Response, next: NextFunct
   }
 
   const now = Date.now();
-  if (activeLimits.has(userId)) {
-    const lastRequestTime = activeLimits.get(userId)!;
-    if (now - lastRequestTime < 5000) {
-      return res.status(429).json({
-        message: "Too many requests. Please wait 5 seconds before making another AI request."
-      });
-    }
+
+  // get or initialise bucket for this user
+  const bucket = buckets.get(userId) ?? { tokens: BUCKET_CAPACITY, lastRefill: now };
+
+  // calculate how many tokens have refilled since last request
+  const elapsed = now - bucket.lastRefill;
+  const refillAmount = Math.floor(elapsed / REFILL_RATE_MS);
+
+  if (refillAmount > 0) {
+    bucket.tokens = Math.min(BUCKET_CAPACITY, bucket.tokens + refillAmount);
+    bucket.lastRefill = now;
   }
 
-  activeLimits.set(userId, now);
-  return next();
-}
+  // reject if empty
+  if (bucket.tokens <= 0) {
+    const msUntilNextToken = REFILL_RATE_MS - (elapsed % REFILL_RATE_MS);
+    const secondsUntilNextToken = Math.ceil(msUntilNextToken / 1000);
 
-// periodically sweep entries older than 5 seconds to prevent memory leak
+    return res.status(429).json({
+      message: `You're sending requests too fast. Try again in ${secondsUntilNextToken}s.`
+    });
+  }
+
+  // consume one token and save
+  bucket.tokens -= 1;
+  buckets.set(userId, bucket);
+
+  return next();
+};
+
+// sweep buckets that are full and untouched
 setInterval(() => {
   const now = Date.now();
-  for (const [userId, timestamp] of activeLimits.entries()) {
-    if (now - timestamp > 5000) {
-      activeLimits.delete(userId);
+  for (const [userId, bucket] of buckets.entries()) {
+    const elapsed = now - bucket.lastRefill;
+    const refillAmount = Math.floor(elapsed / REFILL_RATE_MS);
+    const currentTokens = Math.min(BUCKET_CAPACITY, bucket.tokens + refillAmount);
+    if (currentTokens >= BUCKET_CAPACITY) {
+      buckets.delete(userId);
     }
   }
-}, 5000); // run every 5s
+}, 60 * 1000);
