@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { addNewMessage, checkAdminAuthority, checkGroupMembership, checkIfAlreadyDeleted, checkMessageDeletionAuthority, checkMessageExists, deleteMessageForEveryone, deleteMsgForMe, fetchMessages, filterDeletedMessages, getMessageByIdWithSender } from "../services/dal/messages.dal";
+import { aiChatHandler } from "../services/handlers/ai-group-chat";
 
 export const sendMessage = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -17,7 +18,14 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     const [message] = await getMessageByIdWithSender(createdMessage.id)
 
-    return res.status(201).json({ message });
+    res.status(201).json({ message });
+
+    if(req.body.content?.startsWith("@ai")){
+        aiChatHandler(groupId, req.body.content.slice(3).trim())
+        .catch(console.error)
+    }
+
+    return res;
 };
 
 export const getMessages = async (req: Request, res: Response) => {
@@ -35,7 +43,7 @@ export const getMessages = async (req: Request, res: Response) => {
 
     // Fetch messages that haven't been soft-deleted for everyone
     // and haven't been personally deleted by this user
-    const rows = await fetchMessages(groupId, userId, cursor, limit)
+    const rows = await fetchMessages(groupId, limit, cursor)
 
     // Filter out messages the user personally deleted
     const userDeletions = await filterDeletedMessages(userId)

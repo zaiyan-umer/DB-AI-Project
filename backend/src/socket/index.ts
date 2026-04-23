@@ -2,8 +2,8 @@ import { Server, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
-import { registerPresenceHandlers } from '../services/handlers/presence.handler';
-import { registerMessageHandlers } from '../services/handlers/message.handler';
+import { registerPresenceHandlers } from './socket-handlers/presence.handler';
+import { registerMessageHandlers } from './socket-handlers/message.handler';
 
 // Extend Socket type to carry authenticated user
 export interface AuthenticatedSocket extends Socket {
@@ -15,9 +15,19 @@ export interface AuthenticatedSocket extends Socket {
   };
 }
 
+export let io: Server;
+
+export const getIO = () => {
+  if (!io) {
+    throw new Error('Socket.io not initialized!');
+  }
+  return io;
+};
+
 export const initSocket = (httpServer: HttpServer) => {
-  const io = new Server(httpServer, {
+  io = new Server(httpServer, {
     cors: {
+      // Need to change this in prod
       origin: 'http://localhost:5173',
       credentials: true,
     },

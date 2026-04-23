@@ -6,12 +6,13 @@ import { useCurrentUser } from "../hooks/useCurrentUser";
 export default function Dashboard() {
     const { data: user } = useCurrentUser();
     const { mutate: logout, isPending } = useLogout();
+    const displayName = user?.user ? `${user.user.firstName ?? ''} ${user.user.lastName ?? ''}`.trim() || user.user.username || 'User' : 'User'
 
     return (
-        <div className="h-screen w-screen bg-linear-to-br from-gray-50 to-gray-100">
+        <div className="h-screen w-full bg-linear-to-br from-gray-50 to-gray-100">
             {/* Navbar */}
             <nav className="bg-white border-b border-gray-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div className="w-full mx-auto px-6 py-4 flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-gray-900">StudySync AI</h1>
                     <Button 
                         onClick={() => logout()} 
@@ -25,7 +26,7 @@ export default function Dashboard() {
             </nav>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="w-full mx-auto py-12">
                 <div className="bg-white rounded-lg shadow-md p-8">
                     <div className="flex items-center gap-4 mb-8">
                         <div className="w-16 h-16 bg-linear-to-br from-[#667eea] to-[#764ba2] rounded-full flex items-center justify-center">
@@ -33,7 +34,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                             <h2 className="text-3xl font-bold text-gray-900">
-                                Welcome, {user?.firstName || user?.username}!
+                                Welcome, {displayName}!
                             </h2>
                             <p className="text-gray-600">{user?.email}</p>
                         </div>
@@ -45,15 +46,15 @@ export default function Dashboard() {
                             <dl className="space-y-2 text-sm">
                                 <div>
                                     <dt className="font-medium text-gray-700">ID</dt>
-                                    <dd className="text-gray-600">{user?.id}</dd>
+                                    <dd className="text-gray-600">{user?.user?.id}</dd>
                                 </div>
                                 <div>
                                     <dt className="font-medium text-gray-700">Email</dt>
-                                    <dd className="text-gray-600">{user?.email}</dd>
+                                    <dd className="text-gray-600">{user?.user?.email}</dd>
                                 </div>
                                 <div>
                                     <dt className="font-medium text-gray-700">Username</dt>
-                                    <dd className="text-gray-600">{user?.username || "Not set"}</dd>
+                                    <dd className="text-gray-600">{user?.user?.username || "No Username"}</dd>
                                 </div>
                             </dl>
                         </div>

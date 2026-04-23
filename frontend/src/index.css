@@ -9,7 +9,7 @@
 
 @import "tailwindcss";
 
-/* ── Light theme (default) ────────────────────────────────────────────────── */
+/* Light theme (default) */
 :root {
   --bg-page:        #f9fafb;
   --bg-surface:     #ffffff;
@@ -27,25 +27,28 @@
   color-scheme: light;
 }
 
-/* ── Dark theme ───────────────────────────────────────────────────────────── */
+/* Dark theme */
 .dark {
-  --bg-page:        #0f1117;
-  --bg-surface:     #1a1d27;
-  --bg-subtle:      #252836;
-  --bg-muted:       #2e3347;
+  --bg-page:        #0B0B0B;
+  --bg-surface:     #141414;
+  --bg-subtle:      #1A1A1A;
+  --bg-muted:       #262626;
 
   --text-primary:   #f9fafb;
   --text-secondary: #e5e7eb;
   --text-muted:     #9ca3af;
   --text-faint:     #6b7280;
 
-  --border:         #2e3347;
-  --border-strong:  #3d4357;
+  --border:         #1F1F1F;
+  --border-strong:  #333333;
+
+  --accent-muted:   #1E293B; /* muted accent for user chat bubbles */
+  --accent-hover:   #334155;
 
   color-scheme: dark;
 }
 
-/* ── Base resets ──────────────────────────────────────────────────────────── */
+/* Base resets */
 
 html, body {
   margin: 0;
@@ -79,7 +82,7 @@ body {
   min-height: 100dvh;
 }
 
-/* ── LIGHT MODE: neutralise dark: prefixed Tailwind classes ───────────────── */
+/* LIGHT MODE: neutralise dark: prefixed Tailwind classes  */
 /*
  * SettingsModal uses className="bg-white dark:bg-gray-900".
  * In light mode, the dark: classes must not apply, but Tailwind v4 may
@@ -97,7 +100,7 @@ body {
 :not(.dark) .dark\:hover\:bg-gray-800:hover { background-color: transparent !important; }
 :not(.dark) .dark\:red-950\/30      { background-color: transparent !important; }
 
-/* ── DARK MODE overrides ──────────────────────────────────────────────────── */
+/* DARK MODE overrides */
 
 /* Surface backgrounds */
 .dark .bg-white   { background-color: var(--bg-surface) !important; }

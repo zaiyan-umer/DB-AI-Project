@@ -16,6 +16,8 @@ import { useState, useRef, useEffect } from 'react'
 import { NotificationPanel } from './NotificationPanel'
 import { SettingsModal } from './SettingsModal'
 import { useTheme } from '../contexts/ThemeContext'
+import Chatbot from './Chatbot'
+import useCopilot from '@/hooks/useCopilot'
 
 interface NavItem {
     name: string
@@ -52,6 +54,8 @@ export function DashboardLayout() {
     const [showNotifications, setShowNotifications] = useState(false)
     const [showSettings, setShowSettings]           = useState(false)
     const [showUserMenu, setShowUserMenu]            = useState(false)
+    
+    const {messages, isStreaming, sendMessage, isLoadingHistory,} = useCopilot()
 
     const userMenuRef = useRef<HTMLDivElement>(null)
 
@@ -66,7 +70,7 @@ export function DashboardLayout() {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
-    const unreadCount = notifications.filter((n: any) => !n.isRead).length
+    const unreadCount = notifications.filter((n: { isRead?: boolean }) => !n.isRead).length
 
     const initials = currentUser?.user ? `${currentUser.user.firstName?.[0] ?? ''}${currentUser.user.lastName?.[0] ?? ''}`.toUpperCase() || 'U' : 'U'
 
@@ -415,7 +419,6 @@ export function DashboardLayout() {
                     minHeight: 0,
                     overflowY: 'auto',
                     overflowX: 'hidden',
-                    padding: '32px',
                     backgroundColor: pageBg,
                 }}>
                     <Outlet />
@@ -424,6 +427,12 @@ export function DashboardLayout() {
 
             {/* Settings modal */}
             <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+
+            <Chatbot
+                messages={messages}
+                isStreaming={isStreaming}
+                onSendMessage={sendMessage}
+            />
         </div>
     )
 }

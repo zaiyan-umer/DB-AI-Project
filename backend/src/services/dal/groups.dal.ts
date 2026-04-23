@@ -18,6 +18,17 @@ export const checkExistingGroupById = async (id: string) => {
         .limit(1);
 }
 
+export const getGroupById = async (groupId: string) => {
+    return await db
+        .select({ 
+            name: groups.name
+        })
+        .from(groups)
+        .where(eq(groups.id, groupId))
+        .limit(1);
+}
+
+// transaction
 export const createGroupAndSetAdmin = async (name: string, userId: string) => {
     return await db.transaction(async (tx) => {
         const [group] = await tx

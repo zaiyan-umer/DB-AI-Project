@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { AuthenticatedSocket } from '../../socket';
+import { AuthenticatedSocket } from '..';
 import { db } from '../../db/connection';
 import { messages } from '../../db/schema/messages.schema';
 import { groupMembers } from '../../db/schema/groupMember.schema';

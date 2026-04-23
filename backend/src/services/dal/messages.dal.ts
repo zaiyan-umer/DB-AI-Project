@@ -16,12 +16,18 @@ export const checkGroupMembership = async (groupId: string, userId: string) => {
         .limit(1);
 }
 
-export const addNewMessage = async (groupId: string, userId: string, content: string) => {
+export const addNewMessage = async (
+  groupId: string, 
+  userId: string | null, 
+  content: string, 
+  senderType: 'user' | 'ai' = 'user'
+) => {
     return await db
         .insert(messages)
-        .values({ groupId, userId, content })
+        .values({ groupId, userId, content, senderType })
         .returning();
 }
+
 
 export const getMessageByIdWithSender = async (messageId: string) => {
     return await db
@@ -31,6 +37,7 @@ export const getMessageByIdWithSender = async (messageId: string) => {
             content: messages.content,
             createdAt: messages.createdAt,
             deletedAt: messages.deletedAt,
+            senderType: messages.senderType,
             sender: {
                 id: users.id,
                 username: users.username,
@@ -39,18 +46,19 @@ export const getMessageByIdWithSender = async (messageId: string) => {
             },
         })
         .from(messages)
-        .innerJoin(users, eq(messages.userId, users.id))
+        .leftJoin(users, eq(messages.userId, users.id))
         .where(eq(messages.id, messageId))
         .limit(1);
 }
 
-export const fetchMessages = async (groupId: string, userId: string, cursor: string, limit: number) => {
+export const fetchMessages = async (groupId: string, limit: number, cursor?: string) => {
     return await db
         .select({
             id: messages.id,
             content: messages.content,
             createdAt: messages.createdAt,
             deletedAt: messages.deletedAt, // non-null = deleted for everyone
+            senderType: messages.senderType,
             sender: {
                 id: users.id,
                 username: users.username,
@@ -59,7 +67,7 @@ export const fetchMessages = async (groupId: string, userId: string, cursor: str
             },
         })
         .from(messages)
-        .innerJoin(users, eq(messages.userId, users.id))
+        .leftJoin(users, eq(messages.userId, users.id))
         // Exclude messages this user deleted for themselves
         .where(
             and(
