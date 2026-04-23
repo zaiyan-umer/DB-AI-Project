@@ -419,7 +419,6 @@ export function DashboardLayout() {
                     minHeight: 0,
                     overflowY: 'auto',
                     overflowX: 'hidden',
-                    padding: '32px',
                     backgroundColor: pageBg,
                 }}>
                     <Outlet />

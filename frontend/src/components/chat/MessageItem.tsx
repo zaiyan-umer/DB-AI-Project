@@ -44,24 +44,25 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3`}
     >
       <div className={`relative max-w-xs lg:max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}
         onMouseEnter={() => setShowOptions(true)}
         onMouseLeave={() => setShowOptions(false)}>
         {/* Sender name — only show for others' messages */}
         {!isOwn && (
-          <span className="text-xs text-gray-500 mb-1 ml-1">
-            {message.senderType === 'ai' ? <Bot size={22} /> : senderUsername}
+          <span className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 ml-1">
+            {message.senderType === 'ai' ? <Bot size={18} className="inline mr-1" /> : senderUsername}
           </span>
         )}
 
         <div
-          className={`px-4 py-2 rounded-2xl text-sm ${isDeleted
-            ? 'bg-gray-100 text-gray-400 italic'
+          className={`px-4 py-2.5 rounded-lg text-sm leading-relaxed ${isDeleted
+            ? 'bg-[var(--bg-subtle)] text-[var(--text-muted)] italic border border-[var(--border)]'
             : isOwn
-              ? 'bg-green-500 text-white'
-              : 'bg-white text-gray-800 shadow-sm'
+              ? 'bg-[var(--accent-muted)] text-[var(--text-primary)] border border-[var(--border-strong)]'
+              : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border)] shadow-sm'
             }`}
         >
           {isDeleted ? 'This message was deleted' : (
@@ -81,7 +82,7 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
         </div>
 
         {/* Timestamp */}
-        <span className="text-xs text-gray-400 mt-1 mx-1">
+        <span className="text-[10px] font-medium tracking-wide text-[var(--text-faint)] mt-1.5 mx-1">
           {new Date(message.createdAt).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
@@ -95,11 +96,12 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className={`absolute -top-4 z-10 ${isOwn ? 'right-0' : 'left-0'} flex items-center gap-1 rounded-md border border-gray-200 bg-white/95 p-0.5 shadow-md backdrop-blur`}
+              transition={{ duration: 0.15 }}
+              className={`absolute -top-6 z-10 ${isOwn ? 'right-0' : 'left-0'} flex items-center gap-1 rounded-md border border-[var(--border-strong)] bg-[var(--bg-surface)] p-1 shadow-md`}
             >
               <button
                 onClick={() => deleteMe.mutate(message.id)}
-                className="cursor-pointer h-auto! min-h-0! whitespace-nowrap rounded-md border border-gray-200 px-2! py-0.5! text-[11px]! leading-4! font-medium text-gray-600 transition-colors bg-white! hover:bg-red-50 hover:text-red-600"
+                className="cursor-pointer h-auto! min-h-0! whitespace-nowrap rounded-md px-2.5! py-1! text-[11px]! font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
               >
                 Delete for me
               </button>
@@ -107,7 +109,7 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
               {(isOwn || isAdmin) && (
                 <button
                   onClick={() => deleteEveryone.mutate(message.id)}
-                  className="cursor-pointer h-auto! min-h-0! whitespace-nowrap rounded-md px-2! py-0.5! text-[11px]! leading-4! font-semibold text-white! transition-colors bg-red-500! hover:bg-red-600"
+                  className="cursor-pointer h-auto! min-h-0! whitespace-nowrap rounded-md px-2.5! py-1! text-[11px]! font-medium text-red-200 transition-colors bg-red-900/40 hover:bg-red-900 hover:text-white"
                 >
                   Delete for all
                 </button>

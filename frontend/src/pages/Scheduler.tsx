@@ -339,7 +339,7 @@ export default function SchedulerPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-12">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-1">Scheduler</h1>
         <p className="text-gray-500">Manage your deadlines and study schedule</p>

@@ -69,34 +69,34 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-400">
+      <div className="flex-1 flex items-center justify-center text-[var(--text-faint)]">
         Loading messages...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[var(--bg-page)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b bg-white flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold text-sm">
+      <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-surface)] flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-[var(--text-primary)] flex items-center justify-center text-[var(--bg-page)] font-semibold text-sm">
           {groupName[0].toUpperCase()}
         </div>
         <div className="flex flex-col">
-          <span className="font-medium text-gray-800">{groupName}</span>
-          <span className="text-xs text-green-500">{onlineCount} online</span>
+          <span className="font-medium text-[var(--text-primary)]">{groupName}</span>
+          <span className="text-xs text-[var(--text-muted)] font-medium">{onlineCount} online</span>
         </div>
       </div>
 
       {/* Messages */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 bg-gray-50">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 bg-[var(--bg-page)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Load more */}
         {hasNextPage && (
           <div className="flex justify-center mb-4">
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="text-xs text-gray-500 hover:text-gray-700 bg-white border rounded-full px-3 py-1 shadow-sm"
+              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-surface)] border border-[var(--border)] rounded-full px-4 py-1.5 shadow-sm transition-colors cursor-pointer"
             >
               {isFetchingNextPage ? 'Loading...' : 'Load older messages'}
             </button>
@@ -123,11 +123,11 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
               className="flex justify-start mb-2"
             >
               <div className="relative max-w-xs lg:max-w-md items-start flex flex-col">
-                <span className="text-xs text-gray-500 mb-1 ml-1"><Bot size={22} /></span>
-                <div className="bg-white text-gray-800 border rounded-2xl px-3 py-1 shadow-sm rounded-bl-sm flex gap-1 items-center h-8">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                <span className="text-xs font-medium text-[var(--text-faint)] mb-1 ml-1"><Bot size={22} /></span>
+                <div className="bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border)] rounded-lg px-3 py-1 shadow-sm flex gap-1 items-center h-8">
+                  <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                 </div>
               </div>
             </motion.div>
@@ -138,22 +138,22 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t bg-white flex gap-2 items-end">
+      <div className="px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-surface)] flex gap-2 items-end">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message or type @ai help"
           rows={1}
-          className={`flex-1 resize-none border rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 transition-colors ${input.startsWith('@ai')
-            ? 'bg-blue-50 border-blue-400 text-blue-900 focus:ring-blue-400 placeholder:text-blue-400/70'
-            : 'bg-white border-gray-200 text-gray-900 focus:ring-green-400'
+          className={`flex-1 resize-none rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-colors ${input.startsWith('@ai')
+            ? 'bg-[var(--accent-muted)] border border-[var(--border-strong)] text-[var(--text-primary)] focus:ring-[var(--border-strong)] placeholder:text-[var(--text-faint)]'
+            : 'bg-[var(--bg-subtle)] border border-[var(--border)] text-[var(--text-primary)] focus:ring-[var(--border-strong)] placeholder-[var(--text-faint)]'
             }`}
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || sendMessage.isPending}
-          className="cursor-pointer bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-full px-4 py-2 text-sm font-medium"
+          className="cursor-pointer bg-[var(--text-primary)] hover:bg-[var(--text-secondary)] hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100 text-[var(--bg-page)] rounded-lg px-5 py-2.5 text-sm font-medium"
         >
           Send
         </button>
