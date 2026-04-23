@@ -8,7 +8,6 @@ import { useSocket } from '@/hooks/useSocket';
 import { useGroupSocket } from '@/hooks/useGroupSocket';
 import { useOnlineCount } from '@/hooks/useOnlineCount';
 
-
 interface Group {
     id: string;
     name: string;
@@ -34,7 +33,7 @@ export const ChatPage = () => {
     const isAdmin = activeGroup?.role === 'admin';
 
     return (
-        <div className="flex h-full bg-gray-100">
+        <div className="flex h-full bg-[var(--bg-page)] text-[var(--text-primary)] font-sans">
             <GroupSidebar
                 myGroups={my_groups}
                 activeGroupId={activeGroup?.id ?? null}
@@ -67,7 +66,7 @@ export const ChatPage = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="flex-1 flex items-center justify-center text-gray-400"
+                            className="flex-1 flex items-center justify-center text-[var(--text-faint)]"
                         >
                             Select a group to start chatting
                         </motion.div>

@@ -8,6 +8,7 @@ import {
 } from '../db/schema/messages.schema';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware';
 import { verifyToken } from '../middleware/verifyToken.middleware';
+import { aiRateLimiter } from '../middleware/ai-rate-limiter.middleware';
 
 const router = Router({ mergeParams: true });
 
@@ -17,6 +18,13 @@ router.post(
     '/',
     validateParams(groupParamsSchema),
     validateBody(sendMessageBodySchema),
+    (req, res, next) => {
+        const content = req.body?.content;
+        if (content?.startsWith('@ai')) {
+            return aiRateLimiter(req, res, next);
+        }
+        return next();
+    },
     sendMessage
 );
 

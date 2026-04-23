@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteForEveryone, deleteForMe, getMessages, sendMessage } from '../services/chat.services';
 import { getSocket } from '../socket';
+import { toast } from 'sonner';
 
 export const useMessages = (groupId: string) => {
   return useInfiniteQuery({
@@ -21,6 +22,13 @@ export const useSendMessage = (groupId: string) => {
       // No invalidateQueries — socket event handles cache update for everyone
       getSocket().emit('send_message', savedMessage);
     },
+    onError: (error: any) => {
+      if (error?.response?.status === 429) {
+        toast.error("Please wait 5 seconds before sending another message.");
+        return;
+      }
+      toast.error(error?.message || "Something went wrong");
+    }
   });
 };
 

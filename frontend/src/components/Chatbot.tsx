@@ -52,64 +52,64 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-20 right-6 z-50">
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
                         key="chatbot-panel"
-                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 15 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{
-                            opacity: { duration: 0.2, ease: 'easeOut' },
-                            scale: { type: 'spring', stiffness: 320, damping: 30, mass: 0.8 },
-                            y: { type: 'spring', stiffness: 320, damping: 30, mass: 0.8 },
+                            opacity: { duration: 0.25, ease: 'easeOut' },
+                            scale: { type: 'spring', stiffness: 300, damping: 25 },
+                            y: { type: 'spring', stiffness: 300, damping: 25 },
                         }}
                         style={{ transformOrigin: 'bottom right' }}
-                        className="mb-3 flex h-125 w-90 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                        className="mb-3 flex h-[500px] w-90 flex-col overflow-hidden rounded-2xl bg-[#0B0B0B]/80 backdrop-blur-[12px] border border-[#ffffff10] shadow-2xl"
                     >
-                        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                        <div className="flex items-center justify-between border-b border-[#1F1F1F] px-4 py-3">
                             <div className="flex items-center gap-2">
-                                <div className="grid h-8 w-8 place-items-center rounded-full bg-indigo-600 text-white">
-                                    <Bot size={16} />
+                                <div className="grid h-7 w-7 place-items-center rounded-full bg-[#1F1F1F] text-white/80 border border-[#ffffff10]">
+                                    <Bot size={14} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-white">StudySync AI</p>
+                                    <p className="text-sm font-medium text-white/90">StudySync AI</p>
                                 </div>
                             </div>
 
                             <button
                                 type="button"
                                 onClick={() => setIsOpen(false)}
-                                className="rounded-md p-1.5 cursor-pointer text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 duration-300"
+                                className="rounded-md p-1.5 cursor-pointer text-white/40 transition hover:bg-white/10 hover:text-white/90 duration-300"
                                 aria-label="Close chatbot"
                             >
                                 <X size={16} />
                             </button>
                         </div>
 
-                        <div className="flex-1 space-y-3 overflow-y-auto bg-white p-4">
+                        <div className="flex-1 space-y-4 overflow-y-auto p-4 [&::-webkit-scrollbar]:w-[2px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#ffffff20] [&::-webkit-scrollbar-thumb]:rounded-full">
                             {messages.map((message) => {
                                 const isUser = message.role === 'user'
 
                                 return (
                                     <motion.div
                                         key={message.id}
-                                        initial={{ opacity: 0, y: 8 }}
+                                        initial={{ opacity: 0, y: 5 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.2, ease: 'easeOut' }}
                                         className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
                                     >
                                         <div
-                                            className={`max-w-[80%] px-3 py-2 text-sm rounded-2xl ${isUser
-                                                ? 'rounded-br-md bg-indigo-600 text-white'
-                                                : 'rounded-bl-md bg-slate-100 text-slate-800'
+                                            className={`max-w-[85%] px-3.5 py-2.5 text-[13px] leading-relaxed rounded-2xl border ${isUser
+                                                ? 'rounded-br-sm bg-[#1A1A1A] text-white/90 border-[#ffffff10]'
+                                                : 'rounded-bl-sm bg-[#0B0B0B] text-white/80 border-[#1F1F1F] shadow-sm'
                                                 }`}
                                         >
                                             {isUser ? (
                                                 <span className="whitespace-pre-wrap wrap-break-word">{message.content}</span>
                                             ) : (
-                                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                <div className="prose prose-sm prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
                                                     <ReactMarkdown
                                                         remarkPlugins={[remarkMath]}
                                                         rehypePlugins={[rehypeKatex]}
@@ -125,17 +125,17 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
 
                             {shouldShowTyping && (
                                 <div className="flex justify-start">
-                                    <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-slate-100 px-3 py-2">
+                                    <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-sm bg-[#0B0B0B] border border-[#1F1F1F] px-4 py-3">
                                         {[0, 1, 2].map((index) => (
                                             <motion.span
                                                 key={index}
-                                                className="h-1.5 w-1.5 rounded-full bg-slate-500"
-                                                animate={{ y: [0, -4, 0] }}
+                                                className="h-1.5 w-1.5 rounded-full bg-white/40"
+                                                animate={{ opacity: [0.3, 1, 0.3] }}
                                                 transition={{
-                                                    duration: 0.8,
+                                                    duration: 1.2,
                                                     repeat: Infinity,
                                                     ease: 'easeInOut',
-                                                    delay: index * 0.15,
+                                                    delay: index * 0.2,
                                                 }}
                                             />
                                         ))}
@@ -146,8 +146,8 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
                             <div ref={endRef} />
                         </div>
 
-                        <div className="bg-white p-3">
-                            <div className="flex items-center gap-2">
+                        <div className="p-3 border-t border-[#1F1F1F] bg-[#0B0B0B]/50">
+                            <div className="flex items-center gap-2 rounded-xl bg-[#141414] border border-[#ffffff05] px-2 py-1 focus-within:border-[#ffffff20] focus-within:bg-[#1A1A1A] transition-colors">
                                 <input
                                     type="text"
                                     value={input}
@@ -160,19 +160,20 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
                                     }}
                                     placeholder="Ask StudySync AI..."
                                     disabled={isStreaming}
-                                    className="h-10 flex-1 rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                    className="h-9 flex-1 bg-transparent px-2 text-[13px] text-white/90 outline-none transition placeholder:text-white/30 disabled:cursor-not-allowed"
                                 />
 
                                 <button
                                     type="button"
                                     onClick={handleSend}
                                     disabled={isStreaming || !input.trim()}
-                                    className="inline-flex h-10 w-20 items-center justify-center gap-1 rounded-lg bg-indigo-600 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300"
+                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 disabled:cursor-not-allowed ${
+                                        input.trim() 
+                                            ? 'text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 scale-100' 
+                                            : 'text-white/20 scale-95'
+                                    }`}
                                 >
-                                    <span>Send</span>
-                                    <span className='flex items-center justify-center mt-1'>
-                                        <SendHorizontal size={12} />
-                                    </span>
+                                    <SendHorizontal size={14} className={input.trim() ? "translate-x-0.5" : ""} />
                                 </button>
                             </div>
                         </div>
@@ -186,7 +187,7 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
                     <button
                         type="button"
                         onClick={() => setIsOpen((prev) => !prev)}
-                        className="grid cursor-pointer h-14 w-14 place-items-center rounded-full bg-indigo-600 text-white shadow-lg transition hover:bg-indigo-500 duration-200"
+                        className="grid cursor-pointer h-14 w-14 place-items-center rounded-full bg-[#0B0B0B] border border-[#ffffff] text-white/80 shadow-2xl transition-all hover:bg-[#141414] hover:text-white hover:scale-105 duration-150 backdrop-blur-md"
                         aria-label={isOpen ? 'Close StudySync AI' : 'Open StudySync AI'}
                     >
                         <motion.span>

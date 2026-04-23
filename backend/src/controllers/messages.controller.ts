@@ -43,7 +43,7 @@ export const getMessages = async (req: Request, res: Response) => {
 
     // Fetch messages that haven't been soft-deleted for everyone
     // and haven't been personally deleted by this user
-    const rows = await fetchMessages(groupId, userId, cursor, limit)
+    const rows = await fetchMessages(groupId, limit, cursor)
 
     // Filter out messages the user personally deleted
     const userDeletions = await filterDeletedMessages(userId)

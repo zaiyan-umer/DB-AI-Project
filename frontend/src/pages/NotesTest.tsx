@@ -61,7 +61,7 @@ export default function NotesTestPage() {
 
     return (
         <>
-            <div className="space-y-8">
+            <div className="space-y-8 p-12">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>

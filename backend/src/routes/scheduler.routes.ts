@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyToken } from '../middleware/verifyToken.middleware';
-import { getEvents, createEvent, deleteEvent, getStudyPlan, saveStudyPlan, getNotifications, markRead, deleteNotification, deleteAllNotifications, getPlanLogs, savePlanLogs, deleteCourseData,} from '../controllers/auth.controller'
+import { getEvents, createEvent, deleteEvent, getStudyPlan, saveStudyPlan, getNotifications, markRead, deleteNotification, deleteAllNotifications, getPlanLogs, savePlanLogs, deleteCourseData} from '../controllers/events.controller'
 
 const router = express.Router();
 router.use(verifyToken);

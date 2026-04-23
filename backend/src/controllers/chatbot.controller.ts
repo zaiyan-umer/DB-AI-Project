@@ -1,62 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Request, Response } from "express";
-import env from "../config/env";
 import { getPreviousMessages, saveChatbotMessage } from "../services/dal/chatbot.dal";
 import { getMyGroupsFromDB } from "../services/dal/groups.dal";
 import { getCoursesByUser } from "../services/dal/notes.dal";
-import { AIMessageType, SAMPLE_CONVERSATION, STATIC_PROMPT, withRetry } from '../utils/ai-chatbot';
-
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
-
-
-const generateAIResponseStream = async function* (
-    systemPrompt: string, 
-    messages: AIMessageType[]
-): AsyncGenerator<string> {
-    const model = genAI.getGenerativeModel({
-        model: env.GEMINI_MODEL,
-        systemInstruction: systemPrompt,
-    })
-
-    const history = messages.slice(0, -1).map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
-    }))
-
-    const chat = model.startChat({ history })
-    const lastMessage = messages[messages.length - 1].content
-
-    const result = await withRetry(() => chat.sendMessageStream(lastMessage))
-
-    for await (const chunk of result.stream) {
-        const text = chunk.text()
-        if (text) yield text
-    }
-}
-
-
-type PromptUser = Pick<Express.UserPayload, 'username' | 'email'>
-type PromptCourse = { name: string }
-type PromptGroup = { name: string }
-
-function buildSystemPrompt({ user, courses, groups }: { user: PromptUser; courses: PromptCourse[]; groups: PromptGroup[] }) {
-    const now = new Date().toLocaleString()
-    const courseList = courses.map(c => c.name).join(', ')
-    const groupList = groups.map(g => g.name).join(', ')
-
-    return `
-${STATIC_PROMPT}
-
---- User Context ---
-Current date and time: ${now}
-Student name: ${user.username}
-Courses: ${courseList || 'No courses yet'}
-Study groups: ${groupList || 'No groups yet'}
-
-Use the above information to personalize your responses.
-Only refer to information explicitly listed above. Do not invent details.
-    `.trim()
-}
+import { AIMessageType, SAMPLE_CONVERSATION, streamResponseToClients } from '../utils/ai-chatbot.utils';
+import { STATIC_PROMPT } from "../utils/data";
 
 
 export async function handleChatbotMessage(req: Request, res: Response) {
@@ -87,42 +34,18 @@ export async function handleChatbotMessage(req: Request, res: Response) {
             { role: 'user', content: prompt }
         ]
 
-        // SSE headers
-        res.setHeader('Content-Type', 'text/event-stream')
-        res.setHeader('Cache-Control', 'no-cache')
-        res.setHeader('Connection', 'keep-alive')
-        res.flushHeaders()
-
-        let fullResponse = ''
-
-        for await (const chunk of generateAIResponseStream(systemPrompt, messages)) {
-            fullResponse += chunk
-            res.write(`data: ${chunk.replace(/\n/g, '\\n')}\n\n`)
-        }
+        
+        const fullResponse = await streamResponseToClients({res, systemPrompt, messages})
 
         await saveChatbotMessage(userId, 'assistant', fullResponse)
 
-        res.write('data: [DONE]\n\n')
         res.end()
 
     } catch (err: any) {
         console.error(err)
-        const isAIUnavailable = err?.status === 503 || err?.status === 429
-
-        // If headers already sent, we can't send a JSON error response
-        // so we signal the error through the stream instead
-        if (res.headersSent) {
-            res.write(`data: [ERROR] ${isAIUnavailable ? 'AI is currently busy' : 'Something went wrong'}\n\n`)
-            res.end()
-        } else {
-            res.status(isAIUnavailable ? 503 : 500).json({
-                message: isAIUnavailable
-                    ? 'AI is currently busy, please try again shortly'
-                    : 'Failed to process message'
-            })
-        }
     }
 }
+
 
 export async function getCopilotHistory(req: Request, res: Response) {
     try {
@@ -146,4 +69,28 @@ export async function getCopilotHistory(req: Request, res: Response) {
         console.error(error)
         return res.status(500).json({ message: 'Failed to fetch copilot history' })
     }
+}
+
+
+type PromptUser = Pick<Express.UserPayload, 'username' | 'email'>
+type PromptCourse = { name: string }
+type PromptGroup = { name: string }
+
+function buildSystemPrompt({ user, courses, groups }: { user: PromptUser; courses: PromptCourse[]; groups: PromptGroup[] }) {
+    const now = new Date().toLocaleString()
+    const courseList = courses.map(c => c.name).join(', ')
+    const groupList = groups.map(g => g.name).join(', ')
+
+    return `
+${STATIC_PROMPT}
+
+--- User Context ---
+Current date and time: ${now}
+Student name: ${user.username}
+Courses: ${courseList || 'No courses yet'}
+Study groups: ${groupList || 'No groups yet'}
+
+Use the above information to personalize your responses.
+Only refer to information explicitly listed above. Do not invent details.
+    `.trim()
 }
