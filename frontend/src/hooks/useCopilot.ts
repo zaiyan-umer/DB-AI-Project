@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/axios'
+import { toast } from 'sonner'
 
 export type Message = {
 	id: string | number
@@ -81,6 +82,12 @@ export const useCopilot = () => {
 				},
 				body: JSON.stringify({ content: trimmedContent }),
 			})
+
+			if (response.status === 429) {
+				toast.error('Please wait 5 seconds before sending another message.')
+				setMessages((prev) => prev.filter((msg) => msg.id !== userMessageId))
+				return
+			}
 
 			if (!response.ok || !response.body) {
 				throw new Error('Failed to start chatbot stream')
