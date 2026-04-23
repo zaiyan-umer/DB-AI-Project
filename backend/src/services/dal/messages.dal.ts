@@ -51,7 +51,7 @@ export const getMessageByIdWithSender = async (messageId: string) => {
         .limit(1);
 }
 
-export const fetchMessages = async (groupId: string, userId: string, cursor: string, limit: number) => {
+export const fetchMessages = async (groupId: string, limit: number, cursor?: string) => {
     return await db
         .select({
             id: messages.id,

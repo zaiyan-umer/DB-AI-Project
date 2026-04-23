@@ -17,3 +17,18 @@ ACCURACY:
 TONE:
 - Keep responses concise, friendly, and helpful.
 - Address the student by name when natural.`
+
+
+export const AI_HELP_MESSAGE = `I am your StudySync AI assistant! You can ask me questions about your courses, exam preparation, study strategies, and more.
+
+Here is how you can use me in this group chat:
+
+
+- **@ai help**: Shows this help message.
+
+- **@ai summarize [number]**: Summarizes the last [number] of messages in the group (maximum 20). (e.g., "@ai summarize 10")
+
+- **@ai [your question]**: Ask any general questions about academics, course topics, or study techniques. (e.g., "@ai What are good study techniques for coding?")
+
+
+I'll keep my responses concise and helpful. Just let me know what you need!`

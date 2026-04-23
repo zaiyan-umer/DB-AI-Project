@@ -68,6 +68,12 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
+              components={{
+                p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2 last:mb-0" {...props} />,
+                ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2 last:mb-0" {...props} />,
+                li: ({ node, ...props }) => <li className="mb-1 last:mb-0" {...props} />,
+              }}
             >
               {message.content}
             </ReactMarkdown>
