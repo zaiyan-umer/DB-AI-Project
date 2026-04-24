@@ -1,7 +1,7 @@
 import { and, eq, sql, lt, asc } from 'drizzle-orm'
 import db from '../../db/connection'
-import { courses, courseFiles, flashcards, mcqs, mcqAttempts, flashcardSessions } from '../../db/schema'
-import type { NewCourse, NewCourseFile, NewFlashcard, NewMcq, NewMcqAttempt, NewFlashcardSession,  } from '../../db/schema/notes.schema'
+import { courses, courseFiles, flashcards, mcqs, mcqOptions, mcqAttempts, flashcardSessions } from '../../db/schema'
+import type { NewCourse, NewCourseFile, NewFlashcard, NewMcq, NewMcqAttempt, NewFlashcardSession, Mcq, McqOption } from '../../db/schema/notes.schema'
  
 // ---- Courses --------------------------------------------------------------
 
@@ -205,31 +205,109 @@ export const getSessionsByCourse = async (courseId: string, userId: string) => {
 
 // ---- MCQs -----------------------------------------------------------------
 
+export type McqWithOptions = Mcq & {
+    options: Array<Pick<McqOption, 'id' | 'optionIndex' | 'optionText' | 'isCorrect'>>
+}
+
+type McqInput = {
+    courseId: string
+    userId: string
+    question: string
+    options: string[]
+    correctOption: number
+    explanation: string | null
+    difficulty: 'easy' | 'medium' | 'hard'
+    aiGenerated: boolean
+}
+
+const toMcqWithOptions = (
+    rows: Array<{
+        mcq: Mcq
+        option: McqOption | null
+    }>
+): McqWithOptions[] => {
+    const map = new Map<string, McqWithOptions>()
+
+    for (const row of rows) {
+        const existing = map.get(row.mcq.id)
+        if (!existing) {
+            map.set(row.mcq.id, {
+                ...row.mcq,
+                options: row.option ? [{ id: row.option.id, optionIndex: row.option.optionIndex, optionText: row.option.optionText, isCorrect: row.option.isCorrect, }] : [],
+            })
+            continue
+        }
+
+        if (row.option) {
+            existing.options.push({
+                id: row.option.id,
+                optionIndex: row.option.optionIndex,
+                optionText: row.option.optionText,
+                isCorrect: row.option.isCorrect,
+            })
+        }
+    }
+
+    return Array.from(map.values())
+}
+
 export const getMcqsByCourse = async (courseId: string, userId: string) => {
-    return db
-        .select()
+    const rows = await db
+        .select({ mcq: mcqs, option: mcqOptions })
         .from(mcqs)
+        .leftJoin(mcqOptions, eq(mcqOptions.mcqId, mcqs.id))
         .where(and(eq(mcqs.courseId, courseId), eq(mcqs.userId, userId)))
-        .orderBy(asc(mcqs.createdAt)) // order by creation time (oldest first) 
+        .orderBy(asc(mcqs.createdAt), asc(mcqOptions.optionIndex))
+
+    return toMcqWithOptions(rows)
 }
 
 export const getMcqById = async (mcqId: string, userId: string) => {
-    const [mcq] = await db
-        .select()
+    const rows = await db
+        .select({ mcq: mcqs, option: mcqOptions })
         .from(mcqs)
+        .leftJoin(mcqOptions, eq(mcqOptions.mcqId, mcqs.id))
         .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
+
+    const [mcq] = toMcqWithOptions(rows)
     return mcq ?? null
 }
 
-export const insertMcq = async (payload: NewMcq) => {
-    const [created] = await db.insert(mcqs).values(payload).returning()
-    return created
+export const insertMcqWithOptions = async (payload: McqInput): Promise<McqWithOptions> => {
+    const { options, correctOption } = payload
+    if (!Array.isArray(options) || options.length === 0) {
+        throw new Error('options array is required')
+    }
+    if (correctOption < 0 || correctOption >= options.length) {
+        throw new Error('correctOption is out of range')
+    }
+
+    return db.transaction(async (tx) => {
+        const [created] = await tx
+            .insert(mcqs)
+            .values({ courseId: payload.courseId, userId: payload.userId, question: payload.question, explanation: payload.explanation, difficulty: payload.difficulty, aiGenerated: payload.aiGenerated, })
+            .returning()
+
+        const insertedOptions = await tx
+            .insert(mcqOptions)
+            .values(
+                options.map((optionText, optionIndex) => ({ mcqId: created.id, optionIndex, optionText, isCorrect: optionIndex === correctOption,}))
+            )
+            .returning()
+
+        return {
+            ...created,
+            options: insertedOptions
+                .sort((a, b) => a.optionIndex - b.optionIndex)
+                .map((o) => ({ id: o.id, optionIndex: o.optionIndex, optionText: o.optionText, isCorrect: o.isCorrect, })),
+        }
+    })
 }
 
 export const updateMcq = async (
     mcqId: string,
     userId: string,
-    data: Partial<Pick<NewMcq, 'question' | 'options' | 'correctOption' | 'explanation' | 'difficulty'>>
+    data: Partial<Pick<NewMcq, 'question' | 'explanation' | 'difficulty'>>
 ) => {
     const [updated] = await db
         .update(mcqs)
@@ -242,14 +320,44 @@ export const updateMcq = async (
 export const replaceMcqContent = async (
     mcqId: string,
     userId: string,
-    data: { question: string; options: string; correctOption: number; explanation: string | null; difficulty: 'easy' | 'medium' | 'hard' }
+    data: { question: string; options: string[]; correctOption: number; explanation: string | null; difficulty: 'easy' | 'medium' | 'hard' }
 ) => {
-    const [updated] = await db
-        .update(mcqs)
-        .set({ ...data, updatedAt: new Date() })
-        .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
-        .returning()
-    return updated
+    const { options, correctOption } = data
+    if (!Array.isArray(options) || options.length === 0) {
+        throw new Error('options array is required')
+    }
+    if (correctOption < 0 || correctOption >= options.length) {
+        throw new Error('correctOption is out of range')
+    }
+
+    return db.transaction(async (tx) => {
+        const [updated] = await tx
+            .update(mcqs)
+            .set({ question: data.question, explanation: data.explanation, difficulty: data.difficulty, updatedAt: new Date(),})
+            .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
+            .returning()
+
+        if (!updated) return null
+
+        // Old attempts reference old option rows; remove them before replacing options.
+        await tx.delete(mcqAttempts).where(eq(mcqAttempts.mcqId, mcqId))
+
+        await tx.delete(mcqOptions).where(eq(mcqOptions.mcqId, mcqId))
+
+        const insertedOptions = await tx
+            .insert(mcqOptions)
+            .values(
+                options.map((optionText, optionIndex) => ({ mcqId, optionIndex, optionText, isCorrect: optionIndex === correctOption, }))
+            )
+            .returning()
+
+        return {
+            ...updated,
+            options: insertedOptions
+                .sort((a, b) => a.optionIndex - b.optionIndex)
+                .map((o) => ({ id: o.id, optionIndex: o.optionIndex, optionText: o.optionText, isCorrect: o.isCorrect, })),
+        }
+    })
 }
 
 export const removeMcq = async (mcqId: string, userId: string) => {
@@ -261,7 +369,6 @@ export const removeMcq = async (mcqId: string, userId: string) => {
 }
 
 // ---- MCQ Attempts ---------------------------------------------------------
-
 export const insertMcqAttempt = async (payload: NewMcqAttempt) => {
     const [created] = await db.insert(mcqAttempts).values(payload).returning()
     return created
