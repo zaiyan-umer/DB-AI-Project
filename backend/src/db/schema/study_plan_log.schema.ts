@@ -1,49 +1,50 @@
-import { pgTable, uuid, varchar, timestamp, jsonb, } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, smallint, numeric, timestamp, pgEnum, unique } from 'drizzle-orm/pg-core'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import users from './user.schema'
-import studyPlans from './study_plan.schema'
+import { studyPlanCourses } from './study_plan.schema'
 
-/**
- * study_plan_logs — ONE row per (user, course, weekStart).
- *
- * dayStatuses is a JSONB array of 7 elements (Mon–Sun), each either:
- *   null           — not yet marked
- *   'complete'     — studied the full scheduled amount
- *   'missed'       — did not study
- *   'less_than'    — studied less than scheduled
- *   'greater_than' — studied more than scheduled
- *
- * scheduledHours is a JSONB array of 7 numbers matching the weeklyPlan hours.
- *
- * weekStart is the ISO date string of Monday of that week (e.g. "2025-03-10").
- * Used for week expiry logic — UI hides rows older than 7 days,
- * backend cron deletes rows older than 31 days.
- */
-export const studyPlanLogs = pgTable('study_plan_logs', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-        .references(() => users.id, { onDelete: 'cascade' })
-        .notNull(),
-    studyPlanId: uuid('study_plan_id')
-        .references(() => studyPlans.id, { onDelete: 'cascade' })
-        .notNull(),
-    course: varchar('course', { length: 100 }).notNull(),
-    weekStart: varchar('week_start', { length: 10 }).notNull(), // "YYYY-MM-DD" of Monday
-    // Array of 7 scheduled hours, index 0=Mon … 6=Sun
-    scheduledHours: jsonb('scheduled_hours').notNull().default('[]'),
-    // Array of 7 statuses, index 0=Mon … 6=Sun, null = not yet set
-    dayStatuses: jsonb('day_statuses').notNull().default('[null,null,null,null,null,null,null]'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
+// ---- day status enum ------------------------------------------------------
+// Extracted from the old DayStatus union type into a proper DB enum.
 
-export type StudyPlanLog = typeof studyPlanLogs.$inferSelect
-export type NewStudyPlanLog = typeof studyPlanLogs.$inferInsert
+export const dayStatusEnum = pgEnum('day_status', [
+    'complete',
+    'missed',
+    'less_than',
+    'greater_than',
+])
 
-// Type for the dayStatuses array elements
+// ---- study_plan_log_days --------------------------------------------------
+// One row per (user, study_plan_course, week_start, day_of_week).
+// FK: study_plan_course_id → study_plan_courses.id (cascade delete)
+//     Deleting a course now cascade-deletes all its log rows automatically,
+//     eliminating the hand-rolled deleteLogsByCourse DAL function.
+// FK: user_id → users.id (cascade delete)
+
+export const studyPlanLogDays = pgTable('study_plan_log_days', {
+    id:                uuid('id').primaryKey().defaultRandom(),
+    userId:            uuid('user_id')
+                           .references(() => users.id, { onDelete: 'cascade' })
+                           .notNull(),
+    studyPlanCourseId: uuid('study_plan_course_id')
+                           .references(() => studyPlanCourses.id, { onDelete: 'cascade' })
+                           .notNull(),
+    weekStart:         timestamp('week_start').notNull(),          // Monday 00:00:00 UTC of that week
+    dayOfWeek:         smallint('day_of_week').notNull(),          // 0=Mon … 6=Sun
+    scheduledHours:    numeric('scheduled_hours', { precision: 4, scale: 1 }).notNull(),
+    status:            dayStatusEnum('status'),                    // null = not yet marked
+    createdAt:         timestamp('created_at').notNull().defaultNow(),
+    updatedAt:         timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+    unique().on(t.studyPlanCourseId, t.weekStart, t.dayOfWeek),
+])
+
+export type StudyPlanLogDay    = typeof studyPlanLogDays.$inferSelect
+export type NewStudyPlanLogDay = typeof studyPlanLogDays.$inferInsert
+
+// Re-export DayStatus as a TS type for use in DAL / controller
 export type DayStatus = 'complete' | 'missed' | 'less_than' | 'greater_than' | null
 
-export const insertStudyPlanLogSchema = createInsertSchema(studyPlanLogs)
-export const selectStudyPlanLogSchema = createSelectSchema(studyPlanLogs)
+export const insertStudyPlanLogDaySchema = createInsertSchema(studyPlanLogDays)
+export const selectStudyPlanLogDaySchema = createSelectSchema(studyPlanLogDays)
 
-export default studyPlanLogs
+export default studyPlanLogDays

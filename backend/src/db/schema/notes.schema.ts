@@ -117,7 +117,6 @@ export const selectFlashcardSessionSchema = createSelectSchema(flashcardSessions
  
 // ---- mcqs -----------------------------------------------------------------
 // Multiple-choice questions.
-// correctOption is 0-based index into the options array.
 // FK: course_id      → courses.id     (cascade delete)
 // FK: user_id        → users.id       (cascade delete)
 // FK: source_file_id → course_files.id (set null if file deleted)
@@ -133,9 +132,6 @@ export const mcqs = pgTable('mcqs', {
     sourceFileId:  uuid('source_file_id')
                        .references(() => courseFiles.id, { onDelete: 'set null' }),
     question:      text('question').notNull(),
-    // JSON string e.g. '["Option A","Option B","Option C","Option D"]'
-    options:       text('options').notNull(),
-    correctOption: integer('correct_option').notNull(),
     explanation:   text('explanation'),
     difficulty:    mcqDifficultyEnum('difficulty').notNull().default('medium'),
     aiGenerated:   boolean('ai_generated').notNull().default(false),
@@ -149,9 +145,34 @@ export type NewMcq = typeof mcqs.$inferInsert
 export const insertMcqSchema = createInsertSchema(mcqs)
 export const selectMcqSchema = createSelectSchema(mcqs)
 
+// ---- mcq_options ---------------------------------------------------------
+// One row per MCQ option. optionIndex preserves display order.
+// isCorrect marks the canonical correct option row.
+// FK: mcq_id → mcqs.id (cascade delete)
+
+export const mcqOptions = pgTable('mcq_options', {
+    id:          uuid('id').primaryKey().defaultRandom(),
+    mcqId:       uuid('mcq_id')
+                     .references(() => mcqs.id, { onDelete: 'cascade' })
+                     .notNull(),
+    optionIndex: integer('option_index').notNull(),
+    optionText:  text('option_text').notNull(),
+    isCorrect:   boolean('is_correct').notNull().default(false),
+    createdAt:   timestamp('created_at').notNull().defaultNow(),
+}, (t) => ({
+    uniqueMcqOptionIndex: unique().on(t.mcqId, t.optionIndex),
+}))
+
+export type McqOption    = typeof mcqOptions.$inferSelect
+export type NewMcqOption = typeof mcqOptions.$inferInsert
+
+export const insertMcqOptionSchema = createInsertSchema(mcqOptions)
+export const selectMcqOptionSchema = createSelectSchema(mcqOptions)
+
 // ---- mcq_attempts ---------------------------------------------------------
 // Tracks each time a user answers an MCQ. Used for progress analytics in future iterations.
 // FK: mcq_id  → mcqs.id  (cascade delete)
+// FK: selected_option_id → mcq_options.id
 // FK: user_id → users.id (cascade delete)
 
 export const mcqAttempts = pgTable('mcq_attempts', {
@@ -162,7 +183,9 @@ export const mcqAttempts = pgTable('mcq_attempts', {
     userId:         uuid('user_id')
                         .references(() => users.id, { onDelete: 'cascade' })
                         .notNull(),
-    selectedOption: integer('selected_option').notNull(),
+    selectedOptionId: uuid('selected_option_id')
+                        .references(() => mcqOptions.id, { onDelete: 'cascade' })
+                        .notNull(),
     isCorrect:      boolean('is_correct').notNull(),
     attemptedAt:    timestamp('attempted_at').notNull().defaultNow(),
 })

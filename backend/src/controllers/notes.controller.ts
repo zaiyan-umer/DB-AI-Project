@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
-import { getCoursesByUser, getCourseById, insertCourse, removeCourse, updateCourse, getCourseCounts, getFilesByCourse, getFileByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, replaceFlashcardContent, insertFlashcardSession, completeFlashcardSession, getMcqsByCourse, getMcqById, insertMcq, replaceMcqContent, insertMcqAttempt,} from '../services/dal/notes.dal'
+import { getCoursesByUser, getCourseById, insertCourse, removeCourse, updateCourse, getCourseCounts, getFilesByCourse, getFileByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, replaceFlashcardContent, insertFlashcardSession, completeFlashcardSession, getMcqsByCourse, getMcqById, insertMcqWithOptions, replaceMcqContent, insertMcqAttempt,} from '../services/dal/notes.dal'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -358,9 +358,7 @@ export const getMcqs = async (req: Request, res: Response) => {
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
         const questions = await getMcqsByCourse(courseId, userId)
-        const parsed = questions.map((q) => ({ ...q, options: JSON.parse(q.options) }))
-
-        return res.status(200).json(parsed)
+        return res.status(200).json(questions)
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to fetch MCQs' })
@@ -389,11 +387,11 @@ export const seedMcqs = async (req: Request, res: Response) => {
                 explanation?:  string
                 difficulty?:   'easy' | 'medium' | 'hard'
             }) =>
-                insertMcq({
+                insertMcqWithOptions({
                     courseId,
                     userId,
                     question:      q.question,
-                    options:       JSON.stringify(q.options),
+                    options:       q.options,
                     correctOption: q.correctOption,
                     explanation:   q.explanation ?? null,
                     difficulty:    q.difficulty ?? 'medium',
@@ -402,8 +400,7 @@ export const seedMcqs = async (req: Request, res: Response) => {
             )
         )
 
-        const parsed = inserted.map((m) => ({ ...m, options: JSON.parse(m.options) }))
-        return res.status(201).json(parsed)
+        return res.status(201).json(inserted)
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to seed MCQs' })
@@ -430,7 +427,7 @@ export const regenerateMcqs = async (req: Request, res: Response) => {
             existing.map((mcq, i) =>
                 replaceMcqContent(mcq.id, userId, {
                     question:      questions[i].question,
-                    options:       JSON.stringify(questions[i].options),
+                    options:       questions[i].options,
                     correctOption: questions[i].correctOption,
                     explanation:   questions[i].explanation ?? null,
                     difficulty:    questions[i].difficulty ?? 'medium',
@@ -438,8 +435,7 @@ export const regenerateMcqs = async (req: Request, res: Response) => {
             )
         )
 
-        const parsed = updated.map((m) => ({ ...m, options: JSON.parse(m.options) }))
-        return res.status(200).json(parsed)
+        return res.status(200).json(updated)
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to regenerate MCQs' })
@@ -450,19 +446,26 @@ export const submitMcqAttempt = async (req: Request, res: Response) => {
     try {
         const userId = req.user!.id
         const mcqId = req.params.mcqId as string
-        const { selectedOption } = req.body
+        const { selectedOptionId } = req.body
 
-        if (typeof selectedOption !== 'number') {
-            return res.status(400).json({ message: 'selectedOption is required' })
+        if (!selectedOptionId || typeof selectedOptionId !== 'string') {
+            return res.status(400).json({ message: 'selectedOptionId is required' })
         }
 
         const mcq = await getMcqById(mcqId, userId)
         if (!mcq) return res.status(404).json({ message: 'MCQ not found' })
 
-        const isCorrect = selectedOption === mcq.correctOption
-        const attempt   = await insertMcqAttempt({ mcqId, userId, selectedOption, isCorrect })
+        const selectedOption = mcq.options.find((option) => option.id === selectedOptionId)
+        if (!selectedOption) {
+            return res.status(400).json({ message: 'Selected option does not belong to this MCQ' })
+        }
 
-        return res.status(201).json({ ...attempt, isCorrect, correctOption: mcq.correctOption })
+        const correctOption = mcq.options.find((option) => option.isCorrect)
+
+        const isCorrect = selectedOption.isCorrect
+        const attempt   = await insertMcqAttempt({ mcqId, userId, selectedOptionId, isCorrect })
+
+        return res.status(201).json({ ...attempt, isCorrect, correctOptionId: correctOption?.id ?? null })
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to submit attempt' })

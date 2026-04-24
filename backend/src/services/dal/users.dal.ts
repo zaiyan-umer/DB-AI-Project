@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
 import db from "../../db/connection";
 import users, { newUser } from "../../db/schema/user.schema";
+import chatbotMessages from "../../db/schema/chatbot_messages.schema";
+import groups from "../../db/schema/group.schema";
 
 export const insertUser = async (user: newUser, hashedPassword: string) => {
     try {
@@ -61,10 +63,15 @@ export const getUserById = async (id: string) => {
 
 export const deleteUserById = async (userId: string) => {
     try {
-        const [deleted] = await db
-            .delete(users)
-            .where(eq(users.id, userId))
-            .returning()
+        const [deleted] = await db.transaction(async (tx) => {
+            await tx.delete(chatbotMessages).where(eq(chatbotMessages.userId, userId))
+            await tx.delete(groups).where(eq(groups.createdBy, userId))
+
+            return tx
+                .delete(users)
+                .where(eq(users.id, userId))
+                .returning()
+        })
         return deleted
     } catch (err) {
         console.error("deleteUserById failed:", err)
