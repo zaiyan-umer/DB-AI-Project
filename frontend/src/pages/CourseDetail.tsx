@@ -435,7 +435,8 @@ function FilesTab({ courseId }: { courseId: string }) {
                                     </div>
                                 ) : (
                                     <Document
-                                        file={{ url: getPreviewUrl(selectedFileId), withCredentials: true }}
+                                        file={{ url: getPreviewUrl(selectedFileId) }}
+                                        options={{ withCredentials: true }}
                                         loading={<div className="text-sm text-gray-500">Loading PDF...</div>}
                                         error={<div className="text-sm text-red-500">Failed to load PDF preview.</div>}
                                         onLoadSuccess={({ numPages: loadedPages }) => {
@@ -741,11 +742,15 @@ function McqTab({ courseId }: { courseId: string }) {
         setAnswered(true)
 
         const mcq       = mcqs[testIdx]
-        const isCorrect = idx === mcq.correctOption
+        const chosen    = mcq.options[idx]
+        if (!chosen) return
+
+        const correctIndex = mcq.options.findIndex((option) => option.isCorrect)
+        const isCorrect = chosen.isCorrect
         if (isCorrect) setScore((s) => s + 1)
 
-        setResults((r) => [...r, { question: mcq.question, correct: mcq.correctOption, selected: idx }])
-        submitAttempt({ mcqId: mcq.id, selectedOption: idx })
+        setResults((r) => [...r, { question: mcq.question, correct: correctIndex, selected: idx }])
+        submitAttempt({ mcqId: mcq.id, selectedOptionId: chosen.id })
     }
 
     const handleNext = () => {
@@ -832,15 +837,15 @@ function McqTab({ courseId }: { courseId: string }) {
                                             {!isCorrect && (
                                                 <div className="space-y-1">
                                                     <p className="text-xs text-red-600">
-                                                        Your answer: <span className="font-semibold">{mcq.options[r.selected]}</span>
+                                                        Your answer: <span className="font-semibold">{mcq.options[r.selected]?.optionText ?? 'N/A'}</span>
                                                     </p>
                                                     <p className="text-xs text-green-600">
-                                                        Correct answer: <span className="font-semibold">{mcq.options[r.correct]}</span>
+                                                        Correct answer: <span className="font-semibold">{mcq.options[r.correct]?.optionText ?? 'N/A'}</span>
                                                     </p>
                                                 </div>
                                             )}
                                             {isCorrect && (
-                                                <p className="text-xs text-green-600 font-medium">{mcq.options[r.correct]}</p>
+                                                <p className="text-xs text-green-600 font-medium">{mcq.options[r.correct]?.optionText ?? 'Correct'}</p>
                                             )}
                                             {mcq.explanation && (
                                                 <p className="text-xs text-gray-500 mt-1 italic">{mcq.explanation}</p>
@@ -905,7 +910,7 @@ function McqTab({ courseId }: { courseId: string }) {
                         let cls = 'border border-gray-200 text-gray-700 hover:border-[#667eea]/50 hover:bg-purple-50 cursor-pointer'
 
                         if (answered) {
-                            if (i === mcq.correctOption)  cls = 'border-green-400 bg-green-50 text-green-800 cursor-default'
+                            if (opt.isCorrect)            cls = 'border-green-400 bg-green-50 text-green-800 cursor-default'
                             else if (i === selected)       cls = 'border-red-400 bg-red-50 text-red-800 cursor-default'
                             else                           cls = 'border-gray-100 text-gray-400 cursor-default'
                         }
@@ -920,7 +925,7 @@ function McqTab({ courseId }: { courseId: string }) {
                                 className={`w-full text-left px-5 py-4 rounded-xl border transition-all text-sm font-medium ${cls}`}
                             >
                                 <span className="font-bold mr-3 text-xs opacity-60">{String.fromCharCode(65 + i)}</span>
-                                {opt}
+                                {opt.optionText}
                             </motion.button>
                         )
                     })}
