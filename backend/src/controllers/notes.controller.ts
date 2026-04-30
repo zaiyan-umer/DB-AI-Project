@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
 import { getCoursesByUser, getCourseById, insertCourse, removeCourse, updateCourse, getCourseCounts, getFilesByCourse, getFileByCourse, getFileById, insertFile, removeFile, getFlashcardsByCourse, insertFlashcard, replaceFlashcardContent, insertFlashcardSession, completeFlashcardSession, getMcqsByCourse, getMcqById, insertMcq, replaceMcqContent, insertMcqAttempt,} from '../services/dal/notes.dal'
+import { deleteEmbeddingsByFile, extractTextFromPdf, generateChunks, generateEmbeddings, storeEmbeddingsIntoDB } from '../utils/rag.utils'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -159,6 +160,13 @@ export const uploadFile = async (req: Request, res: Response) => {
             sizeBytes:    multerFile.size,
         })
 
+        const fullFilePath = path.join(process.cwd(), 'uploads', multerFile.filename);
+        const text = await extractTextFromPdf(fullFilePath);
+        const chunks = await generateChunks(text)
+        const embeddings = await generateEmbeddings(chunks);
+
+        await storeEmbeddingsIntoDB({ chunks, embeddings, userId, fileId: file.id });
+
         return res.status(201).json(file)
     } catch (err) {
         console.error(err)
@@ -222,6 +230,7 @@ export const deleteFile = async (req: Request, res: Response) => {
         if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
 
         await removeFile(fileId, userId)
+        await deleteEmbeddingsByFile(fileId)
         return res.status(200).json({ message: 'File deleted' })
     } catch (err) {
         console.error(err)

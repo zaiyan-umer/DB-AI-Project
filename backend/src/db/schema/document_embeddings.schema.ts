@@ -1,15 +1,15 @@
-import { pgTable, text, uuid, varchar, vector } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, vector } from "drizzle-orm/pg-core";
+import { courseFiles } from "./notes.schema";
 import users from "./user.schema";
 
 
 const documentEmbeddings = pgTable("document_embeddings", {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("userId").references(() => users.id, { onDelete: "cascade" }),
-
-    pdfName: varchar("pdf_name", { length: 255 }).notNull(),
-    pdfUrl: varchar("pdf_url", { length: 255 }).notNull(),
+    userId: uuid("userId").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    fileId: uuid("file_id").references(() => courseFiles.id, { onDelete: "cascade" }).notNull(),
 
     chunkText: text("chunk_text").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
 
     embedding: vector("embedding", {dimensions: 768}).notNull()
 })

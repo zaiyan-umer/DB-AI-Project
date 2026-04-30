@@ -6,6 +6,7 @@ import { checkExistingUser, deleteUserById, getUserById, insertUser, updateUserP
 import { compareHash, hashPassword, hashResetToken } from "../utils/hashing.utils";
 import { generateToken } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/mailer";
+import { deleteEmbeddingsByUser } from "../utils/rag.utils";
 
 export const register = async (req: Request<any, any, newUser>, res: Response) => {
     try {
@@ -195,7 +196,6 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     }
 };
 
-// DELETE /api/auth/account Permanently deletes the authenticated user and all their data (cascade).
 export const deleteAccount = async (req: Request, res: Response) => {
     try {
         if (!req.user) return res.status(401).json({ error: "Unauthorized" });
@@ -208,6 +208,8 @@ export const deleteAccount = async (req: Request, res: Response) => {
  
         // Clear the auth cookie so the client is immediately logged out
         res.clearCookie("token");
+
+        await deleteEmbeddingsByUser(req.user.id);
  
         return res.status(200).json({ message: "Account deleted successfully" });
     } catch (err) {
