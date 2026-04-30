@@ -34,7 +34,10 @@ export const useSaveStudyPlan = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: saveStudyPlan,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['study-plan'] }),
+    // setQueryData instead of invalidateQueries: the server echoes back the
+    // full updated plan — we put it straight into the cache so no refetch
+    // fires and local state is not wiped mid-render.
+    onSuccess: (updatedPlan) => qc.setQueryData(['study-plan'], updatedPlan),
     onError: () => toast.error('Failed to save study plan'),
   })
 }

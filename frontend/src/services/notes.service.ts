@@ -38,13 +38,19 @@ export interface Flashcard {
 
 export type McqDifficulty = 'easy' | 'medium' | 'hard'
 
+export interface McqOption {
+    id:          string
+    optionIndex: number
+    optionText:  string
+    isCorrect:   boolean
+}
+
 export interface Mcq {
     id:            string
     courseId:      string
     userId:        string
     question:      string
-    options:       string[]
-    correctOption: number
+    options:       McqOption[]
     explanation:   string | null
     difficulty:    McqDifficulty
     aiGenerated:   boolean
@@ -53,13 +59,13 @@ export interface Mcq {
 }
 
 export interface McqAttemptResult {
-    id:             string
-    mcqId:          string
-    userId:         string
-    selectedOption: number
-    isCorrect:      boolean
-    correctOption:  number
-    attemptedAt:    string
+    id:               string
+    mcqId:            string
+    userId:           string
+    selectedOptionId: string
+    isCorrect:        boolean
+    correctOptionId:  string | null
+    attemptedAt:      string
 }
 
 // ---- Courses --------------------------------------------------------------
@@ -208,8 +214,8 @@ export const regenerateMcqs = async (
 export const submitMcqAttempt = async (
     courseId:       string,
     mcqId:          string,
-    selectedOption: number,
+    selectedOptionId: string,
 ): Promise<McqAttemptResult> => {
-    const res = await api.post(`/notes/${courseId}/mcqs/${mcqId}/attempt`, { selectedOption })
+    const res = await api.post(`/notes/${courseId}/mcqs/${mcqId}/attempt`, { selectedOptionId })
     return res.data
 }

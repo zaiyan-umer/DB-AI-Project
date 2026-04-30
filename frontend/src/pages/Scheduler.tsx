@@ -63,8 +63,8 @@ function generateWeeklyPlan(priority: Priority, preparation: number) {
   const total = priority === 'high' ? 20 : priority === 'medium' ? 15 : 10
   const adjusted = total * (1 - preparation / 100) + 2
   const perDay = adjusted / 7
-  return DAYS.map(day => ({
-    day,
+  return DAYS.map(dayOfWeek => ({
+    dayOfWeek,
     hours: Math.max(0.5, Math.round((Math.random() * 0.5 + 0.75) * perDay * 10) / 10),
   }))
 }
@@ -125,27 +125,32 @@ export default function SchedulerPage() {
   const [deleteTarget, setDeleteTarget] = useState<CourseEntry | null>(null)
 
   // ── Regenerate state: course → new weeklyPlan (pending confirmation) ──
-  const [regenPreviews, setRegenPreviews] = useState<Record<string, { day: string; hours: number }[]>>({})
+  const [regenPreviews, setRegenPreviews] = useState<Record<string, { dayOfWeek: string; hours: number }[]>>({})
 
   // CHANGES
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [savedState, setSavedState] = useState<{courseStatuses: Record<string, DayStatus[]>; confirmedCourses: CourseEntry[]} | null>(null)
 
   // ── Load confirmed courses from DB on mount ──
+  // All courses in the DB are confirmed by definition — no confirmed flag is
+  // ever persisted, so filtering by it would always return [].
   useEffect(() => {
     if (planLoading || !savedPlan) return
     const courses = (savedPlan.courses as CourseEntry[]) ?? []
-    setConfirmedCourses(courses.filter(c => c.confirmed))
+    setConfirmedCourses(courses)
   }, [savedPlan, planLoading])
 
   // ── Load existing logs into courseStatuses ──
+  // Logs are now one row per day. Rebuild the [7] status array per course uuid.
   useEffect(() => {
     if (!existingLogs.length) return
+    const weekStart = getCurrentWeekStart()
     const map: Record<string, DayStatus[]> = {}
     existingLogs.forEach((log: any) => {
-      // Only load current week's log into UI
-      if (isCurrentWeek(log.weekStart)) {
-        map[log.course] = log.dayStatuses as DayStatus[]
+      if (log.weekStart?.startsWith(weekStart)) {
+        const key = log.studyPlanCourseId
+        if (!map[key]) map[key] = Array(7).fill(null)
+        map[key][log.dayOfWeek] = log.status as DayStatus
       }
     })
     setCourseStatuses(map)
@@ -202,20 +207,32 @@ export default function SchedulerPage() {
   }
 
   const handleConfirmCourse = (entry: CourseEntry) => {
-    const confirmed = { ...entry, confirmed: true }
+    // Strip any local-only flags before persisting
+    const cleanEntry: CourseEntry = {
+      course:      entry.course,
+      preparation: entry.preparation,
+      priority:    entry.priority,
+      color:       entry.color,
+      weeklyPlan:  entry.weeklyPlan,
+    }
+
+    // Use functional updater so we always get the latest list — avoids the
+    // stale-closure bug where confirmedCourses is [] at call time.
+    let updatedList: CourseEntry[] = []
     setConfirmedCourses(prev => {
       const exists = prev.find(c => c.course === entry.course)
-      return exists ? prev.map(c => c.course === entry.course ? confirmed : c) : [...prev, confirmed]
+      updatedList = exists
+        ? prev.map(c => c.course === entry.course ? cleanEntry : c)
+        : [...prev, cleanEntry]
+      return updatedList
     })
+
     setGeneratedDraft(prev => prev?.filter(c => c.course !== entry.course) ?? null)
     setPendingCourses(prev => prev.filter(c => c.course !== entry.course))
-    // Persist — merge with existing confirmed
-    const updated = [
-      ...confirmedCourses.filter(c => c.course !== entry.course),
-      confirmed,
-    ]
-    savePlan({ courses: updated })
-    // Auto-expand newly confirmed course
+
+    // setTimeout(0) lets the setState above flush so updatedList is populated
+    setTimeout(() => savePlan({ courses: updatedList }), 0)
+
     setExpandedCourses(prev => new Set(prev).add(entry.course))
   }
 
@@ -238,14 +255,15 @@ export default function SchedulerPage() {
   const handleConfirmRegen = (course: CourseEntry) => {
     const newPlan = regenPreviews[course.course]
     if (!newPlan) return
-    const updated = confirmedCourses.map(c =>                                               // Update confirmed courses with new weeklyPlan
+    const updated: CourseEntry[] = confirmedCourses.map(c =>
       c.course === course.course ? { ...c, weeklyPlan: newPlan } : c
     )
     setConfirmedCourses(updated)
-    setCourseStatuses(prev => ({ ...prev, [course.course]: Array(7).fill(null) }))          // Reset statuses to null — new schedule, fresh start
+    const statusKey = course.id ?? course.course
+    setCourseStatuses(prev => ({ ...prev, [statusKey]: Array(7).fill(null) }))
     setUnsavedCourses(prev => new Set(prev).add(course.course))
-    setRegenPreviews(prev => { const n = { ...prev }; delete n[course.course]; return n })  // Clear preview
-    savePlan({ courses: updated })                                                          // Persist to DB
+    setRegenPreviews(prev => { const n = { ...prev }; delete n[course.course]; return n })
+    savePlan({ courses: updated })
     setHasUnsavedChanges(true)
   }
   const handleCancelRegen = (courseName: string) => {
@@ -261,14 +279,15 @@ export default function SchedulerPage() {
     })
   }
 
-    const handleSetStatus = (course: string, dayIndex: number, status: StudyStatus) => {
+    const handleSetStatus = (course: CourseEntry, dayIndex: number, status: StudyStatus) => {
+    const key = course.id ?? course.course
     setCourseStatuses(prev => {
-      const current = prev[course] ?? Array(7).fill(null)
+      const current = prev[key] ?? Array(7).fill(null)
       const updated = [...current]
       updated[dayIndex] = updated[dayIndex] === status ? null : status
-      return { ...prev, [course]: updated }
+      return { ...prev, [key]: updated }
     })
-    setUnsavedCourses(prev => new Set(prev).add(course))
+    setUnsavedCourses(prev => new Set(prev).add(course.course))
     setHasUnsavedChanges(true)
   }
 
@@ -298,29 +317,26 @@ export default function SchedulerPage() {
   }
 
   const handleSaveStatus = (course: CourseEntry) => {
-    if (!savedPlan?.id) return
-    const statuses = courseStatuses[course.course] ?? Array(7).fill(null)
+    if (!course.id) return   // course.id is the study_plan_courses uuid
+    const statuses = courseStatuses[course.id] ?? Array(7).fill(null)
     saveLog({
-      studyPlanId: savedPlan.id,
-      course: course.course,
+      studyPlanCourseId: course.id,
       scheduledHours: course.weeklyPlan.map(d => d.hours),
       dayStatuses: statuses,
     }, {
       onSuccess: () => {
         setUnsavedCourses(prev => { const n = new Set(prev); n.delete(course.course); return n })
-        if (unsavedCourses.size <= 1) {
-          captureSavedState()
-        }
+        if (unsavedCourses.size <= 1) captureSavedState()
       },
     })
   }
 
   const handleDeleteCourse = () => {
-    if (!deleteTarget || !savedPlan?.id) return
-    deleteCourse({ studyPlanId: savedPlan.id, course: deleteTarget.course }, {
+    if (!deleteTarget?.id) return
+    deleteCourse({ studyPlanCourseId: deleteTarget.id }, {
       onSuccess: () => {
         setConfirmedCourses(prev => prev.filter(c => c.course !== deleteTarget.course))
-        setCourseStatuses(prev => { const n = { ...prev }; delete n[deleteTarget.course]; return n })
+        setCourseStatuses(prev => { const n = { ...prev }; delete n[deleteTarget.id!]; return n })
         setExpandedCourses(prev => { const n = new Set(prev); n.delete(deleteTarget.course); return n })
         setDeleteTarget(null)
       },
@@ -331,7 +347,8 @@ export default function SchedulerPage() {
   // If all 7 days of that course have a single status, tint the bar that colour.
   // Otherwise use course colour.
   const getChartBarColor = (course: CourseEntry, dayIndex: number): string => {
-    const status = courseStatuses[course.course]?.[dayIndex]
+    const key = course.id ?? course.course
+    const status = courseStatuses[key]?.[dayIndex]
     if (status) return STATUS_CONFIG[status].color
     return course.color
   }
@@ -573,11 +590,11 @@ export default function SchedulerPage() {
           <AnimatePresence>
             {confirmedCourses.filter(c => expandedCourses.has(c.course)).map((plan, pi) => {
               const hasUnsaved = unsavedCourses.has(plan.course)
-              const statuses = courseStatuses[plan.course] ?? Array(7).fill(null)
+              const statuses = courseStatuses[plan.id ?? plan.course] ?? Array(7).fill(null)
               const regenPreview = regenPreviews[plan.course] // new hours pending confirm
               // Show regen preview hours if pending, otherwise confirmed hours
               const displayPlan = regenPreview
-                ? DAYS.map((day, i) => ({ day, hours: regenPreview[i]?.hours ?? 0 }))
+              ? DAYS.map((dayOfWeek, i) => ({ dayOfWeek, hours: regenPreview[i]?.hours ?? 0 }))
                 : plan.weeklyPlan
 
               return (
@@ -630,7 +647,7 @@ export default function SchedulerPage() {
 
                         return (
                           <div key={di} className="group/dayrow flex items-center gap-3">
-                            <span className="text-sm text-gray-500 w-10 flex-shrink-0">{dayPlan.day}</span>
+                            <span className="text-sm text-gray-500 w-10 flex-shrink-0">{dayPlan.dayOfWeek}</span>
 
                             {/* Bar */}
                             <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
@@ -649,7 +666,7 @@ export default function SchedulerPage() {
                             {STATUS_OPTIONS.map(([key, cfg]) => (
                               <button
                                 key={key}
-                                onClick={() => handleSetStatus(plan.course, di, key)}
+                                onClick={() => handleSetStatus(plan, di, key)}
                                 title={cfg.label}
                                 className="p-1 rounded-md transition-all hover:scale-110"
                                 style={{
@@ -736,7 +753,7 @@ export default function SchedulerPage() {
                       <div className="space-y-2 mb-5">
                         {plan.weeklyPlan.map((d, di) => (
                           <div key={di} className="flex items-center gap-3">
-                            <span className="text-sm text-gray-500 w-10">{d.day}</span>
+                            <span className="text-sm text-gray-500 w-10">{d.dayOfWeek}</span>
                             <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
                               <motion.div initial={{ width: 0 }}
                                 animate={{ width: `${Math.min((d.hours / 4) * 100, 100)}%` }}

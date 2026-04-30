@@ -179,7 +179,7 @@ export const useRegenerateMcqs = (courseId: string) => {
 
 export const useSubmitMcqAttempt = (courseId: string) =>
     useMutation({
-        mutationFn: ({ mcqId, selectedOption }: { mcqId: string; selectedOption: number }) =>
-            submitMcqAttempt(courseId, mcqId, selectedOption),
+        mutationFn: ({ mcqId, selectedOptionId }: { mcqId: string; selectedOptionId: string }) =>
+            submitMcqAttempt(courseId, mcqId, selectedOptionId),
         onError: () => toast.error('Failed to submit attempt'),
     })
