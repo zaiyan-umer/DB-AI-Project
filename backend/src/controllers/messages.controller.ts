@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { addNewMessage, checkAdminAuthority, checkGroupMembership, checkIfAlreadyDeleted, checkMessageDeletionAuthority, checkMessageExists, deleteMessageForEveryone, deleteMsgForMe, fetchMessages, filterDeletedMessages, getMessageByIdWithSender } from "../services/dal/messages.dal";
 import { aiChatHandler } from "../services/handlers/ai-group-chat";
+import { generateChunks } from "../utils/rag.utils";
 
 export const sendMessage = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -13,6 +14,8 @@ export const sendMessage = async (req: Request, res: Response) => {
     if (membership.length === 0) {
         return res.status(403).json({ message: "You are not a member of this group" });
     }
+
+    console.log(await generateChunks(req.body.content))
 
     const [createdMessage] = await addNewMessage(groupId, userId, req.body.content)
 

@@ -7,6 +7,8 @@ export { default as studyPlans } from './study_plan.schema'
 export { default as studyPlanLogs, } from './study_plan_log.schema'
 export { default as groups } from './group.schema'
 export { default as groupMembers } from './groupMember.schema'
+export { default as documentEmbeddings} from "./document_embeddings.schema";
+
 
 // Notes & Test
 export { default as courses, mcqDifficultyEnum, courseFiles, flashcards, mcqs, mcqAttempts, flashcardSessions} from './notes.schema'
