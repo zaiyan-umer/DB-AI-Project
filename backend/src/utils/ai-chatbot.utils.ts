@@ -1,6 +1,7 @@
-import { ChatSession } from "@google/generative-ai"
+import { streamText, ModelMessage } from "ai"
+import { google } from "@ai-sdk/google"
 import { Response } from "express"
-import { getGeminiModel } from "../config/gemini"
+import env from "../config/env"
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -37,48 +38,16 @@ export type AIMessageType = {
 
 export const SAMPLE_CONVERSATION: AIMessageType[] = [
     { role: 'user', content: 'What can you help me with?' },
-    { role: 'model', content: 'I can help you with your courses, answer study questions, and provide information about your groups and deadlines.' },
+    { role: 'assistant', content: 'I can help you with your courses, answer study questions, and provide information about your groups and deadlines.' },
 ]
 
-export const initializeChatSession = 
-    (systemPrompt: string, messages: AIMessageType[]): [ChatSession, string] => {
-    const model = getGeminiModel(systemPrompt);
-
-    const history = messages.slice(0, -1).map(m => {
-        const isAssistant = m.role === 'assistant' || m.role === 'model';
-
-        return {
-            role: isAssistant ? 'model' : 'user',
-            parts: [{ text: m.content }],
-        };
-    });
-
-    const chat = model.startChat({ history })
-    const lastMessage = messages[messages.length - 1].content
-
-    return [chat, lastMessage]
-}
-
-
-const generateAIResponseStream = async function* (
-    systemPrompt: string,
-    messages: AIMessageType[]
-): AsyncGenerator<string> {
-    const [chat, lastMessage] = initializeChatSession(systemPrompt, messages);
-
-    const result = await withRetry(() => chat.sendMessageStream(lastMessage))
-
-    for await (const chunk of result.stream) {
-        const text = chunk.text()
-        if (text) yield text
-    }
-}
 
 type StreamResponseToClientsPayload = {
     res: Response
     systemPrompt: string
     messages: AIMessageType[]
 }
+
 export const streamResponseToClients = 
     async ({res, systemPrompt, messages} : StreamResponseToClientsPayload): Promise<string> => {
     try{
@@ -90,9 +59,44 @@ export const streamResponseToClients =
 
         let fullResponse = ''
 
-        for await (const chunk of generateAIResponseStream(systemPrompt, messages)) {
-            fullResponse += chunk
-            res.write(`data: ${chunk.replace(/\n/g, '\\n')}\n\n`)
+        const coreMessages: ModelMessage[] = messages.map(m => {
+            const isAssistant = m.role === 'assistant' || m.role === 'model';
+            return {
+                role: isAssistant ? 'assistant' : 'user',
+                content: m.content,
+            };
+        });
+
+        let iterator: AsyncIterator<string> | undefined;
+        let firstChunkResult: IteratorResult<string> | undefined;
+
+        // streamText returns an object synchronously, but the API connection is asynchronous.
+        // To properly catch and retry 503/429 errors, we must explicitly await the very first 
+        // chunk of the stream inside the retry wrapper.
+        await withRetry(async () => {
+            const result = streamText({
+                model: google(env.GEMINI_MODEL),
+                system: systemPrompt,
+                messages: coreMessages,
+            });
+            
+            iterator = result.textStream[Symbol.asyncIterator]();
+            firstChunkResult = await iterator.next();
+        });
+
+        if (firstChunkResult && !firstChunkResult.done) {
+            fullResponse += firstChunkResult.value;
+            res.write(`data: ${firstChunkResult.value.replace(/\n/g, '\\n')}\n\n`);
+        }
+
+        if (iterator) {
+            while (true) {
+                const chunkResult = await iterator.next();
+                if (chunkResult.done) break;
+                
+                fullResponse += chunkResult.value;
+                res.write(`data: ${chunkResult.value.replace(/\n/g, '\\n')}\n\n`);
+            }
         }
 
         // SSE Done
