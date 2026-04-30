@@ -11,7 +11,7 @@ const documentEmbeddings = pgTable("document_embeddings", {
     chunkText: text("chunk_text").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 
-    embedding: vector("embedding", {dimensions: 768}).notNull()
+    embedding: vector("embedding", {dimensions: 3072}).notNull()
 })
 
 export default documentEmbeddings;

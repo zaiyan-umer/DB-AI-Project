@@ -1,5 +1,8 @@
+import { google } from "@ai-sdk/google";
+import { generateText, ModelMessage } from "ai";
+import env from "../../config/env";
 import { getIO } from "../../socket";
-import { AIMessageType, initializeChatSession, SAMPLE_CONVERSATION, withRetry } from "../../utils/ai-chatbot.utils";
+import { AIMessageType, SAMPLE_CONVERSATION, withRetry } from "../../utils/ai-chatbot.utils";
 import { AI_HELP_MESSAGE, STATIC_PROMPT } from "../../utils/data";
 import { getGroupById } from "../dal/groups.dal";
 import { addNewMessage, fetchMessages } from "../dal/messages.dal";
@@ -54,9 +57,6 @@ export const aiChatHandler = async (groupId: string, content: string) => {
 
         const [savedMessage] = await addNewMessage(groupId, null, response, 'ai');
 
-        // console.log("AI RESPONSE: ", response);
-        // console.log("SAVED: ", savedMessage);
-
         const messagePayload = {
             id: savedMessage.id,
             groupId: savedMessage.groupId,
@@ -72,6 +72,7 @@ export const aiChatHandler = async (groupId: string, content: string) => {
         return response;
     }
     catch (err) {
+        console.error("MODEL: ", env.GEMINI_MODEL);
         console.error("AI Group Chat Error: ", err);
         getIO().to(groupId).emit('ai_typing', { groupId, isTyping: false });
     }
@@ -79,10 +80,27 @@ export const aiChatHandler = async (groupId: string, content: string) => {
 
 
 const generateAIChatResponse = async (messages: AIMessageType[], prompt: string) => {
-    const [chat, lastMessage] = initializeChatSession(prompt, messages)
+    const coreMessages: ModelMessage[] = messages.map(m => {
+        const isAssistant = m.role === 'assistant' || m.role === 'model';
+        return {
+            role: isAssistant ? 'assistant' : 'user',
+            content: m.content,
+        };
+    });
 
-    const result = await chat.sendMessage(lastMessage)
-    return result.response.text()
+    const startTime = performance.now();
+
+    const { text } = await generateText({
+        model: google(env.GEMINI_MODEL),
+        system: prompt,
+        messages: coreMessages,
+        maxRetries: 0, // Disable Vercel's internal hidden retries
+    });
+
+    const endTime = performance.now();
+    console.log(`\n⏱️  [AI Latency] Gemini API call took ${((endTime - startTime) / 1000).toFixed(2)} seconds\n`);
+
+    return text;
 }
 
 

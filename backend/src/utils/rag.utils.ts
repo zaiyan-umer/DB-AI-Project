@@ -1,8 +1,10 @@
+import { google } from '@ai-sdk/google';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { embedMany } from 'ai';
 import { asc, cosineDistance, eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import { PDFParse } from 'pdf-parse';
-import { getEmbeddingModel } from '../config/gemini';
+import env from '../config/env';
 import db from '../db/connection';
 import { courseFiles, documentEmbeddings } from '../db/schema';
 
@@ -13,18 +15,23 @@ export async function generateChunks(text: string, chunkSize: number = 1000, chu
     });
 
     const chunks = await splitter.splitText(text);
+
+    // console.log("Chunks length: ", chunks.length);
+    // console.log("Chunks: ", chunks);
+
     return chunks;
 }
 
 export async function extractTextFromPdf(filepath: string): Promise<string> {
     const pdf = await fs.readFile(filepath);
     const parser = new PDFParse({ data: pdf });
-    
+
     try {
         const result = await parser.getText();
         const text = result.text;
 
         if (!text) throw new Error("Failed to extract text from PDF");
+        // console.log("Text length: ", text.length);
 
         return text;
     } finally {
@@ -33,15 +40,11 @@ export async function extractTextFromPdf(filepath: string): Promise<string> {
 }
 
 export async function generateEmbeddings(texts: string[]) {
-    const embeddingModel = getEmbeddingModel();
-    
-    const result = await embeddingModel.batchEmbedContents({
-        requests: texts.map(text => ({
-            content: { role: 'user', parts: [{ text }] }
-        }))
+    const { embeddings } = await embedMany({
+        model: google.embeddingModel(env.TEXT_EMBEDDING_MODEL),
+        values: texts,
     });
-
-    return result.embeddings.map(e => e.values);
+    return embeddings;
 }
 
 
@@ -51,7 +54,7 @@ type ChunksStorageType = {
     userId: string;
     fileId: string;
 }
-export async function storeEmbeddingsIntoDB({chunks, embeddings, userId, fileId}: ChunksStorageType) {
+export async function storeEmbeddingsIntoDB({ chunks, embeddings, userId, fileId }: ChunksStorageType) {
     const records = chunks.map((chunk, index) => ({
         chunkText: chunk,
         embedding: embeddings[index],
@@ -72,15 +75,15 @@ export async function getEmbeddingsByUserId(userId: string) {
 
 export async function deleteEmbeddingsByFile(fileId: string) {
     return await db.delete(documentEmbeddings).where(eq(documentEmbeddings.fileId, fileId));
-}   
+}
 
 export async function deleteEmbeddingsByUser(userId: string) {
     return await db.delete(documentEmbeddings).where(eq(documentEmbeddings.userId, userId));
 }
 
-export async function semanticSearch({query, userId, limit}: {query: string, userId: string, limit?: number}) {
+export async function semanticSearch({ query, userId, limit }: { query: string, userId: string, limit?: number }) {
     const queryEmbed = await generateEmbeddings([query]);
-    const targetVector = queryEmbed[0]; 
+    const targetVector = queryEmbed[0];
 
     const result = await db
         .select({
