@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import fs from 'fs'
 import path from 'path'
-import { completeFlashcardSession, getCourseById, getCourseCounts, getCoursesByUser, getFileByCourse, getFileById, getFilesByCourse, getFlashcardsByCourse, getMcqById, getMcqsByCourse, insertCourse, insertFile, insertFlashcard, insertFlashcardSession, insertMcq, insertMcqAttempt, removeCourse, removeFile, replaceFlashcardContent, replaceMcqContent, updateCourse, } from '../services/dal/notes.dal'
+import { completeFlashcardSession, getCourseById, getCourseCounts, getCoursesByUser, getFileByCourse, getFileById, getFilesByCourse, getFlashcardsByCourse, getMcqById, getMcqsByCourse, insertCourse, insertFile, insertFlashcard, insertFlashcardSession, insertMcqAttempt, insertMcqWithOptions, removeCourse, removeFile, replaceFlashcardContent, replaceMcqContent, updateCourse, } from '../services/dal/notes.dal'
 import { deleteEmbeddingsByFile, extractTextFromPdf, generateChunks, generateEmbeddings, storeEmbeddingsIntoDB } from '../utils/rag.utils'
 
 // ---- Helpers --------------------------------------------------------------
