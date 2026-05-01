@@ -30,5 +30,6 @@ Here is how you can use me in this group chat:
 
 - **@ai [your question]**: Ask any general questions about academics, course topics, or study techniques. (e.g., "@ai What are good study techniques for coding?")
 
+- **@docs [your question]**: Ask any general questions about your uploaded docs or notes. (e.g., "@docs how do I solve this question?")
 
 I'll keep my responses concise and helpful. Just let me know what you need!`
