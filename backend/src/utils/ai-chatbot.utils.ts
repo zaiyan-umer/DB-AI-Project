@@ -107,8 +107,10 @@ export const streamResponseToClients =
 
             // If headers already sent, we can't send a JSON error response
             // so we signal the error through the stream instead
+            const errorMessage = isAIUnavailable ? 'AI is currently busy' : 'Something went wrong';
+            
             if (res.headersSent) {
-                res.write(`data: [ERROR] ${isAIUnavailable ? 'AI is currently busy' : 'Something went wrong'}\n\n`)
+                res.write(`data: [ERROR] ${errorMessage}\n\n`)
                 res.end()
             } else {
                 res.status(isAIUnavailable ? 503 : 500).json({
@@ -181,7 +183,7 @@ export const executeAITaskWithSocketUpdates = async (groupId: string | undefined
         if (groupId) {
             const errStatus = err?.status || err?.statusCode;
             const isAIUnavailable = errStatus === 503 || errStatus === 429;
-            const errorMessage = isAIUnavailable 
+            const errorMessage = isAIUnavailable
                 ? "I am currently experiencing high demand. Please try again shortly."
                 : "Something went wrong while processing your request.";
 
@@ -201,7 +203,7 @@ export const executeAITaskWithSocketUpdates = async (groupId: string | undefined
             } catch (dbErr) {
                 console.error("Failed to save AI error message to DB: ", dbErr);
             }
-            
+
             getIO().to(groupId).emit('ai_typing', { groupId, isTyping: false });
         }
         throw err;

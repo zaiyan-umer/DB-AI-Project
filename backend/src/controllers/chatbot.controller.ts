@@ -4,6 +4,8 @@ import { getMyGroupsFromDB } from "../services/dal/groups.dal";
 import { getCoursesByUser } from "../services/dal/notes.dal";
 import { AIMessageType, SAMPLE_CONVERSATION, streamResponseToClients } from '../utils/ai-chatbot.utils';
 import { STATIC_PROMPT } from "../utils/data";
+import { buildRAGSystemPrompt } from "../services/handlers/rag-search";
+import { semanticSearch } from "../utils/rag.utils";
 
 
 export async function handleChatbotMessage(req: Request, res: Response) {
@@ -33,15 +35,24 @@ export async function handleChatbotMessage(req: Request, res: Response) {
             ...prevMessages.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: prompt }
         ]
-        
-        const fullResponse = await streamResponseToClients({res, systemPrompt, messages})
 
+        let fullResponse: any;
+        if (req.body.docs) {
+            const relevantChunks = await semanticSearch({ query: prompt, userId, limit: 5 });
+            const ragSystemPrompt = buildRAGSystemPrompt(relevantChunks);
+            
+            fullResponse = await streamResponseToClients({res, systemPrompt: ragSystemPrompt, messages})
+        } else {
+            fullResponse = await streamResponseToClients({res, systemPrompt, messages})
+        }
         await saveChatbotMessage(userId, 'assistant', fullResponse)
-
         res.end()
 
     } catch (err: any) {
         console.error(err)
+        if (!res.headersSent) {
+            return res.status(500).json({ message: 'Failed to process chatbot request' })
+        }
     }
 }
 

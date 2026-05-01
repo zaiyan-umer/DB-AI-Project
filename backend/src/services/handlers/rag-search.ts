@@ -21,7 +21,7 @@ export async function handleDocumentRAGRequest(userId: string, query: string, gr
 }
 
 
-const buildRAGSystemPrompt = (chunksFromDb: any[]) => {
+export const buildRAGSystemPrompt = (chunksFromDb: any[]) => {
     const context = chunksFromDb.map((chunk) => {
         return `
             Source: ${chunk.courseFile?.originalName}

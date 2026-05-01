@@ -59,7 +59,7 @@ export const useCopilot = () => {
 		didSeedHistoryRef.current = true
 	}, [historyData])
 
-	const sendMessage = async (content: string) => {
+	const sendMessage = async (content: string, docs: boolean = false) => {
 		const trimmedContent = content.trim()
 		if (!trimmedContent) return
 
@@ -80,13 +80,13 @@ export const useCopilot = () => {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ content: trimmedContent }),
+				body: JSON.stringify({ content: trimmedContent, docs }),
 			})
 
 			if (response.status === 429 || response.status === 503) {
 				const errorMsg = response.status === 429 
 					? 'Please wait 5 seconds before sending another message.'
-					: 'AI is currently experiencing high demand. Please try again later.';
+					: 'Copilot is currently experiencing high demand. Please try again later.';
 				toast.error(errorMsg)
 				setMessages((prev) => prev.filter((msg) => msg.id !== userMessageId))
 				return
@@ -138,6 +138,7 @@ export const useCopilot = () => {
 							]
 						})
 						shouldStop = true
+						continue
 					}
 
 					setMessages((prev) => {
