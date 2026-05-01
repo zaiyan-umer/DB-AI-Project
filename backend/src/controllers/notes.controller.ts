@@ -163,6 +163,10 @@ export const uploadFile = async (req: Request, res: Response) => {
         const fullFilePath = path.join(process.cwd(), 'uploads', multerFile.filename);
         const text = await extractTextFromPdf(fullFilePath);
         const chunks = await generateChunks(text)
+
+        console.log("CHUNKS LENGTH: ", chunks.length);
+        // console.log("CHUNKS: ", chunks);
+        
         const embeddings = await generateEmbeddings(chunks);
 
         await storeEmbeddingsIntoDB({ chunks, embeddings, userId, fileId: file.id });

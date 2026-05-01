@@ -33,7 +33,6 @@ export async function handleChatbotMessage(req: Request, res: Response) {
             ...prevMessages.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: prompt }
         ]
-
         
         const fullResponse = await streamResponseToClients({res, systemPrompt, messages})
 

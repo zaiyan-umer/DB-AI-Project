@@ -1,14 +1,14 @@
 import { google } from '@ai-sdk/google';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { embedMany } from 'ai';
-import { asc, cosineDistance, eq } from 'drizzle-orm';
+import { and, asc, cosineDistance, eq, lte } from 'drizzle-orm';
 import fs from 'fs/promises';
 import { PDFParse } from 'pdf-parse';
 import env from '../config/env';
 import db from '../db/connection';
 import { courseFiles, documentEmbeddings } from '../db/schema';
 
-export async function generateChunks(text: string, chunkSize: number = 1000, chunkOverlap: number = 200) {
+export async function generateChunks(text: string, chunkSize: number = 4000, chunkOverlap: number = 400) {
     const splitter = new RecursiveCharacterTextSplitter({
         chunkSize,
         chunkOverlap,
@@ -40,11 +40,19 @@ export async function extractTextFromPdf(filepath: string): Promise<string> {
 }
 
 export async function generateEmbeddings(texts: string[]) {
-    const { embeddings } = await embedMany({
-        model: google.embeddingModel(env.TEXT_EMBEDDING_MODEL),
-        values: texts,
-    });
-    return embeddings;
+    const BATCH_SIZE = 100;
+    const allEmbeddings: number[][] = [];
+
+    for (let i = 0; i < texts.length; i += BATCH_SIZE) {
+        const batch = texts.slice(i, i + BATCH_SIZE);
+        const { embeddings } = await embedMany({
+            model: google.embeddingModel(env.TEXT_EMBEDDING_MODEL),
+            values: batch,
+        });
+        allEmbeddings.push(...embeddings);
+    }
+
+    return allEmbeddings;
 }
 
 
@@ -100,7 +108,12 @@ export async function semanticSearch({ query, userId, limit }: { query: string, 
         })
         .from(documentEmbeddings)
         .leftJoin(courseFiles, eq(documentEmbeddings.fileId, courseFiles.id))
-        .where(eq(documentEmbeddings.userId, userId))
+        .where(
+            and(
+                eq(documentEmbeddings.userId, userId),
+                lte(cosineDistance(documentEmbeddings.embedding, targetVector), 1 - 0.6)
+            )
+        )
         .orderBy(asc(cosineDistance(documentEmbeddings.embedding, targetVector)))
         .limit(limit ?? 5);
 

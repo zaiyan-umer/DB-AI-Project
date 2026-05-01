@@ -83,8 +83,11 @@ export const useCopilot = () => {
 				body: JSON.stringify({ content: trimmedContent }),
 			})
 
-			if (response.status === 429) {
-				toast.error('Please wait 5 seconds before sending another message.')
+			if (response.status === 429 || response.status === 503) {
+				const errorMsg = response.status === 429 
+					? 'Please wait 5 seconds before sending another message.'
+					: 'AI is currently experiencing high demand. Please try again later.';
+				toast.error(errorMsg)
 				setMessages((prev) => prev.filter((msg) => msg.id !== userMessageId))
 				return
 			}
@@ -118,19 +121,20 @@ export const useCopilot = () => {
 					}
 
 					if (payload.startsWith('[ERROR]')) {
+						const errorMessage = payload.replace('[ERROR] ', '') || 'Something went wrong, Please try again'
 						setMessages((prev) => {
 							const hasPlaceholder = prev.some((m) => m.id === placeholderId)
 							if (hasPlaceholder) {
 								return prev.map((m) =>
 									m.id === placeholderId
-										? { ...m, content: 'Something went wrong, Please try again' }
+										? { ...m, content: errorMessage }
 										: m,
 								)
 							}
 
 							return [
 								...prev,
-								{ id: placeholderId, role: 'assistant', content: 'Something went wrong, Please try again' },
+								{ id: placeholderId, role: 'assistant', content: errorMessage },
 							]
 						})
 						shouldStop = true

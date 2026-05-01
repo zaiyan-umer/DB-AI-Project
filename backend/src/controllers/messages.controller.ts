@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { addNewMessage, checkAdminAuthority, checkGroupMembership, checkIfAlreadyDeleted, checkMessageDeletionAuthority, checkMessageExists, deleteMessageForEveryone, deleteMsgForMe, fetchMessages, filterDeletedMessages, getMessageByIdWithSender } from "../services/dal/messages.dal";
-import { aiChatHandler } from "../services/handlers/ai-group-chat";
+import { handleGroupChatAIRequest } from "../services/handlers/ai-group-chat";
+import { handleDocumentRAGRequest } from "../services/handlers/rag-search";
 
 export const sendMessage = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -21,7 +22,12 @@ export const sendMessage = async (req: Request, res: Response) => {
     res.status(201).json({ message });
 
     if(req.body.content?.startsWith("@ai")){
-        aiChatHandler(groupId, req.body.content.slice(3).trim())
+        handleGroupChatAIRequest(groupId, req.body.content.slice(3).trim())
+        .catch(console.error)
+    }
+
+    if(req.body.content?.startsWith("@docs")){
+        handleDocumentRAGRequest(userId, req.body.content.slice(5).trim(), groupId)
         .catch(console.error)
     }
 
