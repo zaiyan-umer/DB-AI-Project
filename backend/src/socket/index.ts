@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import jwt from 'jsonwebtoken';
 import { parse } from 'cookie';
+import env from '../config/env';
 import { registerPresenceHandlers } from './socket-handlers/presence.handler';
 import { registerMessageHandlers } from './socket-handlers/message.handler';
 
@@ -27,8 +28,7 @@ export const getIO = () => {
 export const initSocket = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
     cors: {
-      // Need to change this in prod
-      origin: 'http://localhost:5173',
+      origin: env.CORS_ORIGIN,
       credentials: true,
     },
   });
