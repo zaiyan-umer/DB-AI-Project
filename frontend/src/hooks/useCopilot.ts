@@ -74,7 +74,7 @@ export const useCopilot = () => {
 		setIsStreaming(true)
 
 		try {
-			const response = await fetch('http://localhost:8000/api/ai/chatbot', {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/ai/chatbot`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: {
