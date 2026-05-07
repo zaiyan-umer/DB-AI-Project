@@ -21,13 +21,13 @@ type HistoryApiResponse = {
 }
 
 const toMessageList = (payload: unknown): Message[] => {
-	const maybeArray = Array.isArray(payload)
+	const maybeArray = (Array.isArray(payload)
 		? payload
 		: typeof payload === 'object' && payload !== null && Array.isArray((payload as HistoryApiResponse).messages)
 		  ? (payload as HistoryApiResponse).messages
-		  : []
+		  : []) as unknown[];
 
-	return maybeArray.map((item, index) => {
+	return maybeArray.map((item: unknown, index: number) => {
 		const record = (typeof item === 'object' && item !== null ? item : {}) as HistoryApiMessage
 
 		return {

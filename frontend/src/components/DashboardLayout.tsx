@@ -55,7 +55,7 @@ export function DashboardLayout() {
     const [showSettings, setShowSettings]           = useState(false)
     const [showUserMenu, setShowUserMenu]            = useState(false)
     
-    const {messages, isStreaming, sendMessage, isLoadingHistory,} = useCopilot()
+    const {messages, isStreaming, sendMessage} = useCopilot()
 
     const userMenuRef = useRef<HTMLDivElement>(null)
 
