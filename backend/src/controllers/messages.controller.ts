@@ -22,13 +22,17 @@ export const sendMessage = async (req: Request, res: Response) => {
     res.status(201).json({ message });
 
     if(req.body.content?.startsWith("@ai")){
-        handleGroupChatAIRequest(groupId, req.body.content.slice(3).trim())
-        .catch(console.error)
+        setTimeout(() => {
+            handleGroupChatAIRequest(groupId, req.body.content.slice(3).trim())
+            .catch(console.error)
+        }, 300);
     }
 
     if(req.body.content?.startsWith("@docs")){
-        handleDocumentRAGRequest(userId, req.body.content.slice(5).trim(), groupId)
-        .catch(console.error)
+        setTimeout(() => {
+            handleDocumentRAGRequest(userId, req.body.content.slice(5).trim(), groupId)
+            .catch(console.error)
+        }, 300);
     }
 
     return res;
