@@ -1,6 +1,6 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { ChevronRight, LogOut, Settings, Sparkles } from 'lucide-react'
 import { motion } from 'motion/react'
-import { ChevronRight, Sparkles, LogOut, Settings } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { navItems } from './navigation'
 
 export function Sidebar({

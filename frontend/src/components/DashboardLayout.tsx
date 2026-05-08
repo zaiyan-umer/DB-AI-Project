@@ -29,23 +29,9 @@ export function DashboardLayout() {
 
     const [showNotifications, setShowNotifications] = useState(false)
     const [showSettings, setShowSettings]           = useState(false)
-    const [showUserMenu, setShowUserMenu]            = useState(false)
     const [isSidebarOpen, setIsSidebarOpen]          = useState(false)
     
     const {messages, isStreaming, sendMessage} = useCopilot()
-
-    const userMenuRef = useRef<HTMLDivElement>(null)
-
-    // Close user-menu when clicking outside
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-                setShowUserMenu(false)
-            }
-        }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
-    }, [])
 
     const unreadCount = notifications.filter((n: { isRead?: boolean }) => !n.isRead).length
 
