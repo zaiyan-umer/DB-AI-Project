@@ -57,13 +57,9 @@ export function Sidebar({
                 {/* Logo */}
                 <div style={{ padding: '24px', borderBottom: `1px solid ${border}`, flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                            width: '40px', height: '40px', flexShrink: 0,
-                            background: 'linear-gradient(to right, #667eea, #764ba2)',
-                            borderRadius: '8px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                            <Sparkles className="w-5 h-5 text-white" />
+                        
+                        <div className='flex justify-center items-center '>
+                            <img src="/logo.webp" alt="logo" className='size-7'/>
                         </div>
                         <span style={{
                             fontSize: '18px', fontWeight: 700,
