@@ -41,7 +41,7 @@ export function DashboardLayout() {
         <div style={{
             display: 'flex',
             width: '100vw',
-            height: '100vh',
+            height: '100dvh',
             overflow: 'hidden',
             backgroundColor: pageBg,
         }}>
@@ -67,7 +67,7 @@ export function DashboardLayout() {
                 minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
-                height: '100vh',
+                height: '100dvh',
                 overflow: 'hidden',
             }}>
 
@@ -148,6 +148,8 @@ export function DashboardLayout() {
                 <main style={{
                     flex: 1,
                     minHeight: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
                     overflowY: 'auto',
                     overflowX: 'hidden',
                     backgroundColor: pageBg,
