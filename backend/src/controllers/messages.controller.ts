@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { addNewMessage, checkAdminAuthority, checkGroupMembership, checkIfAlreadyDeleted, checkMessageDeletionAuthority, checkMessageExists, deleteMessageForEveryone, deleteMsgForMe, fetchMessages, filterDeletedMessages, getMessageByIdWithSender } from "../services/dal/messages.dal";
 import { handleGroupChatAIRequest } from "../services/handlers/ai-group-chat";
 import { handleDocumentRAGRequest } from "../services/handlers/rag-search";
+import { getIO } from "../socket";
 
 export const sendMessage = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -19,20 +20,19 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     const [message] = await getMessageByIdWithSender(createdMessage.id)
 
+    // Broadcast the message immediately to the room from the backend
+    getIO().to(groupId).emit('new_message', message);
+
     res.status(201).json({ message });
 
     if(req.body.content?.startsWith("@ai")){
-        setTimeout(() => {
-            handleGroupChatAIRequest(groupId, req.body.content.slice(3).trim())
-            .catch(console.error)
-        }, 300);
+        handleGroupChatAIRequest(groupId, req.body.content.slice(3).trim())
+        .catch(console.error)
     }
 
     if(req.body.content?.startsWith("@docs")){
-        setTimeout(() => {
-            handleDocumentRAGRequest(userId, req.body.content.slice(5).trim(), groupId)
-            .catch(console.error)
-        }, 300);
+        handleDocumentRAGRequest(userId, req.body.content.slice(5).trim(), groupId)
+        .catch(console.error)
     }
 
     return res;
@@ -124,6 +124,8 @@ export const deleteForEveryone = async (req: Request, res: Response) => {
     }
 
     await deleteMessageForEveryone(messageId)
+
+    getIO().to(msg.groupId).emit('message_deleted', { messageId, groupId: msg.groupId });
 
     return res.status(200).json({ message: "Message deleted for everyone" });
 };
