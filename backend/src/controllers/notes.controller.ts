@@ -219,14 +219,10 @@ export const previewFile = async (req: Request, res: Response) => {
         const file = await getFileById(fileId, userId)
         if (!file) return res.status(404).json({ message: 'File not found' })
 
-        if (file.mimeType !== 'application/pdf') {
-            return res.status(400).json({ message: 'Preview is only available for PDF files' })
-        }
-
         const fullPath = path.join(process.cwd(), file.storagePath)
         if (!fs.existsSync(fullPath)) return res.status(404).json({ message: 'File missing from storage' })
 
-        res.setHeader('Content-Type', 'application/pdf')
+        res.setHeader('Content-Type', file.mimeType)
         res.setHeader('Content-Disposition', `inline; filename="${file.originalName}"`)
 
         return res.sendFile(fullPath)
