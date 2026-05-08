@@ -274,7 +274,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                                 Theme Preference
                                             </p>
                                             <p style={{ fontSize: '13px', color: textMut, marginBottom: '24px' }}>
-                                                Choose how StudySync AI looks to you. Defaults to your system preference.
+                                                Choose how SynapseFlow AI looks to you. Defaults to your system preference.
                                             </p>
 
                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
@@ -345,14 +345,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                         <div style={{ marginBottom: '24px' }}>
                                             <p style={{ fontSize: '13px', fontWeight: 500, color: textSec, marginBottom: '8px' }}>
                                                 Type{' '}
-                                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#ef4444' }}>Delete-StudySyncAI-account</span>
+                                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#ef4444' }}>Delete-SynapseFlowAI-account</span>
                                                 {' '}to confirm
                                             </p>
                                             <input
                                                 type="text"
                                                 value={deleteConfirmText}
                                                 onChange={e => setDeleteConfirmText(e.target.value)}
-                                                placeholder="Delete-StudySyncAI-account"
+                                                placeholder="Delete-SynapseFlowAI-account"
                                                 style={{
                                                     width: '100%', padding: '10px 14px',
                                                     backgroundColor: inputBg, border: `1px solid ${border}`,
@@ -372,17 +372,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                                 Cancel
                                             </button>
                                             <button
-                                                onClick={() => { if (deleteConfirmText === 'Delete-StudySyncAI-account') deleteAccount() }}
-                                                disabled={deleteConfirmText !== 'Delete-StudySyncAI-account' || deleting}
+                                                onClick={() => { if (deleteConfirmText === 'Delete-SynapseFlowAI-account') deleteAccount() }}
+                                                disabled={deleteConfirmText !== 'Delete-SynapseFlowAI-account' || deleting}
                                                 style={{
                                                     flex: 1, padding: '10px', backgroundColor: '#ef4444',
                                                     border: 'none', borderRadius: '10px', color: '#ffffff',
                                                     fontSize: '14px', fontWeight: 600,
-                                                    cursor: deleteConfirmText !== 'Delete-StudySyncAI-account' || deleting ? 'not-allowed' : 'pointer',
-                                                    opacity: deleteConfirmText !== 'Delete-StudySyncAI-account' || deleting ? 0.5 : 1,
+                                                    cursor: deleteConfirmText !== 'Delete-SynapseFlowAI-account' || deleting ? 'not-allowed' : 'pointer',
+                                                    opacity: deleteConfirmText !== 'Delete-SynapseFlowAI-account' || deleting ? 0.5 : 1,
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                                                 }}
-                                                onMouseEnter={e => { if (deleteConfirmText === 'Delete-StudySyncAI-account') (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#dc2626' }}
+                                                onMouseEnter={e => { if (deleteConfirmText === 'Delete-SynapseFlowAI-account') (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#dc2626' }}
                                                 onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ef4444'}
                                             >
                                                 <Trash2 style={{ width: '14px', height: '14px' }} />

@@ -75,7 +75,7 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
                                     <Bot size={14} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-white/90">StudySync AI</p>
+                                    <p className="text-sm font-medium text-white/90">SynapseFlow AI</p>
                                 </div>
                             </div>
 
@@ -186,7 +186,7 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
                                             handleSend()
                                         }
                                     }}
-                                    placeholder="Ask StudySync AI..."
+                                    placeholder="Ask SynapseFlow AI..."
                                     disabled={isStreaming}
                                     className="h-9 flex-1 bg-transparent px-2 text-[13px] text-white/90 outline-none transition placeholder:text-white/30 disabled:cursor-not-allowed"
                                 />
@@ -216,7 +216,7 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
                         type="button"
                         onClick={() => setIsOpen((prev) => !prev)}
                         className="grid cursor-pointer h-14 w-14 place-items-center rounded-full bg-[#0B0B0B] border border-[#ffffff] text-white/80 shadow-2xl transition-all hover:bg-[#141414] hover:text-white hover:scale-105 duration-150 backdrop-blur-md"
-                        aria-label={isOpen ? 'Close StudySync AI' : 'Open StudySync AI'}
+                        aria-label={isOpen ? 'Close SynapseFlow AI' : 'Open SynapseFlow AI'}
                     >
                         <motion.span>
                             <Bot size={22} />
