@@ -15,7 +15,7 @@ import { ChatPage } from './pages/ChatPage'
 const NotFoundPage = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[60vh]">
     <div className="text-center">
-      <h2 className="text-3xl font-bold text-gray-200 mb-4">404 - Page Not Found</h2>
+      <h2 className="text-3xl font-bold text-gray-200 mb-4 px-20">404 - Page Not Found</h2>
       <p className="text-gray-400 mb-6">The page you are looking for doesn't exist or is under construction.</p>
       <Link
         to="/dashboard"
