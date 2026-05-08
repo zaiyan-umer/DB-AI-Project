@@ -6,7 +6,7 @@ let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io('http://localhost:8000', {
+    socket = io(import.meta.env.VITE_SOCKET_URL, {
       withCredentials: true, // sends cookie — required for auth
       autoConnect: false,    // we control when to connect
     });

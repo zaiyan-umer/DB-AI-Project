@@ -6,6 +6,7 @@ import { checkExistingUser, deleteUserById, getUserById, insertUser, updateUserP
 import { compareHash, hashPassword, hashResetToken } from "../utils/hashing.utils";
 import { generateToken } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/mailer";
+import { deleteEmbeddingsByUser } from "../utils/rag.utils";
 
 export const register = async (req: Request<any, any, newUser>, res: Response) => {
     try {
@@ -67,7 +68,7 @@ export const login = async (req: Request, res: Response) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
             maxAge: 1000 * 60 * 60 * 24
         });
 
@@ -87,7 +88,11 @@ export const login = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
     try {
-        res.clearCookie('token')
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        });
         return res.status(200).json({
             message: 'User logged-out successfully',
         });
@@ -195,7 +200,6 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     }
 };
 
-// DELETE /api/auth/account Permanently deletes the authenticated user and all their data (cascade).
 export const deleteAccount = async (req: Request, res: Response) => {
     try {
         if (!req.user) return res.status(401).json({ error: "Unauthorized" });
@@ -206,8 +210,13 @@ export const deleteAccount = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "User not found" });
         }
  
-        // Clear the auth cookie so the client is immediately logged out
-        res.clearCookie("token");
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        });
+
+        await deleteEmbeddingsByUser(req.user.id);
  
         return res.status(200).json({ message: "Account deleted successfully" });
     } catch (err) {

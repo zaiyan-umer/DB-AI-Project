@@ -8,7 +8,7 @@ import { Input } from '../components/Input'
 import { useEvents, useCreateEvent, useDeleteEvent, useStudyPlan, useSaveStudyPlan, usePlanLogs, useSavePlanLogs, useDeleteCourseData, } from '../hooks/useScheduler'
 import type { EventType, Priority, CourseEntry, StudyStatus, DayStatus } from '../services/scheduler.service'
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -54,7 +54,7 @@ const priorityBarColors: Record<Priority, string> = {
   high: 'bg-red-500', medium: 'bg-yellow-500', low: 'bg-green-500',
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 const emptyEvent = { title: '', type: 'assignment' as EventType, date: '', time: '', course: '', priority: 'medium' as Priority }
 const emptyCourse = { course: '', preparation: 30, priority: 'medium' as Priority }
@@ -79,12 +79,8 @@ function getCurrentWeekStart(): string {
   return monday.toISOString().split('T')[0]
 }
 
-/** True if weekStart string is the current week */
-function isCurrentWeek(weekStart: string): boolean {
-  return weekStart === getCurrentWeekStart()
-}
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// Main Component
 
 export default function SchedulerPage() {
   const { data: events = [], isLoading: eventsLoading } = useEvents()
@@ -96,42 +92,42 @@ export default function SchedulerPage() {
   const { mutate: saveLog, isPending: savingLog } = useSavePlanLogs()
   const { mutate: deleteCourse, isPending: deletingCourse } = useDeleteCourseData()
 
-  // ── Event modal ──
+  // Event modal
   const [showEventModal, setShowEventModal] = useState(false)
   const [newEvent, setNewEvent] = useState(emptyEvent)
 
-  // ── Filters ──
+  // Filters
   const [filterType, setFilterType]         = useState<EventType | 'all'>('all')
   const [filterPriority, setFilterPriority] = useState<Priority | 'all'>('all')
   const [filterCourse, setFilterCourse]     = useState('')
   const [showFilters, setShowFilters]       = useState(false)
 
-  // ── Study plan generator ──
+  // Study plan generator
   const [courseForm, setCourseForm]       = useState(emptyCourse)
   const [pendingCourses, setPendingCourses] = useState<CourseEntry[]>([])
   const [generatedDraft, setGeneratedDraft] = useState<CourseEntry[] | null>(null)
 
-  // ── Confirmed courses (loaded from DB) ──
+  // Confirmed courses (loaded from DB)
   const [confirmedCourses, setConfirmedCourses] = useState<CourseEntry[]>([])
 
-  // ── Which confirmed course mini-charts are expanded ──
+  // Which confirmed course mini-charts are expanded
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
 
-  // ── Day statuses: course → DayStatus[7] (Mon-Sun) ──
+  // Day statuses: course → DayStatus[7] (Mon-Sun)
   const [courseStatuses, setCourseStatuses] = useState<Record<string, DayStatus[]>>({})
   const [unsavedCourses, setUnsavedCourses] = useState<Set<string>>(new Set())
 
-  // ── Delete confirmation ──
+  // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<CourseEntry | null>(null)
 
-  // ── Regenerate state: course → new weeklyPlan (pending confirmation) ──
+  // Regenerate state: course → new weeklyPlan (pending confirmation)
   const [regenPreviews, setRegenPreviews] = useState<Record<string, { dayOfWeek: string; hours: number }[]>>({})
 
   // CHANGES
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [savedState, setSavedState] = useState<{courseStatuses: Record<string, DayStatus[]>; confirmedCourses: CourseEntry[]} | null>(null)
 
-  // ── Load confirmed courses from DB on mount ──
+  // Load confirmed courses from DB on mount
   // All courses in the DB are confirmed by definition — no confirmed flag is
   // ever persisted, so filtering by it would always return [].
   useEffect(() => {
@@ -140,7 +136,7 @@ export default function SchedulerPage() {
     setConfirmedCourses(courses)
   }, [savedPlan, planLoading])
 
-  // ── Load existing logs into courseStatuses ──
+  // Load existing logs into courseStatuses
   // Logs are now one row per day. Rebuild the [7] status array per course uuid.
   useEffect(() => {
     if (!existingLogs.length) return
@@ -162,7 +158,7 @@ export default function SchedulerPage() {
     }
   }, [confirmedCourses])
 
-  // ── Filtered events ──
+  // Filtered events
   const filteredEvents = useMemo(() => {
     return events.filter(ev => {
       if (filterType !== 'all' && ev.type !== filterType) return false
@@ -172,7 +168,7 @@ export default function SchedulerPage() {
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   }, [events, filterType, filterPriority, filterCourse])
 
-  // ── Chart: only confirmed courses, uses status color if set ──
+  // Chart: only confirmed courses, uses status color if set
   const maxHoursInChart = useMemo(() => {
     if (!confirmedCourses.length) return 1
     return Math.max(1, ...DAYS.map((_day, di) =>
@@ -182,7 +178,7 @@ export default function SchedulerPage() {
 
   const hasActiveFilters = filterType !== 'all' || filterPriority !== 'all' || filterCourse !== ''
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // Handlers
 
   const handleAddEvent = () => {
     if (!newEvent.title || !newEvent.course || !newEvent.date) return
@@ -343,7 +339,7 @@ export default function SchedulerPage() {
     })
   }
 
-  // ── Bar colour for chart segment ──
+  // Bar colour for chart segment
   // If all 7 days of that course have a single status, tint the bar that colour.
   // Otherwise use course colour.
   const getChartBarColor = (course: CourseEntry, dayIndex: number): string => {
@@ -353,7 +349,7 @@ export default function SchedulerPage() {
     return course.color
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Render
 
   return (
     <div className="space-y-6 p-12">
@@ -479,7 +475,7 @@ export default function SchedulerPage() {
             )}
           </Card>
 
-          {/* ── Stacked bar chart ── */}
+          {/* Stacked bar chart */}
           {confirmedCourses.length > 0 && (
             <Card>
               <div className="flex items-start justify-between mb-5">
@@ -586,7 +582,7 @@ export default function SchedulerPage() {
             </Card>
           )}
 
-          {/* ── Per-course expanded detail cards ── */}
+          {/* Per-course expanded detail cards */}
           <AnimatePresence>
             {confirmedCourses.filter(c => expandedCourses.has(c.course)).map((plan, pi) => {
               const hasUnsaved = unsavedCourses.has(plan.course)
@@ -735,7 +731,7 @@ export default function SchedulerPage() {
             })}
           </AnimatePresence>
 
-          {/* ── Draft cards (generated, not yet confirmed) ── */}
+          {/* Draft cards (generated, not yet confirmed) */}
           {generatedDraft && generatedDraft.length > 0 && (
             <div className="space-y-4">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1">Newly Generated — Confirm to save</p>

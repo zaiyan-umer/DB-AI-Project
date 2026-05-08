@@ -1,11 +1,3 @@
-/**
- * src/main.tsx
- *
- * Wraps the app in ThemeProvider so every component can use useTheme().
- * ThemeProvider applies the correct class to <html> on first render,
- * so there is no flash of unstyled content.
- */
-
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'

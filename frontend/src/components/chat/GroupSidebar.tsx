@@ -22,9 +22,10 @@ interface Props {
   myGroups: Group[];
   activeGroupId: string | null;
   onSelectGroup: (group: Group | null) => void;
+  className?: string;
 }
 
-export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) => {
+export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup, className = '' }: Props) => {
   const [search, setSearch] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -92,7 +93,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup }: Props) 
   };
 
   return (
-    <div className="w-72 h-full flex flex-col border-r border-[var(--border)] bg-[var(--bg-surface)]">
+    <div className={`w-full md:w-72 h-full flex flex-col border-r border-[var(--border)] bg-[var(--bg-surface)] shrink-0 ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
         <h2 className="font-medium text-[var(--text-primary)]">Chats</h2>

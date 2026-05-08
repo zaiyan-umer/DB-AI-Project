@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useOutletContext } from 'react-router-dom';
 import { GroupSidebar } from '../components/chat/GroupSidebar';
 import { ChatWindow } from '../components/chat/ChatWindow';
 import { useMyGroups } from '../hooks/useGroup';
@@ -18,6 +19,18 @@ export const ChatPage = () => {
     const { data: user } = useCurrentUser();
     const { data: my_groups = [] } = useMyGroups();
     const [activeGroup, setActiveGroup] = useState<Group | null>(null);
+    const context = useOutletContext<{ setIsChatWindowOpen?: (v: boolean) => void }>();
+
+    useEffect(() => {
+        if (context?.setIsChatWindowOpen) {
+            context.setIsChatWindowOpen(!!activeGroup);
+        }
+        return () => {
+            if (context?.setIsChatWindowOpen) {
+                context.setIsChatWindowOpen(false);
+            }
+        };
+    }, [activeGroup, context]);
 
     const currentUserId = user?.user?.id ?? user?.id ?? '';
 
@@ -33,14 +46,21 @@ export const ChatPage = () => {
     const isAdmin = activeGroup?.role === 'admin';
 
     return (
-        <div className="flex h-full bg-[var(--bg-page)] text-[var(--text-primary)] font-sans">
-            <GroupSidebar
-                myGroups={my_groups}
-                activeGroupId={activeGroup?.id ?? null}
-                onSelectGroup={setActiveGroup}
-            />
+        <div className="flex h-full bg-[var(--bg-page)] text-[var(--text-primary)] font-sans relative overflow-hidden">
+            <motion.div
+                initial={false}
+                animate={{ x: activeGroup && window.innerWidth < 768 ? '-100%' : '0%' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="absolute inset-y-0 left-0 z-20 md:relative md:!transform-none flex h-full w-full md:w-auto"
+            >
+                <GroupSidebar
+                    myGroups={my_groups}
+                    activeGroupId={activeGroup?.id ?? null}
+                    onSelectGroup={setActiveGroup}
+                />
+            </motion.div>
 
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden w-full">
                 <AnimatePresence mode="wait">
                     {activeGroup ? (
                         <motion.div
@@ -57,6 +77,7 @@ export const ChatPage = () => {
                                 currentUserId={currentUserId}
                                 isAdmin={!!isAdmin}
                                 onlineCount={onlineCount}
+                                onBack={() => setActiveGroup(null)}
                             />
                         </motion.div>
                     ) : (

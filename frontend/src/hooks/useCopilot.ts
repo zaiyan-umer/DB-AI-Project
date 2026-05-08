@@ -21,13 +21,13 @@ type HistoryApiResponse = {
 }
 
 const toMessageList = (payload: unknown): Message[] => {
-	const maybeArray = Array.isArray(payload)
+	const maybeArray = (Array.isArray(payload)
 		? payload
 		: typeof payload === 'object' && payload !== null && Array.isArray((payload as HistoryApiResponse).messages)
 		  ? (payload as HistoryApiResponse).messages
-		  : []
+		  : []) as unknown[];
 
-	return maybeArray.map((item, index) => {
+	return maybeArray.map((item: unknown, index: number) => {
 		const record = (typeof item === 'object' && item !== null ? item : {}) as HistoryApiMessage
 
 		return {
@@ -59,7 +59,7 @@ export const useCopilot = () => {
 		didSeedHistoryRef.current = true
 	}, [historyData])
 
-	const sendMessage = async (content: string) => {
+	const sendMessage = async (content: string, docs: boolean = false) => {
 		const trimmedContent = content.trim()
 		if (!trimmedContent) return
 
@@ -74,17 +74,20 @@ export const useCopilot = () => {
 		setIsStreaming(true)
 
 		try {
-			const response = await fetch('http://localhost:8000/api/ai/chatbot', {
+			const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/ai/chatbot`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ content: trimmedContent }),
+				body: JSON.stringify({ content: trimmedContent, docs }),
 			})
 
-			if (response.status === 429) {
-				toast.error('Please wait 5 seconds before sending another message.')
+			if (response.status === 429 || response.status === 503) {
+				const errorMsg = response.status === 429 
+					? 'Please wait 5 seconds before sending another message.'
+					: 'Copilot is currently experiencing high demand. Please try again later.';
+				toast.error(errorMsg)
 				setMessages((prev) => prev.filter((msg) => msg.id !== userMessageId))
 				return
 			}
@@ -118,22 +121,24 @@ export const useCopilot = () => {
 					}
 
 					if (payload.startsWith('[ERROR]')) {
+						const errorMessage = payload.replace('[ERROR] ', '') || 'Something went wrong, Please try again'
 						setMessages((prev) => {
 							const hasPlaceholder = prev.some((m) => m.id === placeholderId)
 							if (hasPlaceholder) {
 								return prev.map((m) =>
 									m.id === placeholderId
-										? { ...m, content: 'Something went wrong, Please try again' }
+										? { ...m, content: errorMessage }
 										: m,
 								)
 							}
 
 							return [
 								...prev,
-								{ id: placeholderId, role: 'assistant', content: 'Something went wrong, Please try again' },
+								{ id: placeholderId, role: 'assistant', content: errorMessage },
 							]
 						})
 						shouldStop = true
+						continue
 					}
 
 					setMessages((prev) => {
