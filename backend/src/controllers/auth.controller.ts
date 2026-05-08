@@ -88,7 +88,11 @@ export const login = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
     try {
-        res.clearCookie('token')
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        });
         return res.status(200).json({
             message: 'User logged-out successfully',
         });
@@ -206,8 +210,11 @@ export const deleteAccount = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "User not found" });
         }
  
-        // Clear the auth cookie so the client is immediately logged out
-        res.clearCookie("token");
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        });
 
         await deleteEmbeddingsByUser(req.user.id);
  
