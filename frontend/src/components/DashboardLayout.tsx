@@ -123,7 +123,7 @@ export function DashboardLayout() {
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
                         }}>
-                            StudySync AI
+                            SynapseFlow
                         </span>
                     </div>
                 </div>

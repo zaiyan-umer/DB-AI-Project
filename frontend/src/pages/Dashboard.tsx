@@ -13,7 +13,7 @@ export default function Dashboard() {
             {/* Navbar */}
             <nav className="bg-white border-b border-gray-200 shadow-sm">
                 <div className="w-full mx-auto px-6 py-4 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-gray-900">StudySync AI</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">SynapseFlow</h1>
                     <Button 
                         onClick={() => logout()} 
                         disabled={isPending}
