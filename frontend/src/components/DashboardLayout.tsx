@@ -1,6 +1,6 @@
 import useCopilot from '@/hooks/useCopilot'
 import { Bell, Menu } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { useLogout } from '../hooks/useAuth'
@@ -74,7 +74,7 @@ export function DashboardLayout() {
                 {/* ── Fixed top header ── */}
                 <header style={{
                     flexShrink: 0,
-                    height: '64px',
+                    height: '48px',
                     backgroundColor: surface,
                     borderBottom: `1px solid ${border}`,
                     display: 'flex',
@@ -88,9 +88,9 @@ export function DashboardLayout() {
                             className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-colors"
                             onClick={() => setIsSidebarOpen(true)}
                         >
-                            <Menu style={{ width: '24px', height: '24px', color: textPri }} />
+                            <Menu style={{ width: '18px', height: '18px', color: textPri }} />
                         </button>
-                        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: textPri }}>
+                        <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 500, color: textPri }}>
                             {currentPage}
                         </h2>
                     </div>

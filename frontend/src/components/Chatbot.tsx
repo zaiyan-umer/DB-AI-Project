@@ -53,7 +53,7 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
     }
 
     return (
-        <div className="fixed bottom-10 right-6 z-50">
+        <div className="fixed bottom-14 right-1 sm:bottom-16 sm:right-6 z-50">
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -67,7 +67,7 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
                             y: { type: 'spring', stiffness: 300, damping: 25 },
                         }}
                         style={{ transformOrigin: 'bottom right' }}
-                        className="mb-3 flex h-[600px] w-90 flex-col overflow-hidden rounded-2xl bg-[#0B0B0B]/80 backdrop-blur-[12px] border border-[#ffffff10] shadow-2xl"
+                        className="fixed inset-0 sm:static sm:mb-3 flex h-[100dvh] w-full sm:h-[700px] sm:w-90 flex-col overflow-hidden rounded-none sm:rounded-2xl bg-[#0B0B0B] sm:bg-[#0B0B0B]/80 backdrop-blur-[12px] border-none sm:border sm:border-[#ffffff10] shadow-2xl"
                     >
                         <div className="flex items-center justify-between border-b border-[#1F1F1F] px-4 py-3">
                             <div className="flex items-center gap-2">

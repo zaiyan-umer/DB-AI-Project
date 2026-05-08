@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { useMessages, useSendMessage } from '../../hooks/useMessages';
 import { MessageItem } from './MessageItem';
 import { useAITyping } from '../../hooks/useAITyping';
-import { Bot } from 'lucide-react';
+import { Bot, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
@@ -10,10 +10,11 @@ interface Props {
   groupName: string;
   currentUserId: string;
   isAdmin: boolean;
-  onlineCount: number
+  onlineCount: number;
+  onBack?: () => void;
 }
 
-export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineCount }: Props) => {
+export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineCount, onBack }: Props) => {
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -79,11 +80,19 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
     <div className="flex flex-col h-full bg-[var(--bg-page)]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-surface)] flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-[var(--text-primary)] flex items-center justify-center text-[var(--bg-page)] font-semibold text-sm">
+        {onBack && (
+          <button 
+            onClick={onBack}
+            className="md:hidden flex items-center justify-center p-2 -ml-2 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+        <div className="w-9 h-9 rounded-full bg-[var(--text-primary)] flex items-center justify-center text-[var(--bg-page)] font-semibold text-sm shrink-0">
           {groupName[0].toUpperCase()}
         </div>
-        <div className="flex flex-col">
-          <span className="font-medium text-[var(--text-primary)]">{groupName}</span>
+        <div className="flex flex-col min-w-0">
+          <span className="font-medium text-[var(--text-primary)] truncate">{groupName}</span>
           <span className="text-xs text-[var(--text-muted)] font-medium">{onlineCount} online</span>
         </div>
       </div>
@@ -138,12 +147,12 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-surface)] flex gap-2 items-end">
+      <div className="px-1 sm:px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-surface)] flex gap-2 items-end">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message or type @ai help"
+          placeholder="Type a msg or try @ai help..."
           rows={1}
           className={`flex-1 resize-none rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all ${input.startsWith('@ai') || input.startsWith('@docs')
             ? 'bg-blue-500/10 border border-blue-500/40 text-blue-200 focus:ring-blue-500/50 placeholder:text-blue-400/50'
@@ -153,7 +162,7 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
         <button
           onClick={handleSend}
           disabled={!input.trim() || sendMessage.isPending}
-          className="cursor-pointer bg-[var(--text-primary)] hover:bg-[var(--text-secondary)] hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100 text-[var(--bg-page)] rounded-lg px-5 py-2.5 text-sm font-medium"
+          className="cursor-pointer bg-[var(--text-primary)] hover:bg-[var(--text-secondary)] hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100 text-[var(--bg-page)] rounded-lg px-2.5 sm:px-5 py-2 sm:py-2.5 text-sm font-medium"
         >
           Send
         </button>
