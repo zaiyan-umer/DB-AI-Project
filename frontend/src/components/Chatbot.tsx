@@ -15,9 +15,10 @@ export interface ChatbotProps {
     messages: ChatMessage[]
     isStreaming: boolean
     onSendMessage: (content: string, docs: boolean) => void
+    isChatWindowOpen?: boolean
 }
 
-const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
+const Chatbot = ({ messages, isStreaming, onSendMessage, isChatWindowOpen = false }: ChatbotProps) => {
     const [isOpen, setIsOpen] = useState(false)
     const [input, setInput] = useState('')
     const [chatWithDocs, setChatWithDocs] = useState(false)
@@ -53,7 +54,7 @@ const Chatbot = ({ messages, isStreaming, onSendMessage }: ChatbotProps) => {
     }
 
     return (
-        <div className="fixed bottom-14 right-1 sm:bottom-16 sm:right-6 z-50">
+        <div className={`fixed right-4 z-50 transition-all duration-300 ${isChatWindowOpen ? 'bottom-14' : 'bottom-4'}`}>
             <AnimatePresence>
                 {isOpen && (
                     <motion.div

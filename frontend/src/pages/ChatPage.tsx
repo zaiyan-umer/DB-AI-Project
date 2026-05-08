@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useOutletContext } from 'react-router-dom';
 import { GroupSidebar } from '../components/chat/GroupSidebar';
 import { ChatWindow } from '../components/chat/ChatWindow';
 import { useMyGroups } from '../hooks/useGroup';
@@ -18,6 +19,18 @@ export const ChatPage = () => {
     const { data: user } = useCurrentUser();
     const { data: my_groups = [] } = useMyGroups();
     const [activeGroup, setActiveGroup] = useState<Group | null>(null);
+    const context = useOutletContext<{ setIsChatWindowOpen?: (v: boolean) => void }>();
+
+    useEffect(() => {
+        if (context?.setIsChatWindowOpen) {
+            context.setIsChatWindowOpen(!!activeGroup);
+        }
+        return () => {
+            if (context?.setIsChatWindowOpen) {
+                context.setIsChatWindowOpen(false);
+            }
+        };
+    }, [activeGroup, context]);
 
     const currentUserId = user?.user?.id ?? user?.id ?? '';
 

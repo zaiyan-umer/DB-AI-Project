@@ -30,6 +30,7 @@ export function DashboardLayout() {
     const [showNotifications, setShowNotifications] = useState(false)
     const [showSettings, setShowSettings]           = useState(false)
     const [isSidebarOpen, setIsSidebarOpen]          = useState(false)
+    const [isChatWindowOpen, setIsChatWindowOpen]    = useState(false)
     
     const {messages, isStreaming, sendMessage} = useCopilot()
 
@@ -154,7 +155,7 @@ export function DashboardLayout() {
                     overflowX: 'hidden',
                     backgroundColor: pageBg,
                 }}>
-                    <Outlet />
+                    <Outlet context={{ setIsChatWindowOpen }} />
                 </main>
             </div>
 
@@ -165,6 +166,7 @@ export function DashboardLayout() {
                 messages={messages}
                 isStreaming={isStreaming}
                 onSendMessage={sendMessage}
+                isChatWindowOpen={isChatWindowOpen}
             />
         </div>
     )
