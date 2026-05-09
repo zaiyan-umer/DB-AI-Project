@@ -1,8 +1,9 @@
 import type { Request, Response } from 'express'
 import fs from 'fs'
 import path from 'path'
-import { completeFlashcardSession, getCourseById, getCourseCounts, getCoursesByUser, getFileByCourse, getFileById, getFilesByCourse, getFlashcardsByCourse, getMcqById, getMcqsByCourse, insertCourse, insertFile, insertFlashcard, insertFlashcardSession, insertMcqAttempt, insertMcqWithOptions, removeCourse, removeFile, replaceFlashcardContent, replaceMcqContent, updateCourse, } from '../services/dal/notes.dal'
+import { completeFlashcardSession, getCourseById, getCourseCounts, getCoursesByUser, getFileByCourse, getFileById, getFilesByCourse, getFlashcardsByCourse, getMcqById, getMcqsByCourse, insertCourse, insertFile, insertFlashcard, insertFlashcardSession, insertMcqAttempt, insertMcqWithOptions, removeCourse, removeFile, replaceFlashcardContent, replaceMcqContent, updateCourse, deleteMcqOnly, deleteFlashcardOnly, touchCourse } from '../services/dal/notes.dal'
 import { deleteEmbeddingsByFile, extractTextFromPdf, extractTextFromDocx, generateChunks, generateEmbeddings, storeEmbeddingsIntoDB } from '../utils/rag.utils'
+import { extractTextFromFile, generateFlashcardsFromText, generateMcqsFromText } from '../services/handlers/ai-notes'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -183,7 +184,8 @@ export const uploadFile = async (req: Request, res: Response) => {
         await storeEmbeddingsIntoDB({ chunks, embeddings, userId, fileId: file.id });
 
         console.log("EMBEDDINGS STORED SUCCESSFULLY");
-        
+
+        await touchCourse(courseId, userId)
 
         return res.status(201).json(file)
     } catch (err) {
@@ -231,7 +233,7 @@ export const previewFile = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Failed to preview file' })
     }
 }
-
+// ...existing code...
 export const deleteFile = async (req: Request, res: Response) => {
     try {
         const userId = req.user!.id
@@ -245,6 +247,9 @@ export const deleteFile = async (req: Request, res: Response) => {
 
         await removeFile(fileId, userId)
         await deleteEmbeddingsByFile(fileId)
+
+        await touchCourse(file.courseId, userId)
+
         return res.status(200).json({ message: 'File deleted' })
     } catch (err) {
         console.error(err)
@@ -271,8 +276,19 @@ export const getFlashcards = async (req: Request, res: Response) => {
     }
 }
 
-// Placeholder endpoint — will be replaced by AI generation later.
-export const seedFlashcards = async (req: Request, res: Response) => {
+// Helper: distribute `total` items across `n` buckets (first buckets get remainder)
+const distribute = (total: number, n: number) => {
+    const base = Math.floor(total / n)
+    let rem = total % n
+    return Array.from({ length: n }, () => (rem > 0 ? (rem--, base + 1) : base))
+}
+
+// ---- Process Files --------------------------------------------------------
+// Called by the "Process Files" button.
+// Dirty detection: course.updatedAt is bumped on every file add/delete.
+// If course.updatedAt > max(flashcard.updatedAt) — or no cards exist — files have changed.
+// If nothing changed → return alreadyProcessed: true so frontend shows "Study Again"/"Start Test".
+export const processFiles = async (req: Request, res: Response) => {
     try {
         const userId   = req.user!.id
         const courseId = req.params.courseId as string
@@ -280,25 +296,178 @@ export const seedFlashcards = async (req: Request, res: Response) => {
         const course = await getCourseById(courseId, userId)
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
-        const { cards } = req.body
-        if (!Array.isArray(cards) || cards.length === 0) {
-            return res.status(400).json({ message: 'cards array is required' })
+        const files = await getFilesByCourse(courseId, userId)
+
+        // Determine staleness: compare course.updatedAt against the most recently
+        // updated flashcard. If all cards were generated after the last file change,
+        // nothing needs to happen.
+        const existingCardsForCheck = await getFlashcardsByCourse(courseId, userId)
+        const lastCardUpdate = existingCardsForCheck.length > 0
+            ? Math.max(...existingCardsForCheck.map(c => new Date(c.updatedAt).getTime()))
+            : 0
+        const courseUpdatedAt = new Date(course.updatedAt).getTime()
+        const isDirty = existingCardsForCheck.length === 0 || courseUpdatedAt > lastCardUpdate
+
+        if (!isDirty) return res.status(200).json({ alreadyProcessed: true })
+        
+
+        if (files.length === 0) return res.status(200).json({ alreadyProcessed: false, flashcards: [], mcqs: [] })
+
+        const texts: { fileId: string; text: string }[] = []
+        for (const file of files) {
+            try {
+                const text = await extractTextFromFile(file.storagePath, file.mimeType, file.originalName)
+                texts.push({ fileId: file.id, text })
+            } catch (_) { /* skip unsupported */ }
+        }
+        if (texts.length === 0) return res.status(400).json({ message: 'No supported files (PDF/DOCX) found for processing' })
+        
+
+        // ── Flashcards (preserve sessions) ──────────────────────────────────
+        const existingCards = await getFlashcardsByCourse(courseId, userId)
+        let flashcardsResult: any[]
+
+        if (existingCards.length > 0) {
+            const counts = distribute(existingCards.length, texts.length)
+            const generatedPerFile = await Promise.all(
+                texts.map(({ fileId, text }, i) =>
+                    counts[i] > 0 ? generateFlashcardsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+                )
+            )
+            const allCards = generatedPerFile.flatMap(g => g.arr.map(c => ({ ...c, sourceFileId: g.fileId })))
+            const newCards = allCards.slice(0, existingCards.length)
+            flashcardsResult = await Promise.all(
+                existingCards.map((card, i) =>
+                    replaceFlashcardContent(card.id, userId, {
+                        question:     newCards[i]?.question     ?? newCards[0].question,
+                        answer:       newCards[i]?.answer       ?? newCards[0].answer,
+                        sourceFileId: newCards[i]?.sourceFileId ?? newCards[0].sourceFileId ?? null,
+                    })
+                )
+            )
+        } else {
+            const counts = distribute(5, texts.length)
+            const generatedPerFile = await Promise.all(
+                texts.map(({ fileId, text }, i) =>
+                    counts[i] > 0 ? generateFlashcardsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+                )
+            )
+            const allCards = generatedPerFile.flatMap(g => g.arr.map(c => ({ ...c, sourceFileId: g.fileId })))
+            flashcardsResult = await Promise.all(
+                allCards.slice(0, 5).map(c =>
+                    insertFlashcard({ courseId, userId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId })
+                )
+            )
         }
 
+        // ── MCQs (preserve attempts via in-place replace) ────────────────────
+        const existingMcqs = await getMcqsByCourse(courseId, userId)
+        let mcqsResult: any[]
+
+        if (existingMcqs.length > 0) {
+            const counts = distribute(existingMcqs.length, texts.length)
+            const generatedPerFile = await Promise.all(
+                texts.map(({ fileId, text }, i) =>
+                    counts[i] > 0 ? generateMcqsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+                )
+            )
+            const allQuestions = generatedPerFile.flatMap(g => g.arr.map(q => ({ ...q, sourceFileId: g.fileId })))
+            const newQuestions  = allQuestions.slice(0, existingMcqs.length)
+            mcqsResult = await Promise.all(
+                existingMcqs.map((mcq, i) =>
+                    replaceMcqContent(mcq.id, userId, {
+                        question:      newQuestions[i]?.question      ?? newQuestions[0].question,
+                        options:       newQuestions[i]?.options       ?? newQuestions[0].options,
+                        correctOption: newQuestions[i]?.correctOption ?? newQuestions[0].correctOption,
+                        explanation:   newQuestions[i]?.explanation   ?? newQuestions[0].explanation ?? null,
+                        difficulty:    newQuestions[i]?.difficulty    ?? newQuestions[0].difficulty ?? 'medium',
+                        sourceFileId:  newQuestions[i]?.sourceFileId  ?? newQuestions[0].sourceFileId ?? null,
+                    })
+                )
+            )
+        } else {
+            const counts = distribute(5, texts.length)
+            const generatedPerFile = await Promise.all(
+                texts.map(({ fileId, text }, i) =>
+                    counts[i] > 0 ? generateMcqsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+                )
+            )
+            const allQuestions = generatedPerFile.flatMap(g => g.arr.map(q => ({ ...q, sourceFileId: g.fileId })))
+            mcqsResult = await Promise.all(
+                allQuestions.slice(0, 5).map(q =>
+                    insertMcqWithOptions({
+                        courseId, userId,
+                        question: q.question, options: q.options, correctOption: q.correctOption,
+                        explanation: q.explanation ?? null, difficulty: q.difficulty ?? 'medium',
+                        aiGenerated: true, sourceFileId: q.sourceFileId,
+                    })
+                )
+            )
+        }
+
+        return res.status(200).json({ alreadyProcessed: false, flashcards: flashcardsResult, mcqs: mcqsResult })
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to process files' })
+    }
+}
+
+// AI-powered: generates flashcards from all uploaded files in the course.
+export const generateFlashcards = async (req: Request, res: Response) => {
+    try {
+        const userId   = req.user!.id
+        const courseId = req.params.courseId as string
+
+        const course = await getCourseById(courseId, userId)
+        if (!course) return res.status(404).json({ message: 'Course not found' })
+
+        const files = await getFilesByCourse(courseId, userId)
+        if (files.length === 0) {
+            return res.status(400).json({ message: 'No files uploaded to this course' })
+        }
+
+        // Extract text per-file and request 5 cards total distributed across files
+        const texts: { fileId: string; text: string }[] = []
+        for (const file of files) {
+            try {
+                const text = await extractTextFromFile(file.storagePath, file.mimeType, file.originalName)
+                texts.push({ fileId: file.id, text })
+            } catch (_) { /* skip unsupported files */ }
+        }
+
+        if (texts.length === 0) return res.status(400).json({ message: 'No supported files (PDF/DOCX) found for processing' })
+
+        // Delete ALL existing flashcards for this course (preserve sessions/attempts)
+        const existingCards = await getFlashcardsByCourse(courseId, userId)
+        for (const card of existingCards) {
+            await deleteFlashcardOnly(card.id, userId)
+        }
+
+        const counts = distribute(5, texts.length)
+        const generatedPerFile = await Promise.all(
+            texts.map(({ fileId, text }, i) =>
+                counts[i] > 0 ? generateFlashcardsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+            )
+        )
+
+        const allCards = generatedPerFile.flatMap(g => g.arr.map(c => ({ ...c, sourceFileId: g.fileId })))
+        const trimmed = allCards.slice(0, 5)
+
         const inserted = await Promise.all(
-            cards.map((c: { question: string; answer: string }) =>
-                insertFlashcard({ courseId, userId, question: c.question, answer: c.answer, aiGenerated: false })
+            trimmed.map(c =>
+                insertFlashcard({ courseId, userId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId })
             )
         )
 
         return res.status(201).json(inserted)
     } catch (err) {
         console.error(err)
-        return res.status(500).json({ message: 'Failed to seed flashcards' })
+        return res.status(500).json({ message: 'Failed to generate flashcards' })
     }
 }
 
-// Regenerate — replaces content of existing cards in-place.
+
+// AI-powered regenerate — replaces content of existing cards in-place (updates updated_at).
 export const regenerateFlashcards = async (req: Request, res: Response) => {
     try {
         const userId   = req.user!.id
@@ -307,18 +476,52 @@ export const regenerateFlashcards = async (req: Request, res: Response) => {
         const course = await getCourseById(courseId, userId)
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
-        const existing    = await getFlashcardsByCourse(courseId, userId)
-        const { cards }   = req.body
+        const files = await getFilesByCourse(courseId, userId)
+        if (files.length === 0) return res.status(400).json({ message: 'No files uploaded to this course' })
 
-        if (!Array.isArray(cards) || cards.length !== existing.length) {
-            return res.status(400).json({ message: `Expected ${existing.length} cards, got ${cards?.length ?? 0}` })
+        const texts: { fileId: string; text: string }[] = []
+        for (const file of files) {
+            try {
+                const text = await extractTextFromFile(file.storagePath, file.mimeType, file.originalName)
+                texts.push({ fileId: file.id, text })
+            } catch (_) {}
         }
-        
+        if (texts.length === 0) return res.status(400).json({ message: 'No supported files (PDF/DOCX) found for processing' })
+
+        const existing = await getFlashcardsByCourse(courseId, userId)
+
+        if (existing.length === 0) {
+            // No existing cards -> create 5 new distributed across files
+            const counts = distribute(5, texts.length)
+            const generatedPerFile = await Promise.all(
+                texts.map(({ fileId, text }, i) =>
+                    counts[i] > 0 ? generateFlashcardsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+                )
+            )
+            const allCards = generatedPerFile.flatMap(g => g.arr.map(c => ({ ...c, sourceFileId: g.fileId })))
+            const trimmed = allCards.slice(0, 5)
+            const inserted = await Promise.all(
+                trimmed.map(c => insertFlashcard({ courseId, userId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId }))
+            )
+            return res.status(201).json(inserted)
+        }
+
+        // Existing cards -> generate same number and replace content in-place
+        const counts = distribute(existing.length, texts.length)
+        const generatedPerFile = await Promise.all(
+            texts.map(({ fileId, text }, i) =>
+                counts[i] > 0 ? generateFlashcardsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+            )
+        )
+        const allCards = generatedPerFile.flatMap(g => g.arr.map(c => ({ ...c, sourceFileId: g.fileId })))
+        const newCards = allCards.slice(0, existing.length)
+
         const updated = await Promise.all(
             existing.map((card, i) =>
                 replaceFlashcardContent(card.id, userId, {
-                    question: cards[i].question,
-                    answer:   cards[i].answer,
+                    question:     newCards[i]?.question ?? newCards[0].question,
+                    answer:       newCards[i]?.answer   ?? newCards[0].answer,
+                    sourceFileId: newCards[i]?.sourceFileId ?? newCards[0].sourceFileId ?? null,
                 })
             )
         )
@@ -327,6 +530,166 @@ export const regenerateFlashcards = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to regenerate flashcards' })
+    }
+}
+
+// AI-powered: generates MCQs from all uploaded files in the course.
+// Also acts as the MCQ "process files" handler: returns { alreadyProcessed: true }
+// when no file changes have occurred since last generation.
+export const generateMcqs = async (req: Request, res: Response) => {
+    try {
+        const userId   = req.user!.id
+        const courseId = req.params.courseId as string
+
+        const course = await getCourseById(courseId, userId)
+        if (!course) return res.status(404).json({ message: 'Course not found' })
+
+        const existingMcqs = await getMcqsByCourse(courseId, userId)
+
+        // Dirty check: if MCQs exist and all were generated after the last file change, skip.
+        if (existingMcqs.length > 0) {
+            const lastMcqUpdate = Math.max(...existingMcqs.map(m => new Date(m.updatedAt).getTime()))
+            const courseUpdatedAt = new Date(course.updatedAt).getTime()
+            if (courseUpdatedAt <= lastMcqUpdate) {
+                return res.status(200).json({ alreadyProcessed: true })
+            }
+        }
+
+        const files = await getFilesByCourse(courseId, userId)
+        if (files.length === 0) return res.status(400).json({ message: 'No files uploaded to this course' })
+
+        const texts: { fileId: string; text: string }[] = []
+        for (const file of files) {
+            try {
+                const text = await extractTextFromFile(file.storagePath, file.mimeType, file.originalName)
+                texts.push({ fileId: file.id, text })
+            } catch (_) {}
+        }
+
+        if (texts.length === 0) return res.status(400).json({ message: 'No supported files (PDF/DOCX) found for processing' })
+
+        if (existingMcqs.length > 0) {
+            // MCQs already exist — replace content in-place to preserve attempt history
+            const counts = distribute(existingMcqs.length, texts.length)
+            const generatedPerFile = await Promise.all(
+                texts.map(({ fileId, text }, i) =>
+                    counts[i] > 0 ? generateMcqsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+                )
+            )
+            const allQuestions = generatedPerFile.flatMap(g => g.arr.map(q => ({ ...q, sourceFileId: g.fileId })))
+            const newQuestions = allQuestions.slice(0, existingMcqs.length)
+
+            const updated = await Promise.all(
+                existingMcqs.map((mcq, i) =>
+                    replaceMcqContent(mcq.id, userId, {
+                        question:      newQuestions[i]?.question      ?? newQuestions[0].question,
+                        options:       newQuestions[i]?.options       ?? newQuestions[0].options,
+                        correctOption: newQuestions[i]?.correctOption ?? newQuestions[0].correctOption,
+                        explanation:   newQuestions[i]?.explanation   ?? newQuestions[0].explanation ?? null,
+                        difficulty:    newQuestions[i]?.difficulty    ?? newQuestions[0].difficulty ?? 'medium',
+                        sourceFileId:  newQuestions[i]?.sourceFileId  ?? newQuestions[0].sourceFileId ?? null,
+                    })
+                )
+            )
+            return res.status(200).json(updated)
+        }
+
+        // No existing MCQs — generate 5 fresh ones
+        const counts = distribute(5, texts.length)
+        const generatedPerFile = await Promise.all(
+            texts.map(({ fileId, text }, i) =>
+                counts[i] > 0 ? generateMcqsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+            )
+        )
+
+        const allQuestions = generatedPerFile.flatMap(g => g.arr.map(q => ({ ...q, sourceFileId: g.fileId })))
+        const trimmed = allQuestions.slice(0, 5)
+
+        const inserted = await Promise.all(
+            trimmed.map(q =>
+                insertMcqWithOptions({
+                    courseId, userId, question: q.question, options: q.options, correctOption: q.correctOption, explanation: q.explanation ?? null,
+                    difficulty: q.difficulty ?? 'medium', aiGenerated: true, sourceFileId: q.sourceFileId,
+                })
+            )
+        )
+
+        return res.status(201).json(inserted)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to generate MCQs' })
+    }
+}
+
+// AI-powered regenerate — replaces MCQs content in-place (updates updated_at).
+export const regenerateMcqs = async (req: Request, res: Response) => {
+    try {
+        const userId   = req.user!.id
+        const courseId = req.params.courseId as string
+
+        const course = await getCourseById(courseId, userId)
+        if (!course) return res.status(404).json({ message: 'Course not found' })
+
+        const files = await getFilesByCourse(courseId, userId)
+        if (files.length === 0) return res.status(400).json({ message: 'No files uploaded to this course' })
+
+        const texts: { fileId: string; text: string }[] = []
+        for (const file of files) {
+            try {
+                const text = await extractTextFromFile(file.storagePath, file.mimeType, file.originalName)
+                texts.push({ fileId: file.id, text })
+            } catch (_) {}
+        }
+        if (texts.length === 0) return res.status(400).json({ message: 'No supported files (PDF/DOCX) found for processing' })
+
+        const existing = await getMcqsByCourse(courseId, userId)
+
+        if (existing.length === 0) {
+            // No existing MCQs -> create 5 new distributed across files
+            const counts = distribute(5, texts.length)
+            const generatedPerFile = await Promise.all(
+                texts.map(({ fileId, text }, i) =>
+                    counts[i] > 0 ? generateMcqsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+                )
+            )
+            const allQuestions = generatedPerFile.flatMap(g => g.arr.map(q => ({ ...q, sourceFileId: g.fileId })))
+            const trimmed = allQuestions.slice(0, 5)
+            const inserted = await Promise.all(
+                trimmed.map(q =>
+                    insertMcqWithOptions({ courseId, userId, question: q.question, options: q.options, correctOption: q.correctOption,
+                        explanation: q.explanation ?? null, difficulty: q.difficulty ?? 'medium', aiGenerated: true, sourceFileId: q.sourceFileId,
+                    })
+                )
+            )
+            return res.status(201).json(inserted)
+        }
+
+        // Existing MCQs -> generate same number and replace content in-place
+        const counts = distribute(existing.length, texts.length)
+        const generatedPerFile = await Promise.all(
+            texts.map(({ fileId, text }, i) =>
+                counts[i] > 0 ? generateMcqsFromText(text, counts[i]).then(arr => ({ fileId, arr })) : Promise.resolve({ fileId, arr: [] })
+            )
+        )
+        const allQuestions = generatedPerFile.flatMap(g => g.arr.map(q => ({ ...q, sourceFileId: g.fileId })))
+        const newQuestions = allQuestions.slice(0, existing.length)
+        
+const updated = await Promise.all(
+    existing.map((mcq, i) =>
+        replaceMcqContent(mcq.id, userId, {
+            question:      newQuestions[i]?.question      ?? newQuestions[0].question,
+            options:       newQuestions[i]?.options       ?? newQuestions[0].options,
+            correctOption: newQuestions[i]?.correctOption ?? newQuestions[0].correctOption,
+            explanation:   newQuestions[i]?.explanation   ?? newQuestions[0].explanation ?? null,
+            difficulty:    newQuestions[i]?.difficulty    ?? newQuestions[0].difficulty ?? 'medium',
+            sourceFileId:  newQuestions[i]?.sourceFileId  ?? newQuestions[0].sourceFileId  ?? null,
+        })
+    )
+)
+        return res.status(200).json(updated)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Failed to regenerate MCQs' })
     }
 }
 
@@ -385,83 +748,6 @@ export const getMcqs = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to fetch MCQs' })
-    }
-}
-
-// Placeholder endpoint — will be replaced by AI generation later.
-export const seedMcqs = async (req: Request, res: Response) => {
-    try {
-        const userId   = req.user!.id
-        const courseId = req.params.courseId as string
-
-        const course = await getCourseById(courseId, userId)
-        if (!course) return res.status(404).json({ message: 'Course not found' })
-
-        const { questions } = req.body
-        if (!Array.isArray(questions) || questions.length === 0) {
-            return res.status(400).json({ message: 'questions array is required' })
-        }
-
-        const inserted = await Promise.all(
-            questions.map((q: {
-                question:      string
-                options:       string[]
-                correctOption: number
-                explanation?:  string
-                difficulty?:   'easy' | 'medium' | 'hard'
-            }) =>
-                insertMcqWithOptions({
-                    courseId,
-                    userId,
-                    question:      q.question,
-                    options:       q.options,
-                    correctOption: q.correctOption,
-                    explanation:   q.explanation ?? null,
-                    difficulty:    q.difficulty ?? 'medium',
-                    aiGenerated:   false,
-                })
-            )
-        )
-
-        return res.status(201).json(inserted)
-    } catch (err) {
-        console.error(err)
-        return res.status(500).json({ message: 'Failed to seed MCQs' })
-    }
-}
-
-// Regenerate — replaces content of existing MCQ rows in-place.
-export const regenerateMcqs = async (req: Request, res: Response) => {
-    try {
-        const userId   = req.user!.id
-        const courseId = req.params.courseId as string
-
-        const course = await getCourseById(courseId, userId)
-        if (!course) return res.status(404).json({ message: 'Course not found' })
-
-        const existing      = await getMcqsByCourse(courseId, userId)
-        const { questions } = req.body
-
-        if (!Array.isArray(questions) || questions.length !== existing.length) {
-            return res.status(400).json({ message: `Expected ${existing.length} questions, got ${questions?.length ?? 0}` })
-        }
-
-        const updated = await Promise.all(
-            existing.map((mcq, i) =>
-                replaceMcqContent(mcq.id, userId, {
-                    question:      questions[i].question,
-                    options:       questions[i].options,
-                    correctOption: questions[i].correctOption,
-                    explanation:   questions[i].explanation ?? null,
-                    difficulty:    questions[i].difficulty ?? 'medium',
-                })
-            )
-        )
-
-        return res.status(200).json(updated)
-    } catch (err) {
-        console.error(err)
-        return res.status(500).json({ message: 'Failed to regenerate MCQs' })
     }
 }
 
