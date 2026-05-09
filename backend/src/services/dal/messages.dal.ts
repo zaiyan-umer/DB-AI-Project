@@ -28,6 +28,13 @@ export const addNewMessage = async (
         .returning();
 }
 
+export const addNewSystemMessage = async (groupId: string, content: string) => {
+    return await db
+        .insert(messages)
+        .values({ groupId, content, senderType: 'user', isSystem: true })
+        .returning();
+}
+
 
 export const getMessageByIdWithSender = async (messageId: string) => {
     return await db
@@ -38,6 +45,7 @@ export const getMessageByIdWithSender = async (messageId: string) => {
             createdAt: messages.createdAt,
             deletedAt: messages.deletedAt,
             senderType: messages.senderType,
+            isSystem: messages.isSystem,
             sender: {
                 id: users.id,
                 username: users.username,
@@ -59,6 +67,7 @@ export const fetchMessages = async (groupId: string, limit: number, cursor?: str
             createdAt: messages.createdAt,
             deletedAt: messages.deletedAt, // non-null = deleted for everyone
             senderType: messages.senderType,
+            isSystem: messages.isSystem,
             sender: {
                 id: users.id,
                 username: users.username,

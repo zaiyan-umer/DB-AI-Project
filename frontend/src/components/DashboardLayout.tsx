@@ -86,7 +86,7 @@ export function DashboardLayout() {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <button
-                            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-colors"
+                            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-colors"
                             onClick={() => setIsSidebarOpen(true)}
                         >
                             <Menu style={{ width: '18px', height: '18px', color: textPri }} />

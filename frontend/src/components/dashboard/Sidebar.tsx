@@ -36,7 +36,7 @@ export function Sidebar({
             {/* Mobile overlay */}
             {isOpen && (
                 <div
-                    className="md:hidden fixed inset-0 bg-black/50 z-30"
+                    className="lg:hidden fixed inset-0 bg-black/50 z-30"
                     onClick={() => setIsOpen(false)}
                 />
             )}
@@ -45,8 +45,8 @@ export function Sidebar({
                 initial={{ x: -280 }}
                 animate={{ x: 0 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className={`fixed md:relative z-40 md:z-auto h-full flex flex-col shrink-0 transition-transform duration-300 ${
-                    isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+                className={`fixed lg:relative z-40 lg:z-auto h-full flex flex-col shrink-0 transition-transform duration-300 ${
+                    isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 }`}
                 style={{
                     width: '256px',

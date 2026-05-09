@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from 'zod';
 import groups from "./group.schema";
@@ -15,6 +15,7 @@ export const messages = pgTable("messages", {
         .references(() => users.id, { onDelete: "cascade" }),
     senderType: senderTypeEnum("sender_type").notNull(),
     content: text("content").notNull(),
+    isSystem: boolean("is_system").default(false).notNull(),
     deletedAt: timestamp("deleted_at"), // null = not deleted, set = soft deleted for everyone (admin)
     createdAt: timestamp("created_at").defaultNow(),
 });
