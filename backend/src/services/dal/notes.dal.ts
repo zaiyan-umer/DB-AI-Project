@@ -38,6 +38,14 @@ export const updateCourse = async (courseId: string, userId: string, data: { nam
         .returning()
     return updated ?? null
 }
+
+// Bump updatedAt whenever files change so processFiles can detect staleness.
+export const touchCourse = async (courseId: string, userId: string) => {
+    await db
+        .update(courses)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(courses.id, courseId), eq(courses.userId, userId)))
+}
 // Gets counts of files, flashcards, and MCQs for each course of a user.
 // Returns 3 maps: { courseId -> filesCount }, { courseId -> flashcardsCount }, { courseId -> mcqsCount }.
 export const getCourseCounts = async (userId: string) => {
@@ -133,18 +141,22 @@ export const updateFlashcard = async (
     return updated
 }
 
-// Replaces content of an existing flashcard row in-place (for regenerate).
 export const replaceFlashcardContent = async (
     flashcardId: string,
     userId: string,
-    data: { question: string; answer: string }
+    data: { question: string; answer: string; sourceFileId?: string | null }
 ) => {
     const [updated] = await db
         .update(flashcards)
-        .set({ ...data, updatedAt: new Date() })
+        .set({
+            question:     data.question,
+            answer:       data.answer,
+            sourceFileId: data.sourceFileId ?? null,
+            updatedAt:    new Date(),
+        })
         .where(and(eq(flashcards.id, flashcardId), eq(flashcards.userId, userId)))
         .returning()
-    return updated
+    return updated ?? null
 }
 
 export const removeFlashcard = async (flashcardId: string, userId: string) => {
@@ -218,6 +230,7 @@ type McqInput = {
     explanation: string | null
     difficulty: 'easy' | 'medium' | 'hard'
     aiGenerated: boolean
+    sourceFileId?: string | null
 }
 
 const toMcqWithOptions = (
@@ -285,7 +298,7 @@ export const insertMcqWithOptions = async (payload: McqInput): Promise<McqWithOp
     return db.transaction(async (tx) => {
         const [created] = await tx
             .insert(mcqs)
-            .values({ courseId: payload.courseId, userId: payload.userId, question: payload.question, explanation: payload.explanation, difficulty: payload.difficulty, aiGenerated: payload.aiGenerated, })
+            .values({ courseId: payload.courseId, userId: payload.userId, question: payload.question, explanation: payload.explanation, difficulty: payload.difficulty, aiGenerated: payload.aiGenerated, sourceFileId: payload.sourceFileId ?? null, })
             .returning()
 
         const insertedOptions = await tx
@@ -320,42 +333,50 @@ export const updateMcq = async (
 export const replaceMcqContent = async (
     mcqId: string,
     userId: string,
-    data: { question: string; options: string[]; correctOption: number; explanation: string | null; difficulty: 'easy' | 'medium' | 'hard' }
+    data: { question: string; options: string[]; correctOption: number; explanation: string | null; difficulty: 'easy' | 'medium' | 'hard'; sourceFileId?: string | null }
 ) => {
     const { options, correctOption } = data
-    if (!Array.isArray(options) || options.length === 0) {
-        throw new Error('options array is required')
-    }
-    if (correctOption < 0 || correctOption >= options.length) {
-        throw new Error('correctOption is out of range')
-    }
+    if (!Array.isArray(options) || options.length === 0) throw new Error('options array is required')
+    if (correctOption < 0 || correctOption >= options.length) throw new Error('correctOption is out of range')
 
     return db.transaction(async (tx) => {
         const [updated] = await tx
             .update(mcqs)
-            .set({ question: data.question, explanation: data.explanation, difficulty: data.difficulty, updatedAt: new Date(),})
+            .set({
+                question:     data.question,
+                explanation:  data.explanation,
+                difficulty:   data.difficulty,
+                sourceFileId: data.sourceFileId ?? null,
+                updatedAt:    new Date(),
+            })
             .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
             .returning()
 
         if (!updated) return null
 
-        // Old attempts reference old option rows; remove them before replacing options.
-        await tx.delete(mcqAttempts).where(eq(mcqAttempts.mcqId, mcqId))
+        // Update existing option rows in-place so attempts keep referencing them
+        const existingOptions = await tx
+            .select()
+            .from(mcqOptions)
+            .where(eq(mcqOptions.mcqId, mcqId))
+            .orderBy(asc(mcqOptions.optionIndex))
 
-        await tx.delete(mcqOptions).where(eq(mcqOptions.mcqId, mcqId))
-
-        const insertedOptions = await tx
-            .insert(mcqOptions)
-            .values(
-                options.map((optionText, optionIndex) => ({ mcqId, optionIndex, optionText, isCorrect: optionIndex === correctOption, }))
+        const updatedOptions = await Promise.all(
+            existingOptions.map((opt, i) =>
+                tx
+                    .update(mcqOptions)
+                    .set({ optionText: options[i] ?? options[0], isCorrect: i === correctOption })
+                    .where(eq(mcqOptions.id, opt.id))
+                    .returning()
+                    .then(([r]) => r)
             )
-            .returning()
+        )
 
         return {
             ...updated,
-            options: insertedOptions
+            options: updatedOptions
                 .sort((a, b) => a.optionIndex - b.optionIndex)
-                .map((o) => ({ id: o.id, optionIndex: o.optionIndex, optionText: o.optionText, isCorrect: o.isCorrect, })),
+                .map((o) => ({ id: o.id, optionIndex: o.optionIndex, optionText: o.optionText, isCorrect: o.isCorrect })),
         }
     })
 }
@@ -372,4 +393,24 @@ export const removeMcq = async (mcqId: string, userId: string) => {
 export const insertMcqAttempt = async (payload: NewMcqAttempt) => {
     const [created] = await db.insert(mcqAttempts).values(payload).returning()
     return created
+}
+
+// Delete flashcard without cascading to sessions/attempts
+export const deleteFlashcardOnly = async (flashcardId: string, userId: string) => {
+    const [deleted] = await db
+        .delete(flashcards)
+        .where(and(eq(flashcards.id, flashcardId), eq(flashcards.userId, userId)))
+        .returning()
+    return deleted
+}
+
+// Delete MCQ without cascading to attempts
+export const deleteMcqOnly = async (mcqId: string, userId: string) => {
+    // remove option rows first
+    await db.delete(mcqOptions).where(eq(mcqOptions.mcqId, mcqId))
+    const [deleted] = await db
+        .delete(mcqs)
+        .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
+        .returning()
+    return deleted
 }

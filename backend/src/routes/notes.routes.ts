@@ -3,7 +3,7 @@ import multer from 'multer'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { verifyToken } from '../middleware/verifyToken.middleware'
-import { getCourses, createCourse, deleteCourse, renameCourse, getFiles, uploadFile, downloadFile, previewFile, deleteFile, getFlashcards, seedFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, getMcqs, seedMcqs, regenerateMcqs, submitMcqAttempt, getFile} from '../controllers/notes.controller'
+import { getCourses, createCourse, deleteCourse, renameCourse, getFiles, uploadFile, downloadFile, previewFile, deleteFile, getFlashcards, generateFlashcards, regenerateFlashcards, startFlashcardSession, finishFlashcardSession, getMcqs, generateMcqs, regenerateMcqs, submitMcqAttempt, getFile} from '../controllers/notes.controller'
 
 const router = express.Router()
 router.use(verifyToken)
@@ -60,13 +60,12 @@ router.post('/:courseId/files', upload.single('file'), uploadFile)
 router.get('/:courseId/flashcards', getFlashcards)
 router.post('/:courseId/flashcards/regenerate', regenerateFlashcards)
 router.post('/:courseId/flashcards/session', startFlashcardSession)
-// router.post('/:courseId/flashcards/:flashcardId/review', submitFlashcardReview)
-router.post('/:courseId/flashcards', seedFlashcards)
+router.post('/:courseId/flashcards', generateFlashcards)
 
 // ── MCQs ───────────────────────────────────────────────────────────────────
 router.get('/:courseId/mcqs', getMcqs)
 router.post('/:courseId/mcqs/regenerate', regenerateMcqs)
-router.post('/:courseId/mcqs', seedMcqs)
+router.post('/:courseId/mcqs', generateMcqs)
 router.post('/:courseId/mcqs/:mcqId/attempt', submitMcqAttempt)
 
 export default router

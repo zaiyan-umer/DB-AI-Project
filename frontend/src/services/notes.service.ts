@@ -145,20 +145,14 @@ export interface FlashcardSession {
     expiresAt:       string
 }
 
-// replace this with an AI API call that generates cards from uploaded files.
-export const seedFlashcards = async (
-    courseId: string,
-    cards:    FlashcardSeedItem[],
-): Promise<Flashcard[]> => {
-    const res = await api.post(`/notes/${courseId}/flashcards`, { cards })
+// Triggers AI generation of flashcards from uploaded course files.
+export const processFilesForFlashcards = async (courseId: string): Promise<Flashcard[]> => {
+    const res = await api.post(`/notes/${courseId}/flashcards`)
     return res.data
 }
 
-export const regenerateFlashcards = async (
-    courseId: string,
-    cards:    FlashcardSeedItem[],
-): Promise<Flashcard[]> => {
-    const res = await api.post(`/notes/${courseId}/flashcards/regenerate`, { cards })
+export const regenerateFlashcards = async (courseId: string): Promise<Flashcard[]> => {
+    const res = await api.post(`/notes/${courseId}/flashcards/regenerate`)
     return res.data
 }
 
@@ -194,20 +188,14 @@ export interface McqSeedItem {
     difficulty:    McqDifficulty
 }
 
-// replace this with an AI API call that generates MCQs from uploaded files.
-export const seedMcqs = async (
-    courseId:  string,
-    questions: McqSeedItem[],
-): Promise<Mcq[]> => {
-    const res = await api.post(`/notes/${courseId}/mcqs`, { questions })
+// Triggers AI generation of MCQs from uploaded course files.
+export const processFilesForMcqs = async (courseId: string): Promise<Mcq[]> => {
+    const res = await api.post(`/notes/${courseId}/mcqs`)
     return res.data
 }
 
-export const regenerateMcqs = async (
-    courseId:  string,
-    questions: McqSeedItem[],
-): Promise<Mcq[]> => {
-    const res = await api.post(`/notes/${courseId}/mcqs/regenerate`, { questions })
+export const regenerateMcqs = async (courseId: string): Promise<Mcq[]> => {
+    const res = await api.post(`/notes/${courseId}/mcqs/regenerate`)
     return res.data
 }
 
