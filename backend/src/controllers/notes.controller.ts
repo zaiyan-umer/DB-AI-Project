@@ -2,7 +2,7 @@ import type { Request, Response } from 'express'
 import fs from 'fs'
 import path from 'path'
 import { completeFlashcardSession, getCourseById, getCourseCounts, getCoursesByUser, getFileByCourse, getFileById, getFilesByCourse, getFlashcardsByCourse, getMcqById, getMcqsByCourse, insertCourse, insertFile, insertFlashcard, insertFlashcardSession, insertMcqAttempt, insertMcqWithOptions, removeCourse, removeFile, replaceFlashcardContent, replaceMcqContent, updateCourse, } from '../services/dal/notes.dal'
-import { deleteEmbeddingsByFile, extractTextFromPdf, generateChunks, generateEmbeddings, storeEmbeddingsIntoDB } from '../utils/rag.utils'
+import { deleteEmbeddingsByFile, extractTextFromPdf, extractTextFromDocx, generateChunks, generateEmbeddings, storeEmbeddingsIntoDB } from '../utils/rag.utils'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -161,7 +161,18 @@ export const uploadFile = async (req: Request, res: Response) => {
         })
 
         const fullFilePath = path.join(process.cwd(), 'uploads', multerFile.filename);
-        const text = await extractTextFromPdf(fullFilePath);
+        
+        let text = '';
+        if (multerFile.mimetype === 'application/pdf') {
+            text = await extractTextFromPdf(fullFilePath);
+        } else if (
+            multerFile.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+            multerFile.originalname.toLowerCase().endsWith('.docx')
+        ) {
+            text = await extractTextFromDocx(fullFilePath);
+        } else {
+            throw new Error("Unsupported file format for extraction");
+        }
         const chunks = await generateChunks(text)
 
         console.log("CHUNKS LENGTH: ", chunks.length);
@@ -208,14 +219,10 @@ export const previewFile = async (req: Request, res: Response) => {
         const file = await getFileById(fileId, userId)
         if (!file) return res.status(404).json({ message: 'File not found' })
 
-        if (file.mimeType !== 'application/pdf') {
-            return res.status(400).json({ message: 'Preview is only available for PDF files' })
-        }
-
         const fullPath = path.join(process.cwd(), file.storagePath)
         if (!fs.existsSync(fullPath)) return res.status(404).json({ message: 'File missing from storage' })
 
-        res.setHeader('Content-Type', 'application/pdf')
+        res.setHeader('Content-Type', file.mimeType)
         res.setHeader('Content-Disposition', `inline; filename="${file.originalName}"`)
 
         return res.sendFile(fullPath)

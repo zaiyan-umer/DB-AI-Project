@@ -4,6 +4,7 @@ import { embedMany } from 'ai';
 import { and, asc, cosineDistance, eq, lte } from 'drizzle-orm';
 import fs from 'fs/promises';
 import { PDFParse } from 'pdf-parse';
+import * as mammoth from 'mammoth';
 import env from '../config/env';
 import db from '../db/connection';
 import { courseFiles, documentEmbeddings } from '../db/schema';
@@ -36,6 +37,20 @@ export async function extractTextFromPdf(filepath: string): Promise<string> {
         return text;
     } finally {
         await parser.destroy();
+    }
+}
+
+export async function extractTextFromDocx(filepath: string): Promise<string> {
+    try {
+        const result = await mammoth.extractRawText({ path: filepath });
+        const text = result.value;
+
+        if (!text) throw new Error("Failed to extract text from DOCX");
+
+        return text;
+    } catch (error) {
+        console.error("Error extracting text from DOCX:", error);
+        throw new Error("Failed to extract text from DOCX");
     }
 }
 
