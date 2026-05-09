@@ -1,57 +1,328 @@
-import { User } from "lucide-react";
-import { useCurrentUser } from "../hooks/useCurrentUser";
+import { BookOpen, Brain, Calendar, CheckCircle2, ChevronRight, Flame, MessageSquare, TrendingUp, Trophy, User, Users,} from 'lucide-react'
+import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCurrentUser } from '../hooks/useCurrentUser'
+import { useProgress } from '../hooks/useProgress'
+import { useEvents } from '../hooks/useScheduler'
+import { useMyGroups } from '../hooks/useGroup'
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function greet() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  assignment: 'bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400',
+  quiz:       'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400',
+  mid:        'bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400',
+  final:      'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400',
+  project:    'bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-400',
+  study:      'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
+  general:    'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-400',
+}
+
+const PRIORITY_DOT: Record<string, string> = {
+  high:   'bg-red-500',
+  medium: 'bg-amber-400',
+  low:    'bg-emerald-500',
+}
+
+// Group avatar colour — deterministic from group name
+const GROUP_COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f97316',
+  '#10b981', '#0ea5e9', '#f59e0b', '#14b8a6',
+]
+function groupColor(name: string) {
+  let hash = 0
+  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xffffffff
+  return GROUP_COLORS[Math.abs(hash) % GROUP_COLORS.length]
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+  accent = '#6366f1',
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string | number
+  sub?: string
+  accent?: string
+}) {
+  return (
+    <div className="rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 p-5 flex flex-col gap-3 shadow-sm dark:shadow-none">
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `${accent}20`, color: accent }}
+      >
+        {icon}
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">
+          {value}
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{label}</p>
+        {sub && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function QuickLink({
+  icon,
+  label,
+  to,
+  accent,
+}: {
+  icon: React.ReactNode
+  label: string
+  to: string
+  accent: string
+}) {
+  const navigate = useNavigate()
+  return (
+    <button
+      onClick={() => navigate(to)}
+      className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors group w-full shadow-sm dark:shadow-none"
+    >
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
+        style={{ background: `${accent}20`, color: accent }}
+      >
+        {icon}
+      </div>
+      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
+    </button>
+  )
+}
+
+interface TopGroup {
+  id: string
+  name: string
+  role: 'admin' | 'member'
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-    const { data: user } = useCurrentUser();
-    const displayName = user?.user ? `${user.user.firstName ?? ''} ${user.user.lastName ?? ''}`.trim() || user.user.username || 'User' : 'User'
+  const navigate = useNavigate()
 
-    return (
-        <div className="h-full w-full bg-linear-to-br from-gray-50 to-gray-100">
-            {/* Main Content */}
-            <div className="w-full mx-auto">
-                <div className="bg-white rounded-lg shadow-md p-8 pt-14">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="size-16 rounded-full flex items-center justify-center">
-                            <User className="size-8 text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-bold text-gray-900">
-                                Welcome, {displayName}!
-                            </h2>
-                            <p className="text-gray-600">{user?.email}</p>
-                        </div>
-                    </div>
+  const { data: userData }     = useCurrentUser()
+  const { data: progress }     = useProgress()
+  const { data: events = [] }  = useEvents()
+  const { data: groups = [] }  = useMyGroups()
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                        <div className="p-6 bg-linear-to-br from-[#667eea]/10 to-[#764ba2]/10 rounded-lg border border-[#667eea]/20">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">User Information</h3>
-                            <dl className="space-y-2 text-sm">
-                                <div>
-                                    <dt className="font-medium text-gray-700">ID</dt>
-                                    <dd className="text-gray-600">{user?.user?.id}</dd>
-                                </div>
-                                <div>
-                                    <dt className="font-medium text-gray-700">Email</dt>
-                                    <dd className="text-gray-600">{user?.user?.email}</dd>
-                                </div>
-                                <div>
-                                    <dt className="font-medium text-gray-700">Username</dt>
-                                    <dd className="text-gray-600">{user?.user?.username || "No Username"}</dd>
-                                </div>
-                            </dl>
-                        </div>
+  const user        = userData?.user
+  const summary     = progress?.summary
+  const displayName = user
+    ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.username || 'there'
+    : 'there'
 
-                        <div className="p-6 bg-linear-to-br from-[#f093fb]/10 to-[#f5576c]/10 rounded-lg border border-[#f093fb]/20">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Status</h3>
-                            <p className="text-gray-600 mb-4">Your account is active and authenticated.</p>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                                Authenticated
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  // Upcoming events — next 5, sorted by date ascending
+  const upcomingEvents = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return [...events]
+      .filter((e) => new Date(e.date) >= today)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 5)
+  }, [events])
+
+  // Top 5 groups
+  const topGroups = useMemo(() => groups.slice(0, 5), [groups])
+
+  return (
+    <div className="min-h-full w-full px-5 py-6 md:px-8 md:py-8 max-w-6xl mx-auto space-y-8">
+
+      {/* ── Hero greeting ── */}
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 flex items-center justify-center shrink-0">
+          <User className="w-6 h-6 text-indigo-500" />
         </div>
-    );
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+            {greet()}, {displayName} 👋
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Here's what's happening with your studies today.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Stat grid ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Flame className="w-5 h-5" />}
+          label="Day streak"
+          value={summary?.currentStreak ?? 0}
+          sub={(summary?.currentStreak ?? 0) > 0 ? 'Keep it going 🔥' : 'Start today'}
+          accent="#f97316"
+        />
+        <StatCard
+          icon={<Brain className="w-5 h-5" />}
+          label="MCQ accuracy"
+          value={`${Math.round(summary?.mcqAccuracy ?? 0)}%`}
+          sub={`${summary?.mcqAttempts ?? 0} attempts`}
+          accent="#8b5cf6"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="w-5 h-5" />}
+          label="Schedule done"
+          value={`${Math.round(summary?.scheduleCompletionRate ?? 0)}%`}
+          sub={`${summary?.completedScheduledSessions ?? 0} / ${summary?.totalScheduledSessions ?? 0} sessions`}
+          accent="#10b981"
+        />
+        <StatCard
+          icon={<Trophy className="w-5 h-5" />}
+          label="Badges"
+          value={`${summary?.badgesEarned ?? 0} / ${summary?.totalBadges ?? 0}`}
+          sub="Achievements earned"
+          accent="#f59e0b"
+        />
+      </div>
+
+      {/* ── Middle row: My Groups + Upcoming Events ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* My Groups */}
+        <div className="rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 p-5 shadow-sm dark:shadow-none">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">My Groups</h2>
+            <button
+              onClick={() => navigate('/dashboard/group-chat')}
+              className="text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
+            >
+              View all <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {topGroups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
+              <Users className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+              <p className="text-sm text-gray-500 dark:text-gray-500">No groups yet</p>
+              <p className="text-xs text-gray-400 dark:text-gray-600">Join or create a group in Group Chat</p>
+            </div>
+          ) : (
+            <ul className="space-y-2.5">
+              {topGroups.map((group: TopGroup) => {
+                const color = groupColor(group.name)
+                const initials = group.name
+                  .split(' ')
+                  .map((w: string) => w[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase()
+                return (
+                  <li
+                    key={group.id}
+                    onClick={() => navigate('/dashboard/group-chat')}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 cursor-pointer transition-colors"
+                  >
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white text-xs font-bold"
+                      style={{ background: color }}
+                    >
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                        {group.name}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {group.role === 'admin' ? 'Admin' : 'Member'}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0" />
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Upcoming Events */}
+        <div className="rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 p-5 shadow-sm dark:shadow-none">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Upcoming Events</h2>
+            <button
+              onClick={() => navigate('/dashboard/scheduler')}
+              className="text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
+            >
+              View all <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {upcomingEvents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
+              <Calendar className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+              <p className="text-sm text-gray-500 dark:text-gray-500">No upcoming events</p>
+              <p className="text-xs text-gray-400 dark:text-gray-600">Add events in the Scheduler</p>
+            </div>
+          ) : (
+            <ul className="space-y-2.5">
+              {upcomingEvents.map((event) => (
+                <li
+                  key={event.id}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5"
+                >
+                  <span
+                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0 capitalize ${
+                      EVENT_TYPE_COLORS[event.type] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-400'
+                    }`}
+                  >
+                    {event.type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                      {event.title}
+                    </p>
+                    {event.course && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{event.course}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`w-2 h-2 rounded-full ${PRIORITY_DOT[event.priority] ?? 'bg-gray-400'}`}
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-500">
+                      {formatDate(event.date)}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* ── Quick links ── */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Quick Access</h2>
+        <div className="grid grid-cols-4 gap-3">
+          <QuickLink icon={<MessageSquare className="w-5 h-5" />} label="Group Chat" to="/dashboard/group-chat" accent="#6366f1" />
+          <QuickLink icon={<BookOpen className="w-5 h-5" />}      label="Notes"      to="/dashboard/notes"      accent="#8b5cf6" />
+          <QuickLink icon={<Calendar className="w-5 h-5" />}      label="Scheduler"  to="/dashboard/scheduler"  accent="#0ea5e9" />
+          <QuickLink icon={<TrendingUp className="w-5 h-5" />}    label="Progress"   to="/dashboard/progress"   accent="#10b981" />
+        </div>
+      </div>
+
+    </div>
+  )
 }
