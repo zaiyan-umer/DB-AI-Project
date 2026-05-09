@@ -8,7 +8,8 @@ export const eventTypeEnum = pgEnum('event_type', [
     'mid',
     'final',
     'project',
-    'study'
+    'study',
+    'general',
 ])
 
 export const priorityEnum = pgEnum('priority_level', [
