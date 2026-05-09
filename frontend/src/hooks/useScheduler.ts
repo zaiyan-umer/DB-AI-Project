@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { fetchEvents, createEvent, deleteEvent, fetchStudyPlan, saveStudyPlan, fetchNotifications, markNotificationRead, deleteNotification, deleteAllNotifications, fetchPlanLogs, savePlanLogs, deleteCourseData, } from '../services/scheduler.service'
+import { fetchEvents, createEvent, deleteEvent, fetchStudyPlan, saveStudyPlan, fetchNotifications, markNotificationRead, deleteNotification, deleteAllNotifications, fetchPlanLogs, savePlanLogs, deleteCourseData, generateAIStudyPlan, } from '../services/scheduler.service'
 
 // ---- Events ---------------------------------------------------------------
 
@@ -103,4 +103,65 @@ export const useDeleteCourseData = () => {
     },
     onError: () => toast.error('Failed to delete course'),
   })
+}
+
+// ---- AI Schedule Generation -----------------------------------------------
+
+export const useGenerateAISchedule = () => {
+  return useMutation({
+    mutationFn: generateAIStudyPlan,
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message ?? 'AI generation failed. Please try again.'
+      toast.error(msg)
+    },
+  })
+}
+
+// ---- Google Calendar -------------------------------------------------------
+
+import { fetchGCalStatus, fetchGCalAuthUrl, syncGoogleCalendar, disconnectGoogleCalendar } from '../services/scheduler.service'
+
+export const useGCalStatus = () =>
+    useQuery({
+        queryKey: ['gcal-status'],
+        queryFn:  fetchGCalStatus,
+        staleTime: 60_000,
+    })
+
+export const useConnectGCal = () => {
+    return useMutation({
+        mutationFn: fetchGCalAuthUrl,
+        onSuccess: ({ url }) => {
+            // Full page redirect to Google consent screen
+            window.location.href = url
+        },
+        onError: () => toast.error('Failed to start Google Calendar connection'),
+    })
+}
+
+export const useSyncGCal = () => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: syncGoogleCalendar,
+        onSuccess: (data) => {
+            qc.invalidateQueries({ queryKey: ['events'] })
+            toast.success(data.message)
+        },
+        onError: (err: any) => {
+            const msg = err?.response?.data?.message ?? 'Sync failed'
+            toast.error(msg)
+        },
+    })
+}
+
+export const useDisconnectGCal = () => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: disconnectGoogleCalendar,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['gcal-status'] })
+            toast.success('Google Calendar disconnected')
+        },
+        onError: () => toast.error('Failed to disconnect'),
+    })
 }
