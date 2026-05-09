@@ -34,7 +34,7 @@ export function Input({
           required={required}
           className={`
             w-full px-4 py-3 ${icon ? 'pl-12' : ''} rounded-xl border border-gray-200
-            focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent
+            focus:outline-none focus:ring-2 focus:ring-[#6B8E23] focus:border-transparent
             transition-all bg-white
             ${error ? 'border-red-500' : ''}
           `}

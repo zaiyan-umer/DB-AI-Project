@@ -162,7 +162,7 @@ export function McqTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center gap-4 py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#667eea]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[#6B8E23]" />
 
                     {(processing || regenerating) && (
                         <p className="text-sm text-gray-500">
@@ -180,7 +180,7 @@ export function McqTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center py-12 gap-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center shadow-lg shadow-green-200">
                         <Brain className="w-10 h-10 text-white" />
                     </div>
 
@@ -241,7 +241,7 @@ export function McqTab({ courseId }: { courseId: string }) {
             <TabPanel>
                 <div className="max-w-xl mx-auto py-4 space-y-6">
                     <div className="text-center">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-200">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
                             <span className="text-2xl font-bold text-white">
                                 {percentage}%
                             </span>
@@ -253,7 +253,7 @@ export function McqTab({ courseId }: { courseId: string }) {
 
                         <p className="text-gray-500">
                             You got{' '}
-                            <span className="font-bold text-[#667eea]">
+                            <span className="font-bold text-[#6B8E23]">
                                 {score}
                             </span>{' '}
                             out of{' '}
@@ -358,7 +358,7 @@ export function McqTab({ courseId }: { courseId: string }) {
                                 disabled={!hasFiles || regenerating}
                                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium transition-colors
                                     disabled:opacity-40 disabled:cursor-not-allowed
-                                    text-gray-600 hover:text-[#667eea] hover:border-[#667eea]/40 hover:bg-purple-50
+                                    text-gray-600 hover:text-[#6B8E23] hover:border-[#6B8E23]/40 hover:bg-green-50
                                     disabled:hover:text-gray-600 disabled:hover:border-gray-200 disabled:hover:bg-transparent"
                             >
                                 <RefreshCw
@@ -405,7 +405,7 @@ export function McqTab({ courseId }: { courseId: string }) {
 
                     <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
                         <motion.div
-                            className="h-full bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full"
+                            className="h-full bg-gradient-to-r from-[#6B8E23] to-[#556B2F] rounded-full"
                             initial={{ width: 0 }}
                             animate={{
                                 width: `${(testIdx / mcqs.length) * 100}%`,
@@ -422,7 +422,7 @@ export function McqTab({ courseId }: { courseId: string }) {
                 <div className="space-y-3">
                     {mcq.options.map((opt, i) => {
                         let cls =
-                            'border border-gray-200 text-gray-700 hover:border-[#667eea]/50 hover:bg-purple-50 cursor-pointer'
+                            'border border-gray-200 text-gray-700 hover:border-[#6B8E23]/50 hover:bg-green-50 cursor-pointer'
 
                         if (answered) {
                             if (opt.isCorrect) {

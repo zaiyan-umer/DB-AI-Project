@@ -20,12 +20,12 @@ export const MonthlyChart = ({ data }: MonthlyChartProps) => {
             Sessions completed or exceeded vs. total scheduled per month.
           </p>
         </div>
-        <BarChart3 className="h-6 w-6 flex-shrink-0" style={{ color: '#818cf8' }} />
+        <BarChart3 className="h-6 w-6 flex-shrink-0" style={{ color: '#6B8E23' }} />
       </div>
 
       <div className="mb-4 flex flex-wrap gap-4 text-xs" style={{ color: 'var(--text-faint)' }}>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-indigo-500" /> Completed / Over-time
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-[#6B8E23]" /> Completed / Over-time
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-2.5 rounded-sm bg-red-400/60" /> Missed
@@ -41,7 +41,7 @@ export const MonthlyChart = ({ data }: MonthlyChartProps) => {
               <div className="flex h-40 w-full flex-col-reverse items-stretch overflow-hidden rounded-xl"
                    style={{ background: 'var(--bg-subtle)' }}>
                 <div
-                  className="w-full rounded-t-none bg-gradient-to-t from-indigo-600 to-indigo-400 transition-all"
+                  className="w-full rounded-t-none bg-gradient-to-t from-[#556B2F] to-[#6B8E23] transition-all"
                   style={{ height: `${completedH}%`, minHeight: completedH > 0 ? 4 : 0 }}
                   title={`${item.completed} completed`}
                 />
@@ -177,7 +177,7 @@ export const SessionBreakdown = ({ summary, pendingSessions }: SessionBreakdownP
             { label: 'Completed / Over-time', count: summary.completedScheduledSessions, dot: 'bg-emerald-500' },
             { label: 'Less than scheduled',  count: summary.lessThanScheduledSessions,   dot: 'bg-amber-400' },
             { label: 'Missed',               count: summary.missedScheduledSessions,     dot: 'bg-red-500' },
-            { label: 'Pending',              count: pendingSessions,                      dot: 'bg-indigo-400' },
+            { label: 'Pending',              count: pendingSessions,                      dot: 'bg-[#A9BA9D]' },
           ].map(({ label, count, dot }) => (
             <div key={label} className="rounded-xl p-3" style={{ background: 'var(--bg-subtle)' }}>
               <div className="flex items-center gap-2 mb-1">

@@ -143,7 +143,7 @@ export function CourseDetailCard({
               disabled={!hasUnsaved || savingLog}
               className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
               style={{
-                background: hasUnsaved ? 'linear-gradient(to right, #667eea, #764ba2)' : 'transparent',
+                background: hasUnsaved ? 'linear-gradient(to right, #6B8E23, #556B2F)' : 'transparent',
                 color: hasUnsaved ? '#fff' : '#d1d5db',
                 border: hasUnsaved ? 'none' : '1px solid #e5e7eb',
                 cursor: hasUnsaved ? 'pointer' : 'not-allowed',

@@ -40,7 +40,7 @@ export const StatCard = ({ title, value, subtitle, icon, }: {
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{title}</p>
         <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
       </div>
-      <div className="rounded-2xl p-3" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>
+      <div className="rounded-2xl p-3" style={{ background: 'rgba(107,142,35,0.12)', color: '#6B8E23' }}>
         {icon}
       </div>
     </div>
@@ -48,7 +48,7 @@ export const StatCard = ({ title, value, subtitle, icon, }: {
   </Card>
 )
 
-export const ProgressBar = ({ value, color = 'bg-indigo-500' }: { value: number; color?: string }) => (
+export const ProgressBar = ({ value, color = 'bg-[#6B8E23]' }: { value: number; color?: string }) => (
   <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--bg-muted)' }}>
     <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${clamp(value)}%` }} />
   </div>

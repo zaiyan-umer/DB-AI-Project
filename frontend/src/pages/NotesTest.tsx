@@ -78,7 +78,7 @@ export default function NotesTestPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
-                                <div className="h-32 bg-indigo-50 rounded-xl mb-4" />
+                                <div className="h-32 bg-green-50 rounded-xl mb-4" />
                                 <div className="h-5 bg-gray-200 rounded w-2/3 mb-4" />
                                 <div className="space-y-3">
                                     {[1, 2, 3].map((j) => <div key={j} className="h-4 bg-gray-100 rounded" />)}
@@ -165,13 +165,13 @@ export default function NotesTestPage() {
                             <Card
                                 hoverable
                                 onClick={() => setShowAddModal(true)}
-                                className="border-2 border-dashed border-gray-300 flex items-center justify-center min-h-[260px] sm:min-h-[323px] cursor-pointer hover:border-[#667eea] hover:bg-indigo-50"
+                                className="border-2 border-dashed border-gray-300 flex items-center justify-center min-h-[260px] sm:min-h-[323px] cursor-pointer hover:border-[#6B8E23] hover:bg-green-50"
                             >
                                 <div className="text-center">
-                                    <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#667eea]/10">
-                                        <Plus className="w-8 h-8 text-[#667eea] opacity-70" />
+                                    <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#6B8E23]/10">
+                                        <Plus className="w-8 h-8 text-[#6B8E23] opacity-70" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-[#667eea] mb-2">Add New Course</h3>
+                                    <h3 className="text-lg font-semibold text-[#6B8E23] mb-2">Add New Course</h3>
                                     <p className="text-sm text-gray-400">Create a new course to organize your materials</p>
                                 </div>
                             </Card>

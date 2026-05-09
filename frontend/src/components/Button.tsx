@@ -38,21 +38,21 @@ export function Button({
         switch (variant) {
             case 'primary':
                 return {
-                    background: 'linear-gradient(to right, #667eea, #764ba2)',
+                    background: 'linear-gradient(to right, #6B8E23, #556B2F)',
                     color: '#ffffff',
                     border: '2px solid transparent',
                 }
             case 'secondary':
                 return {
-                    background: 'linear-gradient(to right, #f093fb, #f5576c)',
+                    background: 'linear-gradient(to right, #A9BA9D, #6B8E23)',
                     color: '#ffffff',
                     border: '2px solid transparent',
                 }
             case 'outline':
                 return {
                     background: '#ffffff',
-                    color: '#667eea',
-                    border: '2px solid #667eea',
+                    color: '#6B8E23',
+                    border: '2px solid #6B8E23',
                 }
             case 'ghost':
                 return {
@@ -99,12 +99,12 @@ export function Button({
                 if (disabled) return
                 const btn = e.currentTarget as HTMLButtonElement
                 if (variant === 'outline') {
-                    btn.style.background = 'linear-gradient(to right, #667eea, #764ba2)'
+                    btn.style.background = 'linear-gradient(to right, #6B8E23, #556B2F)'
                     btn.style.color = '#ffffff'
                 } else if (variant === 'primary') {
-                    btn.style.boxShadow = '0 4px 16px rgba(102,126,234,0.45)'
+                    btn.style.boxShadow = '0 4px 16px rgba(107,142,35,0.45)'
                 } else if (variant === 'secondary') {
-                    btn.style.boxShadow = '0 4px 16px rgba(240,147,251,0.45)'
+                    btn.style.boxShadow = '0 4px 16px rgba(169,186,157,0.45)'
                 } else if (variant === 'ghost') {
                     btn.style.backgroundColor = '#f3f4f6'
                 } else if (variant === 'danger') {
@@ -117,7 +117,7 @@ export function Button({
                 btn.style.boxShadow = 'none'
                 if (variant === 'outline') {
                     btn.style.background = '#ffffff'
-                    btn.style.color = '#667eea'
+                    btn.style.color = '#6B8E23'
                 } else if (variant === 'ghost') {
                     btn.style.backgroundColor = 'transparent'
                 } else if (variant === 'danger') {

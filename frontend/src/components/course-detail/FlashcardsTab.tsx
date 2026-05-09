@@ -136,7 +136,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center gap-4 py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#667eea]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[#6B8E23]" />
 
                     {(processing || regenerating) && (
                         <p className="text-sm text-gray-500">
@@ -154,7 +154,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center py-12 gap-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center shadow-lg shadow-green-200">
                         <Brain className="w-10 h-10 text-white" />
                     </div>
 
@@ -214,7 +214,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center gap-6 py-8 max-w-sm mx-auto">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center shadow-lg shadow-green-200">
                         <span className="text-2xl font-bold text-white">
                             {pct}%
                         </span>
@@ -257,7 +257,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                             disabled={!hasFiles || regenerating}
                             className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg transition-colors
                                 disabled:opacity-40 disabled:cursor-not-allowed
-                                text-gray-500 hover:text-[#667eea] hover:bg-purple-50 disabled:hover:text-gray-500 disabled:hover:bg-transparent"
+                                text-gray-500 hover:text-[#6B8E23] hover:bg-green-50 disabled:hover:text-gray-500 disabled:hover:bg-transparent"
                         >
                             <RefreshCw
                                 className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''
@@ -329,7 +329,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         }}
                     >
                         <div
-                            className="absolute inset-0 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-2xl flex flex-col items-center justify-center p-8 text-white shadow-lg shadow-purple-200"
+                            className="absolute inset-0 bg-gradient-to-br from-[#6B8E23] to-[#556B2F] rounded-2xl flex flex-col items-center justify-center p-8 text-white shadow-lg shadow-green-200"
                             style={{ backfaceVisibility: 'hidden' }}
                         >
                             <p className="text-xs uppercase tracking-widest mb-4 opacity-60 font-medium">
@@ -346,13 +346,13 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         </div>
 
                         <div
-                            className="absolute inset-0 bg-white rounded-2xl border-2 border-[#667eea]/20 flex flex-col items-center justify-center p-8 shadow-lg"
+                            className="absolute inset-0 bg-white rounded-2xl border-2 border-[#6B8E23]/20 flex flex-col items-center justify-center p-8 shadow-lg"
                             style={{
                                 backfaceVisibility: 'hidden',
                                 transform: 'rotateY(180deg)',
                             }}
                         >
-                            <p className="text-xs uppercase tracking-widest mb-4 text-[#667eea] opacity-60 font-medium">
+                            <p className="text-xs uppercase tracking-widest mb-4 text-[#6B8E23] opacity-60 font-medium">
                                 Answer
                             </p>
 

@@ -50,14 +50,14 @@ export default function CourseDetailPage() {
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`cursor-pointer px-5 py-3 text-sm font-medium transition-all relative ${activeTab === tab ? 'text-[#667eea]' : 'text-gray-500 hover:text-gray-700'
+                                className={`cursor-pointer px-5 py-3 text-sm font-medium transition-all relative ${activeTab === tab ? 'text-[#6B8E23]' : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {labels[tab]}
                                 {activeTab === tab && (
                                     <motion.div
                                         layoutId="tab-underline"
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-t"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#6B8E23] to-[#556B2F] rounded-t"
                                     />
                                 )}
                             </button>

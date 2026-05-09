@@ -51,7 +51,7 @@ const ProgressPage = () => {
       {/* ── Header ── */}
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.25em] text-indigo-500">
+          <p className="text-sm font-medium uppercase tracking-[0.25em] text-[#6B8E23]">
             Progress Center
           </p>
           <h1 className="mt-2 text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>

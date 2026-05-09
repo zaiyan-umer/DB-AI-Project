@@ -33,11 +33,11 @@ export function UpcomingEvents({ events, eventsLoading, onDeleteEvent }: Upcomin
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-semibold text-gray-900">Upcoming Events</h3>
         <button onClick={() => setShowFilters(v => !v)}
-          className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${hasActiveFilters ? 'bg-[#667eea]/10 text-[#667eea]' : 'text-gray-600 hover:bg-gray-100'}`}>
+          className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${hasActiveFilters ? 'bg-[#6B8E23]/10 text-[#6B8E23]' : 'text-gray-600 hover:bg-gray-100'}`}>
           <SlidersHorizontal className="w-4 h-4" />
           Filters
           {hasActiveFilters && (
-            <span className="w-5 h-5 bg-[#667eea] text-white rounded-full text-xs flex items-center justify-center">
+            <span className="w-5 h-5 bg-[#6B8E23] text-white rounded-full text-xs flex items-center justify-center">
               {[filterType !== 'all', filterPriority !== 'all', filterCourse !== ''].filter(Boolean).length}
             </span>
           )}
@@ -53,7 +53,7 @@ export function UpcomingEvents({ events, eventsLoading, onDeleteEvent }: Upcomin
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type="text" placeholder="Filter by course name..." value={filterCourse}
                   onChange={e => setFilterCourse(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#667eea]" />
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B8E23]" />
                 {filterCourse && <button onClick={() => setFilterCourse('')} className="absolute right-3 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-gray-400" /></button>}
               </div>
               <div className="flex flex-wrap gap-3">
@@ -62,7 +62,7 @@ export function UpcomingEvents({ events, eventsLoading, onDeleteEvent }: Upcomin
                   <div className="flex flex-wrap gap-1">
                     {(['all', ...EVENT_TYPE_OPTIONS] as const).map(t => (
                       <button key={t} onClick={() => setFilterType(t as any)}
-                        className={`cursor-pointer px-2 py-1 rounded-md text-xs font-medium capitalize transition-colors ${filterType === t ? 'bg-[#667eea] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                        className={`cursor-pointer px-2 py-1 rounded-md text-xs font-medium capitalize transition-colors ${filterType === t ? 'bg-[#6B8E23] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                         {t === 'all' ? 'All' : t}
                       </button>
                     ))}
@@ -73,7 +73,7 @@ export function UpcomingEvents({ events, eventsLoading, onDeleteEvent }: Upcomin
                   <div className="flex gap-1">
                     {(['all', ...PRIORITY_OPTIONS] as const).map(p => (
                       <button key={p} onClick={() => setFilterPriority(p as any)}
-                        className={`cursor-pointer px-2 py-1 rounded-md text-xs font-medium capitalize transition-colors ${filterPriority === p ? 'bg-[#667eea] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                        className={`cursor-pointer px-2 py-1 rounded-md text-xs font-medium capitalize transition-colors ${filterPriority === p ? 'bg-[#6B8E23] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                         {p === 'all' ? 'All' : p}
                       </button>
                     ))}

@@ -20,11 +20,11 @@ export function DraftPlanCard({
   onConfirmCourse
 }: DraftPlanCardProps) {
   return (
-    <Card className="border-2 border-dashed border-[#667eea]/30">
+    <Card className="border-2 border-dashed border-[#6B8E23]/30">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: plan.color }} />
         <h3 className="text-base font-semibold text-gray-900 flex-1">{plan.course}</h3>
-        <span className="text-xs text-[#667eea] font-medium px-2 py-1 bg-[#667eea]/10 rounded-full">Draft</span>
+        <span className="text-xs text-[#6B8E23] font-medium px-2 py-1 bg-[#6B8E23]/10 rounded-full">Draft</span>
       </div>
 
       <div className="space-y-2 mb-5">

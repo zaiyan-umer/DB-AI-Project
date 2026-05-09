@@ -33,9 +33,9 @@ export function StudyPlanGenerator({
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50">
+    <Card>
       <div className="text-center mb-5">
-        <div className="w-14 h-14 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full flex items-center justify-center mx-auto mb-3">
+        <div className="w-14 h-14 bg-gradient-to-r from-[#6B8E23] to-[#556B2F] rounded-full flex items-center justify-center mx-auto mb-3">
           <Zap className="w-7 h-7 text-white" />
         </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-1">AI Study Plan</h3>
@@ -48,11 +48,11 @@ export function StudyPlanGenerator({
           value={courseForm.course} onChange={e => setCourseForm({ ...courseForm, course: e.target.value })} />
         <div>
           <label className="block text-sm mb-2 text-gray-700">
-            Preparation: <span className="font-semibold text-[#667eea]">{courseForm.preparation}%</span>
+            Preparation: <span className="font-semibold text-[#6B8E23]">{courseForm.preparation}%</span>
           </label>
           <input type="range" min="0" max="100" value={courseForm.preparation}
             onChange={e => setCourseForm({ ...courseForm, preparation: parseInt(e.target.value) })}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#667eea]" />
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#6B8E23]" />
         </div>
         <div>
           <label className="block text-sm mb-2 text-gray-700">Priority</label>
@@ -60,7 +60,7 @@ export function StudyPlanGenerator({
             {PRIORITY_OPTIONS.map(p => (
               <button key={p} onClick={() => setCourseForm({ ...courseForm, priority: p })}
                 className={`cursor-pointer px-3 py-2 rounded-lg text-sm font-medium capitalize transition-all ${courseForm.priority === p
-                    ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-sm'
+                    ? 'bg-gradient-to-r from-[#6B8E23] to-[#556B2F] text-white shadow-sm'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                   }`}>{p}</button>
             ))}
