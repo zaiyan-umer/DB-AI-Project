@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import SchedulerPage from './pages/Scheduler'
 import NotesTestPage from './pages/NotesTest'
 import CourseDetailPage from './pages/CourseDetail'
+import ProgressPage from './pages/Progress'
 import { ChatPage } from './pages/ChatPage'
 
 
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
       { path: 'notes/:courseId', element: <CourseDetailPage /> },
       { path: 'group-chat', element: <ChatPage /> },
       { path: '*', element: <NotFoundPage /> },
+      { path: 'progress', element: <ProgressPage /> }
     ],
   },
   {
