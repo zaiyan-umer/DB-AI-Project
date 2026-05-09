@@ -10,13 +10,13 @@ export const MonthlyChart = ({ data }: MonthlyChartProps) => {
   const maxScheduled = Math.max(1, ...data.map((d) => d.scheduled))
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 overflow-x-scroll">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             Monthly Schedule Completion
           </h2>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
             Sessions completed or exceeded vs. total scheduled per month.
           </p>
         </div>
@@ -82,7 +82,7 @@ export const TrendPanel = ({ data }: TrendPanelProps) => {
           <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             30-Day Activity Trend
           </h2>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
             All study activity: schedule logs, MCQ attempts, and flashcard reviews.
           </p>
         </div>
@@ -147,7 +147,7 @@ export const SessionBreakdown = ({ summary, pendingSessions }: SessionBreakdownP
       <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
         Session Breakdown
       </h2>
-      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+      <span className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
         Total: <strong style={{ color: 'var(--text-primary)' }}>{summary.totalScheduledSessions}</strong> sessions
       </span>
     </div>

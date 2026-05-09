@@ -312,7 +312,7 @@ export default function SchedulerPage() {
   }
 
   return (
-    <div className="space-y-6 p-12">
+    <div className="space-y-6 py-12 px-4 sm:px-12">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-1">Scheduler</h1>
         <p className="text-gray-500">Manage your deadlines and study schedule</p>
@@ -322,9 +322,9 @@ export default function SchedulerPage() {
         {/* ══ LEFT ══ */}
         <div className="xl:col-span-2 space-y-6">
           {/* Quick actions */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-            <div className="flex gap-4">
-              <Button onClick={() => setShowEventModal(true)} icon={<Plus className="w-5 h-5" />} fullWidth>Add Event</Button>
+          <div className="bg-white p-2 sm:p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="flex gap-2 sm:gap-4">
+              <Button className='!px-2!sm:px-4' onClick={() => setShowEventModal(true)} icon={<Plus className="w-5 h-5" />} fullWidth>Add Event</Button>
               {gcalStatus?.connected ? (
                 <div className="flex gap-2 flex-1">
                   <Button
