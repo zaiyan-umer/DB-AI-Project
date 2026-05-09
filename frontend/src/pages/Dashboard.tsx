@@ -6,8 +6,6 @@ import { useProgress } from '../hooks/useProgress'
 import { useEvents } from '../hooks/useScheduler'
 import { useMyGroups } from '../hooks/useGroup'
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 function greet() {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
@@ -49,7 +47,6 @@ function groupColor(name: string) {
   return GROUP_COLORS[Math.abs(hash) % GROUP_COLORS.length]
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
 
 function StatCard({
   icon,
@@ -100,7 +97,7 @@ function QuickLink({
   return (
     <button
       onClick={() => navigate(to)}
-      className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors group w-full shadow-sm dark:shadow-none"
+      className="cursor-pointer flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors group w-full shadow-sm dark:shadow-none"
     >
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
@@ -118,8 +115,6 @@ interface TopGroup {
   name: string
   role: 'admin' | 'member'
 }
-
-// ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -207,7 +202,7 @@ export default function Dashboard() {
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">My Groups</h2>
             <button
               onClick={() => navigate('/dashboard/group-chat')}
-              className="text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
+              className="cursor-pointer text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
             >
               View all <ChevronRight className="w-3 h-3" />
             </button>
@@ -263,7 +258,7 @@ export default function Dashboard() {
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Upcoming Events</h2>
             <button
               onClick={() => navigate('/dashboard/scheduler')}
-              className="text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
+              className="cursor-pointer text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
             >
               View all <ChevronRight className="w-3 h-3" />
             </button>
@@ -312,7 +307,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Quick links ── */}
       <div>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Quick Access</h2>
         <div className="grid grid-cols-4 gap-3">

@@ -12,7 +12,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 
-import { Button } from '../../components/Button'
+import { Button } from '../Button'
 
 import {
     useFiles,
@@ -53,8 +53,8 @@ export function McqTab({ courseId }: { courseId: string }) {
     const [lastProcessedFileCount, setLastProcessedFileCount] = useState(() => hasQs ? files.length : -1)
 
     // Dirty when: a file was added after last generation, OR file count changed since last process
-    const newestFileAt  = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
-    const newestMcqAt   = mcqs.length  ? Math.max(...mcqs.map(m => new Date(m.updatedAt).getTime()))  : 0
+    const newestFileAt = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
+    const newestMcqAt = mcqs.length ? Math.max(...mcqs.map(m => new Date(m.updatedAt).getTime())) : 0
     const hasNewerFiles = hasFiles && hasQs && (newestFileAt > newestMcqAt || files.length !== lastProcessedFileCount)
 
     const [view, setView] = useState<ViewState>('idle')
@@ -195,10 +195,10 @@ export function McqTab({ courseId }: { courseId: string }) {
                             {hasQs && !hasNewerFiles
                                 ? `${mcqs.length} question${mcqs.length !== 1 ? 's' : ''} ready • Answer all and see your score`
                                 : hasNewerFiles
-                                  ? 'New files detected — process them to regenerate your questions'
-                                  : hasFiles
-                                    ? 'Process your uploaded files to generate AI questions'
-                                    : 'Upload files in the Files tab first, then process them here'}
+                                    ? 'New files detected — process them to regenerate your questions'
+                                    : hasFiles
+                                        ? 'Process your uploaded files to generate AI questions'
+                                        : 'Upload files in the Files tab first, then process them here'}
                         </p>
                     </div>
 
@@ -273,19 +273,17 @@ export function McqTab({ courseId }: { courseId: string }) {
                             return (
                                 <div
                                     key={i}
-                                    className={`p-4 rounded-xl border ${
-                                        isCorrect
+                                    className={`p-4 rounded-xl border ${isCorrect
                                             ? 'border-green-200 bg-green-50'
                                             : 'border-red-200 bg-red-50'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-start gap-3">
                                         <div
-                                            className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                                                isCorrect
+                                            className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isCorrect
                                                     ? 'bg-green-500'
                                                     : 'bg-red-500'
-                                            }`}
+                                                }`}
                                         >
                                             {isCorrect ? (
                                                 <CheckCircle className="w-4 h-4 text-white" />
@@ -364,9 +362,8 @@ export function McqTab({ courseId }: { courseId: string }) {
                                     disabled:hover:text-gray-600 disabled:hover:border-gray-200 disabled:hover:bg-transparent"
                             >
                                 <RefreshCw
-                                    className={`w-4 h-4 ${
-                                        regenerating ? 'animate-spin' : ''
-                                    }`}
+                                    className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''
+                                        }`}
                                 />
 
                                 {regenerating

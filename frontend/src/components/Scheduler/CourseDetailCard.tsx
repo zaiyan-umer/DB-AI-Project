@@ -1,0 +1,169 @@
+import { Check, Clock, Loader2, RefreshCw, Save, Trash2, X } from 'lucide-react'
+import { motion } from 'motion/react'
+import type { CourseEntry, DayStatus, StudyStatus } from '../../services/scheduler.service'
+import { Card } from '../Card'
+import { DAYS, STATUS_CONFIG, STATUS_OPTIONS } from './constants'
+
+interface CourseDetailCardProps {
+  plan: CourseEntry
+  courseStatuses: Record<string, DayStatus[]>
+  unsavedCourses: Set<string>
+  regenPreview: { dayOfWeek: string; hours: number }[] | undefined
+  generatingAI: boolean
+  savingLog: boolean
+  hasUnsavedChanges: boolean
+  onSetStatus: (course: CourseEntry, dayIndex: number, status: StudyStatus) => void
+  onSaveStatus: (course: CourseEntry) => void
+  onCancelChanges: () => void
+  onRegenerate: (course: CourseEntry) => void
+  onConfirmRegen: (course: CourseEntry) => void
+  onCancelRegen: (courseName: string) => void
+  onSetDeleteTarget: (course: CourseEntry) => void
+}
+
+export function CourseDetailCard({
+  plan,
+  courseStatuses,
+  unsavedCourses,
+  regenPreview,
+  generatingAI,
+  savingLog,
+  hasUnsavedChanges,
+  onSetStatus,
+  onSaveStatus,
+  onCancelChanges,
+  onRegenerate,
+  onConfirmRegen,
+  onCancelRegen,
+  onSetDeleteTarget
+}: CourseDetailCardProps) {
+  const hasUnsaved = unsavedCourses.has(plan.course)
+  const statuses = courseStatuses[plan.id ?? plan.course] ?? Array(7).fill(null)
+  
+  const displayPlan = regenPreview
+    ? DAYS.map((dayOfWeek, i) => ({ dayOfWeek, hours: regenPreview[i]?.hours ?? 0 }))
+    : plan.weeklyPlan
+
+  return (
+    <Card>
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: plan.color }} />
+        <h3 className="text-base font-semibold text-gray-900 flex-1">{plan.course}</h3>
+        {regenPreview ? (
+          <>
+            <span className="text-xs text-amber-600 font-medium px-2 py-1 bg-amber-50 rounded-full border border-amber-200">
+              New schedule preview
+            </span>
+            <button onClick={() => onConfirmRegen(plan)}
+              className="cursor-pointer flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 transition-colors">
+              <Check className="w-3 h-3" />
+            </button>
+            <button onClick={() => onCancelRegen(plan.course)}
+              className="cursor-pointer flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-red-600 hover:bg-gray-50 transition-colors">
+              <X className="w-3 h-3" />
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full font-medium flex items-center gap-1 border border-green-200">
+              <Check className="w-3 h-3" /> Confirmed
+            </span>
+            <button onClick={() => onRegenerate(plan)}
+              disabled={generatingAI}
+              className="cursor-pointer flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {generatingAI ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            </button>
+            <button onClick={() => onSetDeleteTarget(plan)}
+              className="cursor-pointer flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {displayPlan.map((dayPlan, di) => {
+          const status = regenPreview ? null : statuses[di]
+          const statusCfg = status ? STATUS_CONFIG[status] : null
+          const barCol = statusCfg ? statusCfg.color : plan.color
+
+          return (
+            <div key={di} className="group/dayrow flex items-center gap-3">
+              <span className="text-sm text-gray-500 w-10 flex-shrink-0">{dayPlan.dayOfWeek}</span>
+
+              <div className="ml-8 flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
+                <motion.div initial={{ width: 0 }}
+                  animate={{ width: `${Math.min((dayPlan.hours / 4) * 100, 100)}%` }}
+                  className="h-full flex items-center justify-end px-2 rounded-lg"
+                  style={{ backgroundColor: barCol }}>
+                  <span className="text-xs font-semibold text-white">{dayPlan.hours}h</span>
+                </motion.div>
+              </div>
+
+              {!regenPreview && (
+                <div className="flex items-center gap-1 opacity-0 group-hover/dayrow:opacity-100 transition-opacity flex-shrink-0">
+                  {STATUS_OPTIONS.map(([key, cfg]) => (
+                    <button
+                      key={key}
+                      onClick={() => onSetStatus(plan, di, key)}
+                      title={cfg.label}
+                      className="cursor-pointer p-1 rounded-md transition-all hover:scale-110"
+                      style={{
+                        backgroundColor: status === key ? cfg.bg : 'transparent',
+                        color: cfg.color,
+                        border: `1px solid ${status === key ? cfg.color : 'transparent'}`,
+                      }}
+                    >
+                      {cfg.icon}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {statusCfg && !regenPreview && (
+                <span className="text-xs font-medium flex-shrink-0" style={{ color: statusCfg.color, minWidth: '72px', textAlign: 'right' }}>
+                  {statusCfg.label}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {!regenPreview && (
+        <div className="mt-5 flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Clock className="w-4 h-4" />
+            <span className="font-semibold">{plan.weeklyPlan.reduce((s, d) => s + d.hours, 0).toFixed(1)}h / week</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onSaveStatus(plan)}
+              disabled={!hasUnsaved || savingLog}
+              className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{
+                background: hasUnsaved ? 'linear-gradient(to right, #667eea, #764ba2)' : 'transparent',
+                color: hasUnsaved ? '#fff' : '#d1d5db',
+                border: hasUnsaved ? 'none' : '1px solid #e5e7eb',
+                cursor: hasUnsaved ? 'pointer' : 'not-allowed',
+              }}>
+              <Save className="w-3.5 h-3.5" />
+              {savingLog ? 'Saving…' : 'Save Progress'}
+            </button>
+
+            <button
+              onClick={onCancelChanges}
+              disabled={!hasUnsavedChanges}
+              className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${hasUnsavedChanges
+                ? 'bg-white border border-red-300 text-red-600 hover:bg-red-50'
+                : 'bg-transparent border border-gray-200 text-gray-300 cursor-not-allowed'
+                }`}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}

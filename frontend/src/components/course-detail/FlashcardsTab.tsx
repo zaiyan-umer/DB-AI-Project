@@ -1,7 +1,7 @@
 import { Brain, CheckCircle, FileText, Loader2, RefreshCw, RotateCcw, Sparkles, XCircle } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
-import { Button } from '../../components/Button'
+import { Button } from '../Button'
 import {
     useFinishFlashcardSession,
     useFlashcards,
@@ -43,8 +43,8 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
     const [lastProcessedFileCount, setLastProcessedFileCount] = useState(() => hasCards ? files.length : -1)
 
     // Dirty when: a file was added after last generation, OR file count changed since last process
-    const newestFileAt  = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
-    const newestCardAt  = cards.length ? Math.max(...cards.map(c => new Date(c.updatedAt).getTime())) : 0
+    const newestFileAt = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
+    const newestCardAt = cards.length ? Math.max(...cards.map(c => new Date(c.updatedAt).getTime())) : 0
     const hasNewerFiles = hasFiles && hasCards && (newestFileAt > newestCardAt || files.length !== lastProcessedFileCount)
 
     const [view, setView] = useState<ViewState>('idle')
@@ -169,10 +169,10 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                             {hasCards && !hasNewerFiles
                                 ? `${cards.length} flashcard${cards.length !== 1 ? 's' : ''} ready • Flip each card and rate yourself`
                                 : hasNewerFiles
-                                  ? 'New files detected — process them to regenerate your flashcards'
-                                  : hasFiles
-                                    ? 'Process your uploaded files to generate AI flashcards'
-                                    : 'Upload files in the Files tab first, then process them here'}
+                                    ? 'New files detected — process them to regenerate your flashcards'
+                                    : hasFiles
+                                        ? 'Process your uploaded files to generate AI flashcards'
+                                        : 'Upload files in the Files tab first, then process them here'}
                         </p>
                     </div>
 
@@ -260,9 +260,8 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                                 text-gray-500 hover:text-[#667eea] hover:bg-purple-50 disabled:hover:text-gray-500 disabled:hover:bg-transparent"
                         >
                             <RefreshCw
-                                className={`w-4 h-4 ${
-                                    regenerating ? 'animate-spin' : ''
-                                }`}
+                                className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''
+                                    }`}
                             />
 
                             {regenerating
@@ -373,10 +372,9 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         onClick={() => handleReview(false)}
                         disabled={!flipped}
                         className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 font-semibold transition-colors
-                            ${
-                                flipped
-                                    ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer'
-                                    : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                            ${flipped
+                                ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer'
+                                : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
                             }`}
                     >
                         <XCircle className="w-5 h-5" />
@@ -387,10 +385,9 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         onClick={() => handleReview(true)}
                         disabled={!flipped}
                         className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 font-semibold transition-colors
-                            ${
-                                flipped
-                                    ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100 cursor-pointer'
-                                    : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                            ${flipped
+                                ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100 cursor-pointer'
+                                : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
                             }`}
                     >
                         <CheckCircle className="w-5 h-5" />

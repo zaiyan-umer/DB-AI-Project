@@ -115,14 +115,14 @@ export default function NotesTestPage() {
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setRenamingId(course.id); setRenameValue(course.name) }}
                                                 title="Rename"
-                                                className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-400 hover:text-blue-600"
+                                                className="cursor-pointer p-1.5 rounded-lg hover:bg-blue-100 text-blue-400 hover:text-blue-600"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
                                             </button>
                                             <button
                                                 onClick={(e) => handleDeleteCourse(e, course.id)}
                                                 title="Delete"
-                                                className="p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600"
+                                                className="cursor-pointer p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600"
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
