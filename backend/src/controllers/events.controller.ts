@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import { getEventsByUser, getNotificationsWithEventDetails, getStudyPlanByUser, getCurrentWeekStart, getLogsByUser, insertEvent, markNotificationAsRead, removeAllNotifications, removeEvent, removeNotification, upsertStudyPlan, upsertWeeklyLog, type CourseInput, } from '../services/dal/scheduler.dal'
+import { generateAISchedule } from '../services/handlers/ai-scheduler'
 
 // ---- Events ---------------------------------------------------------------
 
@@ -95,6 +96,41 @@ export const saveStudyPlan = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Failed to save study plan' })
+    }
+}
+
+// ---- AI Schedule Generation -----------------------------------------------
+
+/**
+ * POST /scheduler/ai-generate
+ *
+ * Body:
+ *   newCourses:      { course, preparation, priority }[]   — courses to schedule now
+ *   existingCourses: { course, preparation, priority }[]   — already-confirmed courses (load balancing)
+ *   events:          { title, course, type, date, time }[] — user's upcoming events/deadlines
+ *
+ * Returns:
+ *   { schedules: { course, weeklyPlan: { dayOfWeek, hours }[], rationale }[] }
+ */
+export const generateScheduleWithAI = async (req: Request, res: Response) => {
+    try {
+        const { newCourses, existingCourses = [], events = [] } = req.body
+
+        if (!Array.isArray(newCourses) || newCourses.length === 0) {
+            return res.status(400).json({ message: 'newCourses must be a non-empty array' })
+        }
+
+        for (const c of newCourses) {
+            if (!c.course || typeof c.preparation !== 'number' || !['low', 'medium', 'high'].includes(c.priority)) {
+                return res.status(400).json({ message: 'Each course needs: course (string), preparation (number 0–100), priority (low|medium|high)' })
+            }
+        }
+
+        const schedules = await generateAISchedule(newCourses, existingCourses, events)
+        return res.status(200).json({ schedules })
+    } catch (err: any) {
+        console.error('[AI Scheduler]', err)
+        return res.status(500).json({ message: err?.message ?? 'Failed to generate AI schedule' })
     }
 }
 
