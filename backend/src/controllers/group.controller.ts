@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { addMember, checkExistingGroupById, checkExistingGroupByName, checkIfMember, createGroupAndSetAdmin, deleteGroupFromDB, getAllMembers, getMyGroupsFromDB, leaveGroupFromDB, searchGroupsByName } from '../services/dal/groups.dal';
-import { checkGroupMembership } from '../services/dal/messages.dal';
+import { checkGroupMembership, addNewSystemMessage, getMessageByIdWithSender } from '../services/dal/messages.dal';
+import { getIO } from '../socket';
 
 export const createGroup = async (req: Request, res: Response) => {
     const userId = req.user!.id;
@@ -52,6 +53,13 @@ export const joinGroup = async (req: Request, res: Response) => {
 
     await addMember(userId, groupId)
 
+    const systemMsg = await addNewSystemMessage(groupId, `${req.user!.username} has joined the group`);
+
+    getIO().to(groupId).emit('new_message', {
+        ...systemMsg[0],
+        sender: null,
+    });
+
     return res.status(201).json({ message: 'Joined group successfully' });
 };
 
@@ -96,6 +104,13 @@ export const leaveGroup = async (req: Request, res: Response) => {
     }
 
     await leaveGroupFromDB(groupId, userId)
+
+    const systemMsg = await addNewSystemMessage(groupId, `${req.user!.username} has left the group`);
+
+    getIO().to(groupId).emit('new_message', {
+        ...systemMsg[0],
+        sender: null,
+    });
 
     return res.status(200).json({ message: 'Left group successfully' });
 };

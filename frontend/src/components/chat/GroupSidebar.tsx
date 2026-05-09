@@ -248,7 +248,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup, className
               variant="outline"
               onClick={() => handleDialogOpenChange(false)}
               disabled={leaveGroup.isPending || deleteGroup.isPending}
-              className='border-[var(--border)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
+              className='cursor-pointer border-[var(--border)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
             >
               Cancel
             </Button>
@@ -257,7 +257,7 @@ export const GroupSidebar = ({ myGroups, activeGroupId, onSelectGroup, className
               variant="destructive"
               onClick={handleConfirmAction}
               disabled={!pendingAction || !targetGroup || leaveGroup.isPending || deleteGroup.isPending}
-              className='bg-red-900/50 text-red-200 hover:bg-red-900 border border-red-900'
+              className='cursor-pointer bg-red-900/50 text-red-200 hover:bg-red-900 border border-red-900'
             >
               {pendingAction === 'delete' ? 'Delete' : 'Leave'}
             </Button>

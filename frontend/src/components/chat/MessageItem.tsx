@@ -21,6 +21,7 @@ interface Message {
   deletedAt: string | null;
   sender?: Sender;
   senderType?: 'user' | 'ai';
+  isSystem?: boolean;
 }
 
 interface Props {
@@ -39,6 +40,21 @@ export const MessageItem = ({ message, groupId, currentUserId, isAdmin }: Props)
   const senderUsername = message.sender?.username ?? 'Unknown user';
   const isOwn = senderId === currentUserId;
   const isDeleted = !!message.deletedAt;
+
+  if (message.isSystem) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="flex justify-center my-4"
+      >
+        <span className="bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-xs px-3 py-1.5 rounded-full border border-[var(--border)] font-medium">
+          {message.content}
+        </span>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

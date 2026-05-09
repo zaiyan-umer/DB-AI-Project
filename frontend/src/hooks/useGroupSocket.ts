@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { getSocket } from '../socket';
 import { useCurrentUser } from './useCurrentUser';
 
@@ -15,6 +15,7 @@ interface Message {
     firstName: string;
     lastName: string;
   };
+  isSystem?: boolean;
 }
 
 // Call this when user opens a group chat
@@ -87,6 +88,7 @@ export const useGroupSocket = (groupId: string | null) => {
         queryClient.setQueryData(['ai_typing', groupId], isTyping);
       }
     });
+
 
     return () => {
       // Leave room when user navigates away

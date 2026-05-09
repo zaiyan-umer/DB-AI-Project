@@ -10,5 +10,4 @@ export { default as studyPlans, studyPlanCourses, studyPlanSchedule, } from './s
 export { default as studyPlanLogDays, dayStatusEnum } from './study_plan_log.schema'
 export { default as courses, mcqDifficultyEnum, courseFiles, flashcards, mcqs, mcqOptions, mcqAttempts, flashcardSessions, } from './notes.schema'
 
-export { default as achievementDefinitions, achievementCategoryEnum, userAchievements } from './progress.schema'
 export { default as googleCalendarTokens } from './google_calendar_tokens.schema'
