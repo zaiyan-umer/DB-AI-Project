@@ -1,12 +1,13 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Calendar as CalendarIcon, Plus, Clock, Target, Zap, Trash2, Search, SlidersHorizontal, X, ChevronDown, CheckCircle2, XCircle, TrendingDown, TrendingUp, Save, Check, RefreshCw, AlertTriangle, } from 'lucide-react'
+import { useState, useMemo, useEffect,} from 'react'
+import { Calendar as CalendarIcon, Plus, Clock, Zap, Trash2, Search, SlidersHorizontal, X, ChevronDown, CheckCircle2, XCircle, TrendingDown, TrendingUp, Save, Check, RefreshCw, AlertTriangle, Loader2, Sparkles, } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Modal } from '../components/Modal'
 import { Input } from '../components/Input'
-import { useEvents, useCreateEvent, useDeleteEvent, useStudyPlan, useSaveStudyPlan, usePlanLogs, useSavePlanLogs, useDeleteCourseData, } from '../hooks/useScheduler'
+import { useEvents, useCreateEvent, useDeleteEvent, useStudyPlan, useSaveStudyPlan, usePlanLogs, useSavePlanLogs, useDeleteCourseData, useGenerateAISchedule, useGCalStatus, useConnectGCal, useSyncGCal, useDisconnectGCal, } from '../hooks/useScheduler'
 import type { EventType, Priority, CourseEntry, StudyStatus, DayStatus } from '../services/scheduler.service'
+import { toast } from 'sonner'
 
 // Constants
 
@@ -38,7 +39,7 @@ const STATUS_CONFIG: Record<StudyStatus, { label: string; color: string; bg: str
 
 const STATUS_OPTIONS = Object.entries(STATUS_CONFIG) as [StudyStatus, typeof STATUS_CONFIG[StudyStatus]][]
 
-const EVENT_TYPE_OPTIONS: EventType[] = ['assignment', 'quiz', 'mid', 'final', 'project', 'study']
+const EVENT_TYPE_OPTIONS: EventType[] = ['assignment', 'quiz', 'mid', 'final', 'project', 'study', 'general']
 const PRIORITY_OPTIONS: Priority[] = ['low', 'medium', 'high']
 
 const eventTypeColors: Record<EventType, string> = {
@@ -48,6 +49,7 @@ const eventTypeColors: Record<EventType, string> = {
   final:      'bg-purple-100 text-purple-700 border-purple-200',
   project:    'bg-green-100 text-green-700 border-green-200',
   study:      'bg-indigo-100 text-indigo-700 border-indigo-200',
+  general:    'bg-gray-100 text-gray-700 border-gray-200',
 }
 
 const priorityBarColors: Record<Priority, string> = {
@@ -91,6 +93,12 @@ export default function SchedulerPage() {
   const { mutate: savePlan, isPending: savingPlan } = useSaveStudyPlan()
   const { mutate: saveLog, isPending: savingLog } = useSavePlanLogs()
   const { mutate: deleteCourse, isPending: deletingCourse } = useDeleteCourseData()
+  const { mutate: generateAI, isPending: generatingAI } = useGenerateAISchedule()
+
+  const { data: gcalStatus, refetch: refetchGCalStatus } = useGCalStatus()
+  const { mutate: connectGCal, isPending: connectingGCal } = useConnectGCal()
+  const { mutate: syncGCal, isPending: syncingGCal } = useSyncGCal()
+  const { mutate: disconnectGCal, isPending: disconnectingGCal } = useDisconnectGCal()
 
   // Event modal
   const [showEventModal, setShowEventModal] = useState(false)
@@ -158,6 +166,25 @@ export default function SchedulerPage() {
     }
   }, [confirmedCourses])
 
+  // Handle Google Calendar OAuth redirect back to this page
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const gcal   = params.get('gcal')
+    if (!gcal) return
+
+    if (gcal === 'connected') {
+      toast.success('Google Calendar connected! Click Sync to import your events.')
+      refetchGCalStatus()
+    } else if (gcal === 'error') {
+      const reason = params.get('reason') ?? 'unknown'
+      toast.error(`Google Calendar connection failed: ${reason}`)
+    }
+
+    // Clean the URL so it doesn't re-fire on refresh
+    const clean = window.location.pathname
+    window.history.replaceState({}, '', clean)
+  }, [])
+
   // Filtered events
   const filteredEvents = useMemo(() => {
     return events.filter(ev => {
@@ -197,9 +224,37 @@ export default function SchedulerPage() {
 
   const handleGenerate = () => {
     if (!pendingCourses.length) return
-    setGeneratedDraft(pendingCourses.map(c => ({
-      ...c, confirmed: false, weeklyPlan: generateWeeklyPlan(c.priority, c.preparation),
-    })))
+
+    const newCourses = pendingCourses.map(c => ({
+      course: c.course,
+      preparation: c.preparation,
+      priority: c.priority,
+    }))
+
+    const existingCourses = confirmedCourses.map(c => ({
+      course: c.course,
+      preparation: c.preparation,
+      priority: c.priority,
+    }))
+
+    generateAI(
+      { newCourses, existingCourses, events },
+      {
+        onSuccess: (schedules) => {
+          // Map AI results back to CourseEntry draft cards
+          const draft: CourseEntry[] = pendingCourses.map((c, i) => {
+            const colorIndex = (confirmedCourses.length + i) % COURSE_COLORS.length
+            const aiResult = schedules.find(s => s.course === c.course)
+            return {
+              ...c,
+              color: c.color || COURSE_COLORS[colorIndex],
+              weeklyPlan: aiResult?.weeklyPlan ?? generateWeeklyPlan(c.priority, c.preparation),
+            }
+          })
+          setGeneratedDraft(draft)
+        },
+      }
+    )
   }
 
   const handleConfirmCourse = (entry: CourseEntry) => {
@@ -243,9 +298,24 @@ export default function SchedulerPage() {
   }
 
   const handleRegenerateCourse = (course: CourseEntry) => {
-    // Generate new hours and store as a preview on the confirmed card itself
-    const newPlan = generateWeeklyPlan(course.priority, course.preparation)
-    setRegenPreviews(prev => ({ ...prev, [course.course]: newPlan }))
+    const existingCourses = confirmedCourses
+      .filter(c => c.course !== course.course)
+      .map(c => ({ course: c.course, preparation: c.preparation, priority: c.priority }))
+
+    generateAI(
+      {
+        newCourses: [{ course: course.course, preparation: course.preparation, priority: course.priority }],
+        existingCourses,
+        events,
+      },
+      {
+        onSuccess: (schedules) => {
+          const aiResult = schedules[0]
+          if (!aiResult) return
+          setRegenPreviews(prev => ({ ...prev, [course.course]: aiResult.weeklyPlan }))
+        },
+      }
+    )
   }
 
   const handleConfirmRegen = (course: CourseEntry) => {
@@ -367,10 +437,37 @@ export default function SchedulerPage() {
           <Card>
             <div className="flex gap-4">
               <Button onClick={() => setShowEventModal(true)} icon={<Plus className="w-5 h-5" />} fullWidth>Add Event</Button>
-              <Button variant="outline" icon={<CalendarIcon className="w-5 h-5" />} fullWidth
-                onClick={() => window.open('https://calendar.google.com', '_blank')}>
-                Google Calendar
-              </Button>
+              {gcalStatus?.connected ? (
+                <div className="flex gap-2 flex-1">
+                  <Button
+                    variant="outline"
+                    icon={syncingGCal ? <Loader2 className="w-5 h-5 animate-spin" /> : <CalendarIcon className="w-5 h-5" />}
+                    fullWidth
+                    onClick={() => syncGCal()}
+                    disabled={syncingGCal}
+                  >
+                    {syncingGCal ? 'Syncing…' : 'Sync Calendar'}
+                  </Button>
+                  <button
+                    onClick={() => disconnectGCal()}
+                    disabled={disconnectingGCal}
+                    className="px-3 py-2 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors text-xs disabled:opacity-50"
+                    title="Disconnect Google Calendar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  icon={connectingGCal ? <Loader2 className="w-5 h-5 animate-spin" /> : <CalendarIcon className="w-5 h-5" />}
+                  fullWidth
+                  onClick={() => connectGCal()}
+                  disabled={connectingGCal}
+                >
+                  {connectingGCal ? 'Connecting…' : 'Google Calendar'}
+                </Button>
+              )}
             </div>
           </Card>
 
@@ -623,8 +720,9 @@ export default function SchedulerPage() {
                             <Check className="w-3 h-3" /> Confirmed
                           </span>
                           <button onClick={() => handleRegenerateCourse(plan)}
-                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                            <RefreshCw className="w-3 h-3" /> 
+                            disabled={generatingAI}
+                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            {generatingAI ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                           </button>
                           <button onClick={() => setDeleteTarget(plan)}
                             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
@@ -793,7 +891,7 @@ export default function SchedulerPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-1">AI Study Plan</h3>
               <p className="text-sm text-gray-500">Add courses then generate your schedule</p>
-              <p className="text-xs text-gray-400 mt-1 italic">(AI personalisation in next iteration)</p>
+              <p className="text-xs text-gray-400 mt-1 italic">Powered by Gemini — considers your deadlines, priority & prep level</p>
             </div>
 
             <div className="space-y-3 mb-4">
@@ -856,8 +954,8 @@ export default function SchedulerPage() {
               </div>
             )}
 
-            <Button onClick={handleGenerate} fullWidth disabled={!pendingCourses.length} icon={<Target className="w-5 h-5" />}>
-              Generate Plan
+            <Button onClick={handleGenerate} fullWidth disabled={!pendingCourses.length || generatingAI} icon={generatingAI ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}>
+              {generatingAI ? 'Generating…' : 'Generate with AI'}
             </Button>
           </Card>
         </div>
