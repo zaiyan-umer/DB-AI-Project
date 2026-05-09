@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import { ArrowLeft } from 'lucide-react'
 import { useCourses } from '../hooks/useNotes'
 
@@ -69,11 +69,9 @@ export default function CourseDetailPage() {
 
                 {/* Tab Content */}
                 <div className="p-6">
-                    <AnimatePresence mode="wait">
-                        {activeTab === 'files'      && <FilesTab      key="files"      courseId={courseId} />}
-                        {activeTab === 'flashcards' && <FlashcardsTab key="flashcards" courseId={courseId} />}
-                        {activeTab === 'mcq'        && <McqTab        key="mcq"        courseId={courseId} />}
-                    </AnimatePresence>
+                    <div style={{ display: activeTab === 'files'      ? 'block' : 'none' }}><FilesTab      courseId={courseId} /></div>
+                    <div style={{ display: activeTab === 'flashcards' ? 'block' : 'none' }}><FlashcardsTab courseId={courseId} /></div>
+                    <div style={{ display: activeTab === 'mcq'        ? 'block' : 'none' }}><McqTab        courseId={courseId} /></div>
                 </div>
             </div>
         </div>
