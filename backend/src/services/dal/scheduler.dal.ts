@@ -142,25 +142,77 @@ export const upsertStudyPlan = async (
             planId = created.id
         }
 
-        await tx
-            .delete(studyPlanCourses)
+        // 2. Load existing course rows so we can DIFF instead of delete-insert.
+        //    Preserving existing course IDs is critical: studyPlanLogDays FK-cascade
+        //    deletes ALL logs whenever a course row is deleted, so we must never
+        //    delete a course row that still exists in the new payload.
+        const existingCourseRows = await tx
+            .select()
+            .from(studyPlanCourses)
             .where(eq(studyPlanCourses.studyPlanId, planId))
 
-        if (payload.courses.length > 0) {
-            const insertedCourses = await tx
-                .insert(studyPlanCourses)
-                .values(
-                    payload.courses.map((c) => ({
+        const existingByName = new Map(existingCourseRows.map((r) => [r.course, r]))
+        const incomingNames  = new Set(payload.courses.map((c) => c.course))
+
+        // 3. Delete courses that were removed from the payload (this is intentional removal).
+        const toDelete = existingCourseRows.filter((r) => !incomingNames.has(r.course))
+        if (toDelete.length > 0) {
+            await tx
+                .delete(studyPlanCourses)
+                .where(
+                    inArray(
+                        studyPlanCourses.id,
+                        toDelete.map((r) => r.id)
+                    )
+                )
+        }
+
+        // 4. For each incoming course: UPDATE if it already exists, INSERT if new.
+        const finalCourseRows: typeof existingCourseRows = []
+        for (const c of payload.courses) {
+            const existing = existingByName.get(c.course)
+            if (existing) {
+                // Update mutable fields — id is preserved, logs are safe.
+                const [updated] = await tx
+                    .update(studyPlanCourses)
+                    .set({
+                        preparation: c.preparation,
+                        priority:    c.priority,
+                        color:       c.color ?? null,
+                        updatedAt:   new Date(),
+                    })
+                    .where(eq(studyPlanCourses.id, existing.id))
+                    .returning()
+                finalCourseRows.push(updated)
+            } else {
+                // Brand-new course — insert fresh row.
+                const [inserted] = await tx
+                    .insert(studyPlanCourses)
+                    .values({
                         studyPlanId: planId,
                         course:      c.course,
                         preparation: c.preparation,
                         priority:    c.priority,
                         color:       c.color ?? null,
-                    }))
-                )
-                .returning()
+                    })
+                    .returning()
+                finalCourseRows.push(inserted)
+            }
+        }
 
-            const scheduleValues = insertedCourses.flatMap((courseRow, i) =>
+        // 5. Replace schedule rows (weeklyPlan hours) for every course.
+        //    studyPlanSchedule has NO log rows FK'd to it, so delete-insert is safe here.
+        if (finalCourseRows.length > 0) {
+            await tx
+                .delete(studyPlanSchedule)
+                .where(
+                    inArray(
+                        studyPlanSchedule.studyPlanCourseId,
+                        finalCourseRows.map((r) => r.id)
+                    )
+                )
+
+            const scheduleValues = finalCourseRows.flatMap((courseRow, i) =>
                 (payload.courses[i].weeklyPlan ?? []).map((s) => ({
                     studyPlanCourseId: courseRow.id,
                     dayOfWeek:         s.dayOfWeek,
@@ -173,6 +225,7 @@ export const upsertStudyPlan = async (
             }
         }
 
+        // 6. Read back and return the full updated plan.
         const [plan] = await tx.select().from(studyPlans).where(eq(studyPlans.id, planId))
         const courseRows = await tx
             .select()
