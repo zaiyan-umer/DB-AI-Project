@@ -1,6 +1,7 @@
 import { Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useProgress } from '../hooks/useProgress'
+import { useRealtimeProgress } from '../hooks/useRealtimeProgress'
 
 // Components
 import { Card } from '../components/Progress/Common'
@@ -11,6 +12,7 @@ import { BadgeGrid } from '../components/Progress/BadgeGrid'
 
 const ProgressPage = () => {
   const { data, isLoading, isError } = useProgress()
+   useRealtimeProgress()  // Subscribes to real-time updates for progress changes
 
   const strongestCourse = useMemo(() => {
     if (!data?.courseBreakdown.length) return null
