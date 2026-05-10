@@ -63,7 +63,7 @@ export function Sidebar({
                         </div>
                         <span style={{
                             fontSize: '18px', fontWeight: 700,
-                            background: 'linear-gradient(to right, #667eea, #764ba2)',
+                            background: 'linear-gradient(to right, #6B8E23, #556B2F)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
@@ -105,11 +105,11 @@ export function Sidebar({
                                     textAlign: 'left',
                                     transition: 'all 0.15s ease',
                                     background: isActive
-                                        ? 'linear-gradient(to right, #667eea, #764ba2)'
+                                        ? 'linear-gradient(to right, #6B8E23, #556B2F)'
                                         : 'transparent',
                                     color: isActive ? '#ffffff' : textPri,
                                     boxShadow: isActive
-                                        ? '0 4px 14px rgba(102,126,234,0.35)'
+                                        ? '0 4px 14px rgba(107,142,35,0.35)'
                                         : 'none',
                                 }}
                                 onMouseEnter={(e) => {

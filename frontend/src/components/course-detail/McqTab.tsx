@@ -12,7 +12,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 
-import { Button } from '../../components/Button'
+import { Button } from '../Button'
 
 import {
     useFiles,
@@ -53,8 +53,8 @@ export function McqTab({ courseId }: { courseId: string }) {
     const [lastProcessedFileCount, setLastProcessedFileCount] = useState(() => hasQs ? files.length : -1)
 
     // Dirty when: a file was added after last generation, OR file count changed since last process
-    const newestFileAt  = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
-    const newestMcqAt   = mcqs.length  ? Math.max(...mcqs.map(m => new Date(m.updatedAt).getTime()))  : 0
+    const newestFileAt = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
+    const newestMcqAt = mcqs.length ? Math.max(...mcqs.map(m => new Date(m.updatedAt).getTime())) : 0
     const hasNewerFiles = hasFiles && hasQs && (newestFileAt > newestMcqAt || files.length !== lastProcessedFileCount)
 
     const [view, setView] = useState<ViewState>('idle')
@@ -162,7 +162,7 @@ export function McqTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center gap-4 py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#667eea]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[#6B8E23]" />
 
                     {(processing || regenerating) && (
                         <p className="text-sm text-gray-500">
@@ -180,7 +180,7 @@ export function McqTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center py-12 gap-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center shadow-lg shadow-green-200">
                         <Brain className="w-10 h-10 text-white" />
                     </div>
 
@@ -195,10 +195,10 @@ export function McqTab({ courseId }: { courseId: string }) {
                             {hasQs && !hasNewerFiles
                                 ? `${mcqs.length} question${mcqs.length !== 1 ? 's' : ''} ready • Answer all and see your score`
                                 : hasNewerFiles
-                                  ? 'New files detected — process them to regenerate your questions'
-                                  : hasFiles
-                                    ? 'Process your uploaded files to generate AI questions'
-                                    : 'Upload files in the Files tab first, then process them here'}
+                                    ? 'New files detected — process them to regenerate your questions'
+                                    : hasFiles
+                                        ? 'Process your uploaded files to generate AI questions'
+                                        : 'Upload files in the Files tab first, then process them here'}
                         </p>
                     </div>
 
@@ -241,7 +241,7 @@ export function McqTab({ courseId }: { courseId: string }) {
             <TabPanel>
                 <div className="max-w-xl mx-auto py-4 space-y-6">
                     <div className="text-center">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-200">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
                             <span className="text-2xl font-bold text-white">
                                 {percentage}%
                             </span>
@@ -253,7 +253,7 @@ export function McqTab({ courseId }: { courseId: string }) {
 
                         <p className="text-gray-500">
                             You got{' '}
-                            <span className="font-bold text-[#667eea]">
+                            <span className="font-bold text-[#6B8E23]">
                                 {score}
                             </span>{' '}
                             out of{' '}
@@ -273,19 +273,17 @@ export function McqTab({ courseId }: { courseId: string }) {
                             return (
                                 <div
                                     key={i}
-                                    className={`p-4 rounded-xl border ${
-                                        isCorrect
+                                    className={`p-4 rounded-xl border ${isCorrect
                                             ? 'border-green-200 bg-green-50'
                                             : 'border-red-200 bg-red-50'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-start gap-3">
                                         <div
-                                            className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                                                isCorrect
+                                            className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isCorrect
                                                     ? 'bg-green-500'
                                                     : 'bg-red-500'
-                                            }`}
+                                                }`}
                                         >
                                             {isCorrect ? (
                                                 <CheckCircle className="w-4 h-4 text-white" />
@@ -360,13 +358,12 @@ export function McqTab({ courseId }: { courseId: string }) {
                                 disabled={!hasFiles || regenerating}
                                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium transition-colors
                                     disabled:opacity-40 disabled:cursor-not-allowed
-                                    text-gray-600 hover:text-[#667eea] hover:border-[#667eea]/40 hover:bg-purple-50
+                                    text-gray-600 hover:text-[#6B8E23] hover:border-[#6B8E23]/40 hover:bg-green-50
                                     disabled:hover:text-gray-600 disabled:hover:border-gray-200 disabled:hover:bg-transparent"
                             >
                                 <RefreshCw
-                                    className={`w-4 h-4 ${
-                                        regenerating ? 'animate-spin' : ''
-                                    }`}
+                                    className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''
+                                        }`}
                                 />
 
                                 {regenerating
@@ -408,7 +405,7 @@ export function McqTab({ courseId }: { courseId: string }) {
 
                     <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
                         <motion.div
-                            className="h-full bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-full"
+                            className="h-full bg-gradient-to-r from-[#6B8E23] to-[#556B2F] rounded-full"
                             initial={{ width: 0 }}
                             animate={{
                                 width: `${(testIdx / mcqs.length) * 100}%`,
@@ -425,7 +422,7 @@ export function McqTab({ courseId }: { courseId: string }) {
                 <div className="space-y-3">
                     {mcq.options.map((opt, i) => {
                         let cls =
-                            'border border-gray-200 text-gray-700 hover:border-[#667eea]/50 hover:bg-purple-50 cursor-pointer'
+                            'border border-gray-200 text-gray-700 hover:border-[#6B8E23]/50 hover:bg-green-50 cursor-pointer'
 
                         if (answered) {
                             if (opt.isCorrect) {

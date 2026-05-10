@@ -155,7 +155,7 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
           placeholder="Type a msg or try @ai help..."
           rows={1}
           className={`flex-1 resize-none rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all ${input.startsWith('@ai') || input.startsWith('@docs')
-            ? 'bg-blue-500/10 border border-blue-500/40 text-blue-200 focus:ring-blue-500/50 placeholder:text-blue-400/50'
+            ? 'bg-[#6B8E23]/10 border border-[#6B8E23]/40 text-[#6B8E23] dark:text-[#A9BA9D] focus:ring-[#6B8E23]/50 placeholder:text-[#6B8E23]/50'
             : 'bg-[var(--bg-subtle)] border border-[var(--border)] text-[var(--text-primary)] focus:ring-[var(--border-strong)] placeholder:text-[var(--text-faint)]'
             }`}
         />

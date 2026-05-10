@@ -1,7 +1,7 @@
 import { Brain, CheckCircle, FileText, Loader2, RefreshCw, RotateCcw, Sparkles, XCircle } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
-import { Button } from '../../components/Button'
+import { Button } from '../Button'
 import {
     useFinishFlashcardSession,
     useFlashcards,
@@ -43,8 +43,8 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
     const [lastProcessedFileCount, setLastProcessedFileCount] = useState(() => hasCards ? files.length : -1)
 
     // Dirty when: a file was added after last generation, OR file count changed since last process
-    const newestFileAt  = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
-    const newestCardAt  = cards.length ? Math.max(...cards.map(c => new Date(c.updatedAt).getTime())) : 0
+    const newestFileAt = files.length ? Math.max(...files.map(f => new Date(f.createdAt).getTime())) : 0
+    const newestCardAt = cards.length ? Math.max(...cards.map(c => new Date(c.updatedAt).getTime())) : 0
     const hasNewerFiles = hasFiles && hasCards && (newestFileAt > newestCardAt || files.length !== lastProcessedFileCount)
 
     const [view, setView] = useState<ViewState>('idle')
@@ -136,7 +136,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center gap-4 py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#667eea]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[#6B8E23]" />
 
                     {(processing || regenerating) && (
                         <p className="text-sm text-gray-500">
@@ -154,7 +154,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center py-12 gap-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center shadow-lg shadow-green-200">
                         <Brain className="w-10 h-10 text-white" />
                     </div>
 
@@ -169,10 +169,10 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                             {hasCards && !hasNewerFiles
                                 ? `${cards.length} flashcard${cards.length !== 1 ? 's' : ''} ready • Flip each card and rate yourself`
                                 : hasNewerFiles
-                                  ? 'New files detected — process them to regenerate your flashcards'
-                                  : hasFiles
-                                    ? 'Process your uploaded files to generate AI flashcards'
-                                    : 'Upload files in the Files tab first, then process them here'}
+                                    ? 'New files detected — process them to regenerate your flashcards'
+                                    : hasFiles
+                                        ? 'Process your uploaded files to generate AI flashcards'
+                                        : 'Upload files in the Files tab first, then process them here'}
                         </p>
                     </div>
 
@@ -214,7 +214,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
         return (
             <TabPanel>
                 <div className="flex flex-col items-center gap-6 py-8 max-w-sm mx-auto">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-200">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center shadow-lg shadow-green-200">
                         <span className="text-2xl font-bold text-white">
                             {pct}%
                         </span>
@@ -257,12 +257,11 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                             disabled={!hasFiles || regenerating}
                             className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg transition-colors
                                 disabled:opacity-40 disabled:cursor-not-allowed
-                                text-gray-500 hover:text-[#667eea] hover:bg-purple-50 disabled:hover:text-gray-500 disabled:hover:bg-transparent"
+                                text-gray-500 hover:text-[#6B8E23] hover:bg-green-50 disabled:hover:text-gray-500 disabled:hover:bg-transparent"
                         >
                             <RefreshCw
-                                className={`w-4 h-4 ${
-                                    regenerating ? 'animate-spin' : ''
-                                }`}
+                                className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''
+                                    }`}
                             />
 
                             {regenerating
@@ -330,7 +329,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         }}
                     >
                         <div
-                            className="absolute inset-0 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-2xl flex flex-col items-center justify-center p-8 text-white shadow-lg shadow-purple-200"
+                            className="absolute inset-0 bg-gradient-to-br from-[#6B8E23] to-[#556B2F] rounded-2xl flex flex-col items-center justify-center p-8 text-white shadow-lg shadow-green-200"
                             style={{ backfaceVisibility: 'hidden' }}
                         >
                             <p className="text-xs uppercase tracking-widest mb-4 opacity-60 font-medium">
@@ -347,13 +346,13 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         </div>
 
                         <div
-                            className="absolute inset-0 bg-white rounded-2xl border-2 border-[#667eea]/20 flex flex-col items-center justify-center p-8 shadow-lg"
+                            className="absolute inset-0 bg-white rounded-2xl border-2 border-[#6B8E23]/20 flex flex-col items-center justify-center p-8 shadow-lg"
                             style={{
                                 backfaceVisibility: 'hidden',
                                 transform: 'rotateY(180deg)',
                             }}
                         >
-                            <p className="text-xs uppercase tracking-widest mb-4 text-[#667eea] opacity-60 font-medium">
+                            <p className="text-xs uppercase tracking-widest mb-4 text-[#6B8E23] opacity-60 font-medium">
                                 Answer
                             </p>
 
@@ -373,10 +372,9 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         onClick={() => handleReview(false)}
                         disabled={!flipped}
                         className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 font-semibold transition-colors
-                            ${
-                                flipped
-                                    ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer'
-                                    : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                            ${flipped
+                                ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer'
+                                : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
                             }`}
                     >
                         <XCircle className="w-5 h-5" />
@@ -387,10 +385,9 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         onClick={() => handleReview(true)}
                         disabled={!flipped}
                         className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 font-semibold transition-colors
-                            ${
-                                flipped
-                                    ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100 cursor-pointer'
-                                    : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                            ${flipped
+                                ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100 cursor-pointer'
+                                : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
                             }`}
                     >
                         <CheckCircle className="w-5 h-5" />

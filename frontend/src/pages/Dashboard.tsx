@@ -6,8 +6,6 @@ import { useProgress } from '../hooks/useProgress'
 import { useEvents } from '../hooks/useScheduler'
 import { useMyGroups } from '../hooks/useGroup'
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 function greet() {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
@@ -27,7 +25,7 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
   quiz:       'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400',
   mid:        'bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400',
   final:      'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400',
-  project:    'bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-400',
+  project:    'bg-green-100 text-[#6B8E23] dark:bg-[#6B8E23]/15 dark:text-[#A9BA9D]',
   study:      'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
   general:    'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-400',
 }
@@ -40,7 +38,7 @@ const PRIORITY_DOT: Record<string, string> = {
 
 // Group avatar colour — deterministic from group name
 const GROUP_COLORS = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#f97316',
+  '#6B8E23', '#556B2F', '#A9BA9D', '#f97316',
   '#10b981', '#0ea5e9', '#f59e0b', '#14b8a6',
 ]
 function groupColor(name: string) {
@@ -49,14 +47,13 @@ function groupColor(name: string) {
   return GROUP_COLORS[Math.abs(hash) % GROUP_COLORS.length]
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
 
 function StatCard({
   icon,
   label,
   value,
   sub,
-  accent = '#6366f1',
+  accent = '#6B8E23',
 }: {
   icon: React.ReactNode
   label: string
@@ -100,7 +97,7 @@ function QuickLink({
   return (
     <button
       onClick={() => navigate(to)}
-      className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors group w-full shadow-sm dark:shadow-none"
+      className="cursor-pointer flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors group w-full shadow-sm dark:shadow-none"
     >
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
@@ -118,8 +115,6 @@ interface TopGroup {
   name: string
   role: 'admin' | 'member'
 }
-
-// ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -153,8 +148,8 @@ export default function Dashboard() {
 
       {/* ── Hero greeting ── */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 flex items-center justify-center shrink-0">
-          <User className="w-6 h-6 text-indigo-500" />
+        <div className="w-12 h-12 rounded-2xl bg-[#6B8E23]/15 flex items-center justify-center shrink-0">
+          <User className="w-6 h-6 text-[#6B8E23]" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
@@ -180,7 +175,7 @@ export default function Dashboard() {
           label="MCQ accuracy"
           value={`${Math.round(summary?.mcqAccuracy ?? 0)}%`}
           sub={`${summary?.mcqAttempts ?? 0} attempts`}
-          accent="#8b5cf6"
+          accent="#6B8E23"
         />
         <StatCard
           icon={<CheckCircle2 className="w-5 h-5" />}
@@ -207,7 +202,7 @@ export default function Dashboard() {
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">My Groups</h2>
             <button
               onClick={() => navigate('/dashboard/group-chat')}
-              className="text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
+              className="cursor-pointer text-xs text-[#6B8E23] hover:text-[#556B2F] dark:hover:text-[#A9BA9D] flex items-center gap-0.5 transition-colors font-medium"
             >
               View all <ChevronRight className="w-3 h-3" />
             </button>
@@ -236,7 +231,7 @@ export default function Dashboard() {
                     className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 cursor-pointer transition-colors"
                   >
                     <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white text-xs font-bold"
+                      className="size-9 rounded-xl flex items-center justify-center shrink-0 text-white text-xs font-bold"
                       style={{ background: color }}
                     >
                       {initials}
@@ -263,7 +258,7 @@ export default function Dashboard() {
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Upcoming Events</h2>
             <button
               onClick={() => navigate('/dashboard/scheduler')}
-              className="text-xs text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-0.5 transition-colors font-medium"
+              className="cursor-pointer text-xs text-[#6B8E23] hover:text-[#556B2F] dark:hover:text-[#A9BA9D] flex items-center gap-0.5 transition-colors font-medium"
             >
               View all <ChevronRight className="w-3 h-3" />
             </button>
@@ -312,12 +307,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Quick links ── */}
       <div>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Quick Access</h2>
         <div className="grid grid-cols-4 gap-3">
-          <QuickLink icon={<MessageSquare className="w-5 h-5" />} label="Group Chat" to="/dashboard/group-chat" accent="#6366f1" />
-          <QuickLink icon={<BookOpen className="w-5 h-5" />}      label="Notes"      to="/dashboard/notes"      accent="#8b5cf6" />
+          <QuickLink icon={<MessageSquare className="w-5 h-5" />} label="Group Chat" to="/dashboard/group-chat" accent="#6B8E23" />
+          <QuickLink icon={<BookOpen className="w-5 h-5" />}      label="Notes"      to="/dashboard/notes"      accent="#556B2F" />
           <QuickLink icon={<Calendar className="w-5 h-5" />}      label="Scheduler"  to="/dashboard/scheduler"  accent="#0ea5e9" />
           <QuickLink icon={<TrendingUp className="w-5 h-5" />}    label="Progress"   to="/dashboard/progress"   accent="#10b981" />
         </div>

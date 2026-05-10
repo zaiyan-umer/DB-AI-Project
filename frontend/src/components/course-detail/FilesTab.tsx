@@ -4,7 +4,7 @@ import { Upload, Download, Trash2, FileText, Loader2, Sparkles, Eye, ChevronLeft
 import { Document, Page, pdfjs } from 'react-pdf'
 import mammoth from 'mammoth'
 import { api } from '../../lib/axios'
-import { Button } from '../../components/Button'
+import { Button } from '../Button'
 import { useFiles, useFile, useUploadFile, useDeleteFile } from '../../hooks/useNotes'
 import { getDownloadUrl, getPreviewUrl, type CourseFile } from '../../services/notes.service'
 import { formatBytes, formatRelativeDate } from './types'
@@ -16,33 +16,33 @@ import 'react-pdf/dist/Page/TextLayer.css'
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
 
 export function FilesTab({ courseId }: { courseId: string }) {
-    const { data: files = [], isLoading }           = useFiles(courseId)
-    const { mutate: upload, isPending: uploading }  = useUploadFile(courseId)
-    const { mutate: remove }                        = useDeleteFile(courseId)
-    const fileInputRef                              = useRef<HTMLInputElement>(null)
-    const pdfContainerRef                           = useRef<HTMLDivElement>(null)
-    const [selectedFileId, setSelectedFileId]       = useState<string | null>(null)
-    const [numPages, setNumPages]                   = useState(0)
-    const [pageNumber, setPageNumber]               = useState(1)
-    const [viewerWidth, setViewerWidth]             = useState(800)
+    const { data: files = [], isLoading } = useFiles(courseId)
+    const { mutate: upload, isPending: uploading } = useUploadFile(courseId)
+    const { mutate: remove } = useDeleteFile(courseId)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const pdfContainerRef = useRef<HTMLDivElement>(null)
+    const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
+    const [numPages, setNumPages] = useState(0)
+    const [pageNumber, setPageNumber] = useState(1)
+    const [viewerWidth, setViewerWidth] = useState(800)
     const { data: fetchedFile, isLoading: loadingFile } = useFile(selectedFileId ?? '', courseId)
 
-    const [docxHtml, setDocxHtml]                   = useState<string>('')
-    const [loadingDocx, setLoadingDocx]             = useState(false)
-    const [docxError, setDocxError]                 = useState(false)
+    const [docxHtml, setDocxHtml] = useState<string>('')
+    const [loadingDocx, setLoadingDocx] = useState(false)
+    const [docxError, setDocxError] = useState(false)
 
     const viewerFile = fetchedFile ?? (selectedFileId ? files.find((f) => f.id === selectedFileId) ?? null : null)
 
-    const pdfFile = useMemo(() => ({ 
-        url: selectedFileId ? getPreviewUrl(selectedFileId) : '', 
-        withCredentials: true 
+    const pdfFile = useMemo(() => ({
+        url: selectedFileId ? getPreviewUrl(selectedFileId) : '',
+        withCredentials: true
     }), [selectedFileId])
 
     const isPdfFile = (file: CourseFile) =>
         file.mimeType === 'application/pdf' || file.originalName.toLowerCase().endsWith('.pdf')
 
     const isDocxFile = (file: CourseFile) =>
-        file.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+        file.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
         file.originalName.toLowerCase().endsWith('.docx') ||
         file.originalName.toLowerCase().endsWith('.doc')
 
@@ -149,8 +149,8 @@ export function FilesTab({ courseId }: { courseId: string }) {
                             animate={{ opacity: 1, x: 0 }}
                             className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
                         >
-                            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                <FileText className="w-5 h-5 text-blue-600" />
+                            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 text-[#6B8E23]" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-900 truncate">{file.originalName}</p>
@@ -160,11 +160,10 @@ export function FilesTab({ courseId }: { courseId: string }) {
                                 <button
                                     onClick={() => openViewer(file)}
                                     disabled={!isPreviewableFile(file)}
-                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                                        isPreviewableFile(file)
-                                            ? 'hover:bg-blue-50 cursor-pointer'
-                                            : 'opacity-40 cursor-not-allowed'
-                                    }`}
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isPreviewableFile(file)
+                                        ? 'hover:bg-blue-50 cursor-pointer'
+                                        : 'opacity-40 cursor-not-allowed'
+                                        }`}
                                     title={isPreviewableFile(file) ? 'Preview Document' : 'Preview available for PDF and DOCX only'}
                                 >
                                     <Eye className="w-4 h-4 text-gray-600" />
@@ -180,7 +179,7 @@ export function FilesTab({ courseId }: { courseId: string }) {
                                 </a>
                                 <button
                                     onClick={() => remove(file.id)}
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
+                                    className="cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
                                     title="Delete"
                                 >
                                     <Trash2 className="w-4 h-4 text-red-400" />
@@ -193,8 +192,8 @@ export function FilesTab({ courseId }: { courseId: string }) {
 
             {/* AI placeholder notice */}
             {files.length > 0 && (
-                <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center flex-shrink-0">
+                <div className="mt-6 p-4 rounded-xl border border-green-100 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center flex-shrink-0">
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -256,7 +255,7 @@ export function FilesTab({ courseId }: { courseId: string }) {
                                 <a
                                     href={getDownloadUrl(selectedFileId)}
                                     download={viewerFile?.originalName ?? 'file'}
-                                    className="text-sm text-[#667eea] font-medium hover:underline"
+                                    className="text-sm text-[#6B8E23] font-medium hover:underline"
                                 >
                                     Download file
                                 </a>

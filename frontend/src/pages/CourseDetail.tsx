@@ -4,16 +4,15 @@ import { motion } from 'motion/react'
 import { ArrowLeft } from 'lucide-react'
 import { useCourses } from '../hooks/useNotes'
 
-import { FilesTab } from '../components/CourseDetail/FilesTab'
-import { FlashcardsTab } from '../components/CourseDetail/FlashcardsTab'
-import { McqTab } from '../components/CourseDetail/McqTab'
-import { type Tab } from '../components/CourseDetail/types'
+import { FilesTab } from '../components/course-detail/FilesTab'
+import { FlashcardsTab } from '../components/course-detail/FlashcardsTab'
+import { McqTab } from '../components/course-detail/McqTab'
+import { type Tab } from '../components/course-detail/types'
 
-// ---- Page -----------------------------------------------------------------
 
 export default function CourseDetailPage() {
-    const { courseId }  = useParams<{ courseId: string }>()
-    const navigate      = useNavigate()
+    const { courseId } = useParams<{ courseId: string }>()
+    const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState<Tab>('files')
 
     const { data: courses = [] } = useCourses()
@@ -43,23 +42,22 @@ export default function CourseDetailPage() {
                 <div className="flex border-b border-gray-100 px-6 pt-2 gap-1">
                     {(['files', 'flashcards', 'mcq'] as Tab[]).map((tab) => {
                         const labels: Record<Tab, string> = {
-                            files:      'Uploaded Files',
+                            files: 'Uploaded Files',
                             flashcards: 'Flashcards',
-                            mcq:        'MCQ Test',
+                            mcq: 'MCQ Test',
                         }
                         return (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-5 py-3 text-sm font-medium transition-all relative ${
-                                    activeTab === tab ? 'text-[#667eea]' : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                                className={`cursor-pointer px-5 py-3 text-sm font-medium transition-all relative ${activeTab === tab ? 'text-[#6B8E23]' : 'text-gray-500 hover:text-gray-700'
+                                    }`}
                             >
                                 {labels[tab]}
                                 {activeTab === tab && (
                                     <motion.div
                                         layoutId="tab-underline"
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-t"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#6B8E23] to-[#556B2F] rounded-t"
                                     />
                                 )}
                             </button>
@@ -69,9 +67,9 @@ export default function CourseDetailPage() {
 
                 {/* Tab Content */}
                 <div className="p-6">
-                    <div style={{ display: activeTab === 'files'      ? 'block' : 'none' }}><FilesTab      courseId={courseId} /></div>
+                    <div style={{ display: activeTab === 'files' ? 'block' : 'none' }}><FilesTab courseId={courseId} /></div>
                     <div style={{ display: activeTab === 'flashcards' ? 'block' : 'none' }}><FlashcardsTab courseId={courseId} /></div>
-                    <div style={{ display: activeTab === 'mcq'        ? 'block' : 'none' }}><McqTab        courseId={courseId} /></div>
+                    <div style={{ display: activeTab === 'mcq' ? 'block' : 'none' }}><McqTab courseId={courseId} /></div>
                 </div>
             </div>
         </div>

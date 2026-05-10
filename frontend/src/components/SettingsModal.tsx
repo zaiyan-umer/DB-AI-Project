@@ -136,10 +136,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                                     fontSize: '14px', fontWeight: 500,
                                                     textAlign: 'left', transition: 'all 0.15s',
                                                     background: active
-                                                        ? 'linear-gradient(to right, #667eea, #764ba2)'
+                                                        ? 'linear-gradient(to right, #6B8E23, #556B2F)'
                                                         : 'transparent',
                                                     color: active ? '#ffffff' : textSec,
-                                                    boxShadow: active ? '0 4px 14px rgba(102,126,234,0.35)' : 'none',
+                                                    boxShadow: active ? '0 4px 14px rgba(107,142,35,0.35)' : 'none',
                                                 }}
                                                 onMouseEnter={e => {
                                                     if (!active) (e.currentTarget as HTMLButtonElement).style.backgroundColor = hoverBg
@@ -281,14 +281,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                                 <ThemeOption label="Light"  active={theme === 'light'}  isDark={isDark} onClick={() => setTheme('light')}
                                                     preview={
                                                         <div style={{ width: '100%', height: '96px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'linear-gradient(to right, #667eea, #764ba2)' }} />
+                                                            <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'linear-gradient(to right, #6B8E23, #556B2F)' }} />
                                                         </div>
                                                     }
                                                 />
                                                 <ThemeOption label="Dark"   active={theme === 'dark'}   isDark={isDark} onClick={() => setTheme('dark')}
                                                     preview={
                                                         <div style={{ width: '100%', height: '96px', backgroundColor: '#0f1117', borderRadius: '8px', border: '1px solid #2e3347', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'linear-gradient(to right, #667eea, #764ba2)' }} />
+                                                            <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'linear-gradient(to right, #6B8E23, #556B2F)' }} />
                                                         </div>
                                                     }
                                                 />
@@ -296,10 +296,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                                     preview={
                                                         <div style={{ width: '100%', height: '96px', borderRadius: '8px', border: '1px solid #d1d5db', overflow: 'hidden', display: 'flex' }}>
                                                             <div style={{ flex: 1, backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(to right, #667eea, #764ba2)' }} />
+                                                                <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(to right, #6B8E23, #556B2F)' }} />
                                                             </div>
                                                             <div style={{ flex: 1, backgroundColor: '#0f1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(to right, #667eea, #764ba2)' }} />
+                                                                <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(to right, #6B8E23, #556B2F)' }} />
                                                             </div>
                                                         </div>
                                                     }
@@ -413,9 +413,9 @@ function ThemeOption({ label, active, isDark, onClick, preview }: {
             onClick={onClick}
             style={{
                 padding: '14px', borderRadius: '12px', cursor: 'pointer',
-                border: `2px solid ${active ? '#667eea' : border}`,
+                border: `2px solid ${active ? '#6B8E23' : border}`,
                 backgroundColor: active
-                    ? isDark ? 'rgba(102,126,234,0.1)' : 'rgba(102,126,234,0.05)'
+                    ? isDark ? 'rgba(107,142,35,0.1)' : 'rgba(107,142,35,0.05)'
                     : 'transparent',
                 transition: 'all 0.15s', textAlign: 'center',
             }}
@@ -424,7 +424,7 @@ function ThemeOption({ label, active, isDark, onClick, preview }: {
         >
             {preview}
             <p style={{ fontSize: '13px', fontWeight: 600, color: textPri, marginTop: '10px' }}>{label}</p>
-            {active && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#667eea', margin: '6px auto 0' }} />}
+            {active && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#6B8E23', margin: '6px auto 0' }} />}
         </button>
     )
 }

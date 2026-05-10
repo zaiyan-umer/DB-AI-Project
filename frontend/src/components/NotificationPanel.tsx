@@ -42,7 +42,7 @@ export function NotificationPanel({ notifications, onClose }: NotificationPanelP
     >
       {/* Header */}
       <div className="p-4 border-b border-gray-100 flex items-center gap-2">
-        <Bell className="w-4 h-4 text-[#667eea]" />
+        <Bell className="w-4 h-4 text-[#6B8E23]" />
         <h3 className="font-semibold text-gray-900">Notifications</h3>
         <span className="text-xs text-gray-400 ml-1">{notifications.length}</span>
 
@@ -73,12 +73,12 @@ export function NotificationPanel({ notifications, onClose }: NotificationPanelP
                 initial={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className={`group relative flex items-start gap-3 p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                  !notif.isRead ? 'bg-purple-50/40' : ''
+                  !notif.isRead ? 'bg-green-50/40' : ''
                 }`}
               >
                 {/* Unread dot */}
                 {!notif.isRead && (
-                  <div className="w-2 h-2 bg-[#667eea] rounded-full mt-1.5 flex-shrink-0" />
+                  <div className="w-2 h-2 bg-[#6B8E23] rounded-full mt-1.5 flex-shrink-0" />
                 )}
                 {notif.isRead && <div className="w-2 h-2 flex-shrink-0" />}
 
