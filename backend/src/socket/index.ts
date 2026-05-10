@@ -31,6 +31,8 @@ export const initSocket = (httpServer: HttpServer) => {
       origin: env.CORS_ORIGIN,
       credentials: true,
     },
+    // Prevent engine.io from destroying non-socket.io WebSocket upgrades (e.g. whiteboard)
+    destroyUpgrade: false,
   });
 
   // Runs once per connection before any events are processed
