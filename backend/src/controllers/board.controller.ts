@@ -9,16 +9,10 @@ export const getWhiteboard = async (req: Request, res: Response) => {
         const groupId = req.params.groupId as string;
         const [board] = await db.select().from(whiteboards).where(eq(whiteboards.groupId, groupId));
 
-        if (!board) {
-            return res.status(404).json({
-                success: false,
-                error: "Board not found"
-            });
-        }
-
+        // Return 200 with null data if not found, rather than 404
         return res.status(200).json({
             success: true,
-            data: board
+            data: board || null
         });
     } catch (err) {
         console.log(err);
@@ -34,9 +28,9 @@ export const updateWhiteboard = async (req: Request, res: Response) => {
 
     try {
         const groupId = req.params.groupId as string;
-        const userId = req.params.userId as string;
+        const userId = req.user?.id as string;
 
-        // Only group members can send messages
+        // Only group members can update the whiteboard
         const membership = await checkGroupMembership(groupId, userId)
 
         if (membership.length === 0) {
@@ -46,19 +40,28 @@ export const updateWhiteboard = async (req: Request, res: Response) => {
         const snapshot = req.body;
 
         const [board] = await db.select().from(whiteboards).where(eq(whiteboards.groupId, groupId));
+        
         if (!board) {
-            return res.status(404).json({
-                success: false,
-                error: "Board not found"
+            // Create new board if it doesn't exist
+            await db.insert(whiteboards).values({
+                boardId: crypto.randomUUID(), // Using random UUID for boardId
+                groupId,
+                snapshot,
+                updatedAt: new Date()
             });
+        } else {
+            // Update existing board
+            await db.update(whiteboards)
+                .set({ snapshot, updatedAt: new Date() })
+                .where(eq(whiteboards.groupId, groupId));
         }
-        await db.update(whiteboards).set({ snapshot, updatedAt: new Date() }).where(eq(whiteboards.groupId, groupId));
         
         return res.status(200).json({
             success: true,
             message: "Board updated successfully"
         });
     } catch (err) {
+
         console.log(err);
         return res.status(500).json({
             success: false,

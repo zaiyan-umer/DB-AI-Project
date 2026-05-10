@@ -4,6 +4,7 @@ import { MessageItem } from './MessageItem';
 import { useAITyping } from '../../hooks/useAITyping';
 import { Bot, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Whiteboard from '../Whiteboard';
 
 interface Props {
   groupId: string;
@@ -14,8 +15,27 @@ interface Props {
   onBack?: () => void;
 }
 
+interface MessagesWindowProps {
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  bottomRef: React.RefObject<HTMLDivElement | null>;
+  allMessages: any[];
+  groupId: string;
+  currentUserId: string;
+  isAdmin: boolean;
+  isAITyping: boolean;
+  hasNextPage: boolean | undefined;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
+  input: string;
+  setInput: (val: string) => void;
+  handleSend: () => void;
+  handleKeyDown: (e: React.KeyboardEvent) => void;
+  isSending: boolean;
+}
+
 export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineCount, onBack }: Props) => {
   const [input, setInput] = useState('');
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -79,7 +99,8 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
   return (
     <div className="flex flex-col h-full bg-[var(--bg-page)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-surface)] flex items-center gap-3">
+      <div className='flex justify-between items-center border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3'>
+      <div className="flex items-center gap-3">
         {onBack && (
           <button 
             onClick={onBack}
@@ -96,8 +117,83 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
           <span className="text-xs text-[var(--text-muted)] font-medium">{onlineCount} online</span>
         </div>
       </div>
+      <div className="">
+        <button 
+          onClick={() => setShowWhiteboard(!showWhiteboard)}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all cursor-pointer"
+        >
+            {showWhiteboard ? 'Back to Chat' : 'Open Whiteboard'}
+        </button>
+        </div>
+      </div>
 
-      {/* Messages */}
+      <AnimatePresence mode="wait">
+        {showWhiteboard ? (
+          <motion.div
+            key="whiteboard"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex-1 relative"
+          >
+            <Whiteboard groupId={groupId} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="chat"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <MessagesWindow
+              scrollContainerRef={scrollContainerRef}
+              bottomRef={bottomRef}
+              allMessages={allMessages}
+              groupId={groupId}
+              currentUserId={currentUserId}
+              isAdmin={isAdmin}
+              isAITyping={isAITyping}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+              input={input}
+              setInput={setInput}
+              handleSend={handleSend}
+              handleKeyDown={handleKeyDown}
+              isSending={sendMessage.isPending}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
+    </div>
+  );
+};
+
+const MessagesWindow = ({
+  scrollContainerRef,
+  bottomRef,
+  allMessages,
+  groupId,
+  currentUserId,
+  isAdmin,
+  isAITyping,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+  input,
+  setInput,
+  handleSend,
+  handleKeyDown,
+  isSending
+}: MessagesWindowProps) => {
+  return (
+    <>
+            {/* Messages */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 bg-[var(--bg-page)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Load more */}
         {hasNextPage && (
@@ -161,12 +257,12 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
         />
         <button
           onClick={handleSend}
-          disabled={!input.trim() || sendMessage.isPending}
+          disabled={!input.trim() || isSending}
           className="cursor-pointer bg-[var(--text-primary)] hover:bg-[var(--text-secondary)] hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100 text-[var(--bg-page)] rounded-lg px-2.5 sm:px-5 py-2 sm:py-2.5 text-sm font-medium"
         >
           Send
         </button>
-      </div>
-    </div>
-  );
-};
+      </div>    
+    </>
+  )
+}
