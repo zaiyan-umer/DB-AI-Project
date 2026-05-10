@@ -33,6 +33,10 @@ export const ChatPage = () => {
     }, [activeGroup, context]);
 
     const currentUserId = user?.user?.id ?? user?.id ?? '';
+    const currentUserName = user?.user?.username ?? user?.username ?? 'Anonymous';
+
+    // Simple hash for consistent user color
+    const currentUserColor = `hsl(${(currentUserId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)) % 360}, 70%, 50%)`;
 
     // Connect socket when page loads
     useSocket();
@@ -75,6 +79,8 @@ export const ChatPage = () => {
                                 groupId={activeGroup.id}
                                 groupName={activeGroup.name}
                                 currentUserId={currentUserId}
+                                currentUserName={currentUserName}
+                                currentUserColor={currentUserColor}
                                 isAdmin={!!isAdmin}
                                 onlineCount={onlineCount}
                                 onBack={() => setActiveGroup(null)}

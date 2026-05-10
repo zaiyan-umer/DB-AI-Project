@@ -1,56 +1,45 @@
-import { useUpdateWhiteboard, useWhiteboard } from '@/hooks/useWhiteboard'
-import { useEffect, useRef, useState } from 'react'
-import { createTLStore, getSnapshot, loadSnapshot, Tldraw, type TLStoreWithStatus } from 'tldraw'
+import { computed, createUserId, Tldraw } from 'tldraw'
+import { useSync } from '@tldraw/sync'
 import 'tldraw/tldraw.css'
 
 type WhiteboardProps = {
     groupId: string
+    userId: string
+    userName: string
+    userColor: string
 }
 
-export default function Whiteboard({ groupId }: WhiteboardProps) {
-    const [storeWithStatus, setStoreWithStatus] = useState<TLStoreWithStatus>({ status: 'loading' })
-    const { data: boardData, isLoading, isError, error } = useWhiteboard(groupId)
-    const updateWhiteboard = useUpdateWhiteboard(groupId)
-    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+export default function Whiteboard({ groupId, userId, userName, userColor }: WhiteboardProps) {
 
-    useEffect(() => {
-        if (isLoading || !groupId) return
+    const store = useSync({
+        uri: `wss://myserver.com/sync/room-${groupId}`,
+        assets: {
+            async upload(_asset, _file) {
+                return { src: '' } 
+            },
+            resolve(asset) {
+                return asset.props.src
+            },
+        },
+        users: {
+            currentUser: computed('current-user', () => ({
+                id: createUserId(userId),
+                typeName: 'user',
+                name: userName,
+                color: userColor,
+                imageUrl: '',
+                meta: {},
+            })),
+        },
+    });
 
-        if (isError) {
-            setStoreWithStatus({ status: 'error', error: error as Error })
-            return
-        }
+    if (store.status === "loading") {
+        return <div>Connecting to collaboration session...</div>;
+    }
 
-        const store = createTLStore()
+    if (store.status === "error") {
+        return <div>Failed to connect: {store.error.message}</div>;
+    }
 
-        // only load if a snapshot actually exists
-        if (boardData && boardData.snapshot) {
-            loadSnapshot(store, boardData.snapshot)
-        }
-
-        // debounced save on every store change
-        const unsub = store.listen(() => {
-            if (debounceTimer.current) clearTimeout(debounceTimer.current)
-            debounceTimer.current = setTimeout(() => {
-                const { document } = getSnapshot(store)
-                updateWhiteboard.mutate({ document })
-            }, 2000)
-        })
-
-        setStoreWithStatus({ status: 'synced-local', store })
-
-        return () => {
-            unsub()
-            // final save on unmount
-            if (debounceTimer.current) clearTimeout(debounceTimer.current)
-            const { document } = getSnapshot(store)
-            updateWhiteboard.mutate({ document })
-        }
-    }, [groupId, isLoading])
-
-    return (
-        <div style={{ position: 'absolute', inset: 0 }}>
-            <Tldraw store={storeWithStatus} />
-        </div>
-    )
+    return <Tldraw store={store.store} />;
 }   

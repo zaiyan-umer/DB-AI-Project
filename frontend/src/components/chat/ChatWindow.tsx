@@ -10,6 +10,8 @@ interface Props {
   groupId: string;
   groupName: string;
   currentUserId: string;
+  currentUserName: string;
+  currentUserColor: string;
   isAdmin: boolean;
   onlineCount: number;
   onBack?: () => void;
@@ -33,7 +35,7 @@ interface MessagesWindowProps {
   isSending: boolean;
 }
 
-export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineCount, onBack }: Props) => {
+export const ChatWindow = ({ groupId, groupName, currentUserId, currentUserName, currentUserColor, isAdmin, onlineCount, onBack }: Props) => {
   const [input, setInput] = useState('');
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -137,7 +139,7 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, isAdmin, onlineC
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="flex-1 relative"
           >
-            <Whiteboard groupId={groupId} />
+            <Whiteboard groupId={groupId} userId={currentUserId} userName={currentUserName} userColor={currentUserColor} />
           </motion.div>
         ) : (
           <motion.div
