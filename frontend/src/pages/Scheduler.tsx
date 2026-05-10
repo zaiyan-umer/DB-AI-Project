@@ -224,12 +224,26 @@ export default function SchedulerPage() {
   const handleConfirmRegen = (course: CourseEntry) => {
     const newPlan = regenPreviews[course.course]
     if (!newPlan) return
+
+    // 0=Mon … 6=Sun — only replace hours for today and future days
+    const todayIndex = (new Date().getDay() + 6) % 7
+
+    const mergedPlan = course.weeklyPlan.map((originalDay, di) => {
+      if (di < todayIndex) return originalDay          // past day → keep original hours
+      return newPlan[di] ?? originalDay               // today/future → use AI hours
+    })
+
     const updated: CourseEntry[] = confirmedCourses.map(c =>
-      c.course === course.course ? { ...c, weeklyPlan: newPlan } : c
+      c.course === course.course ? { ...c, weeklyPlan: mergedPlan } : c
     )
     setConfirmedCourses(updated)
     const statusKey = course.id ?? course.course
-    setCourseStatuses(prev => ({ ...prev, [statusKey]: Array(7).fill(null) }))
+    // Only wipe statuses for future days — past day statuses are already saved
+    setCourseStatuses(prev => {
+      const current = prev[statusKey] ?? Array(7).fill(null)
+      const merged = current.map((s, di) => di < todayIndex ? s : null)
+      return { ...prev, [statusKey]: merged }
+    })
     setUnsavedCourses(prev => new Set(prev).add(course.course))
     setRegenPreviews(prev => { const n = { ...prev }; delete n[course.course]; return n })
     savePlan({ courses: updated })
