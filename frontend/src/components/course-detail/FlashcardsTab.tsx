@@ -255,9 +255,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         <button
                             onClick={handleRegenerate}
                             disabled={!hasFiles || regenerating}
-                            className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg transition-colors
-                                disabled:opacity-40 disabled:cursor-not-allowed
-                                text-gray-500 hover:text-[#6B8E23] hover:bg-green-50 disabled:hover:text-gray-500 disabled:hover:bg-transparent"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:text-[#6B8E23] hover:border-[#6B8E23]/40 hover:bg-[#6B8E23]/10 disabled:hover:bg-transparent"
                         >
                             <RefreshCw
                                 className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''

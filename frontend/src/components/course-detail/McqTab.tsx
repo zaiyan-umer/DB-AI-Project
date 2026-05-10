@@ -343,32 +343,18 @@ export function McqTab({ courseId }: { courseId: string }) {
 
                     <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
-                            <Button
-                                variant="outline"
-                                fullWidth
-                                disabled={!hasQs}
-                                onClick={handleTestAgain}
-                                icon={<RotateCcw className="w-4 h-4" />}
-                            >
+                            <Button variant="outline" fullWidth disabled={!hasQs} onClick={handleTestAgain} icon={<RotateCcw className="w-4 h-4" />}>
                                 Test Again
                             </Button>
 
                             <button
                                 onClick={handleRegenerate}
                                 disabled={!hasFiles || regenerating}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium transition-colors
-                                    disabled:opacity-40 disabled:cursor-not-allowed
-                                    text-gray-600 hover:text-[#6B8E23] hover:border-[#6B8E23]/40 hover:bg-green-50
-                                    disabled:hover:text-gray-600 disabled:hover:border-gray-200 disabled:hover:bg-transparent"
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:text-[#6B8E23] hover:border-[#6B8E23]/40 hover:bg-[#6B8E23]/10 disabled:hover:bg-transparent"
                             >
-                                <RefreshCw
-                                    className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''
-                                        }`}
-                                />
+                                <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : '' }`} />
 
-                                {regenerating
-                                    ? 'Regenerating…'
-                                    : 'Regenerate Questions'}
+                                {regenerating ? 'Regenerating…' : 'Regenerate Questions'}
                             </button>
                         </div>
 
@@ -380,8 +366,8 @@ export function McqTab({ courseId }: { courseId: string }) {
                             disabled={!hasFiles}
                             className="flex items-center justify-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg transition-colors
                                 disabled:opacity-40 disabled:cursor-not-allowed
-                                text-gray-500 hover:text-gray-800 hover:bg-gray-100
-                                disabled:hover:text-gray-500 disabled:hover:bg-transparent"
+                                hover:bg-white/10 disabled:hover:bg-transparent"
+                            style={{ color: 'var(--text-muted)' }}
                         >
                             <FileText className="w-4 h-4" />
 
@@ -421,19 +407,15 @@ export function McqTab({ courseId }: { courseId: string }) {
 
                 <div className="space-y-3">
                     {mcq.options.map((opt, i) => {
-                        let cls =
-                            'border border-gray-200 text-gray-700 hover:border-[#6B8E23]/50 hover:bg-green-50 cursor-pointer'
+                        let cls = 'hover:border-[#6B8E23]/50 hover:bg-[#6B8E23]/10 cursor-pointer'
 
                         if (answered) {
                             if (opt.isCorrect) {
-                                cls =
-                                    'border-green-400 bg-green-50 text-green-800 cursor-default'
+                                cls = 'border-green-400 bg-green-50 text-green-800 cursor-default'
                             } else if (i === selected) {
-                                cls =
-                                    'border-red-400 bg-red-50 text-red-800 cursor-default'
+                                cls = 'border-red-400/60 bg-red-500/10 text-red-500 cursor-default'
                             } else {
-                                cls =
-                                    'border-gray-100 text-gray-400 cursor-default'
+                                cls = 'opacity-40 cursor-default'
                             }
                         }
 

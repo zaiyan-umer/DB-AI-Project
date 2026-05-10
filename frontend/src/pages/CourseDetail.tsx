@@ -21,7 +21,7 @@ export default function CourseDetailPage() {
     if (!courseId) return null
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
             {/* Back + Title */}
             <div className="flex items-center gap-4">
                 <button

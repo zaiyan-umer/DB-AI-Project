@@ -190,19 +190,6 @@ export function FilesTab({ courseId }: { courseId: string }) {
                 </div>
             )}
 
-            {/* AI placeholder notice */}
-            {files.length > 0 && (
-                <div className="mt-6 p-4 rounded-xl border border-green-100 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#6B8E23] to-[#556B2F] flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-semibold text-gray-800">AI Processing — Coming in Iteration 3</p>
-                        <p className="text-xs text-gray-500">AI will auto-generate flashcards & MCQs from your uploaded files.</p>
-                    </div>
-                </div>
-            )}
-
             <AnimatePresence>
                 {selectedFileId && (
                     <motion.div
