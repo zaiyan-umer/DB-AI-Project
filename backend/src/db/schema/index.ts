@@ -11,3 +11,4 @@ export { default as studyPlanLogDays, dayStatusEnum } from './study_plan_log.sch
 export { default as courses, mcqDifficultyEnum, courseFiles, flashcards, mcqs, mcqOptions, mcqAttempts, flashcardSessions, } from './notes.schema'
 
 export { default as googleCalendarTokens } from './google_calendar_tokens.schema'
+export { default as whiteboards } from './whiteboard.schema'

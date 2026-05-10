@@ -11,6 +11,7 @@ import NotesTestPage from './pages/NotesTest'
 import CourseDetailPage from './pages/CourseDetail'
 import ProgressPage from './pages/Progress'
 import { ChatPage } from './pages/ChatPage'
+import Whiteboard from './components/Whiteboard'
 
 
 const NotFoundPage = () => (
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
   {
     path: '/verify-email',
     element: <ChangePassword />,
+  },
+  {
+    path: '/whiteboard',
+    element: <Whiteboard />,
   },
 
   {
