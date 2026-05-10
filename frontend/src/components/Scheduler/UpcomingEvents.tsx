@@ -16,33 +16,52 @@ export function UpcomingEvents({ events, eventsLoading, onDeleteEvent }: Upcomin
   const [filterPriority, setFilterPriority] = React.useState<Priority | 'all'>('all')
   const [filterCourse, setFilterCourse] = React.useState('')
   const [showFilters, setShowFilters] = React.useState(false)
+  const [showPast, setShowPast] = React.useState(false)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
   const filteredEvents = React.useMemo(() => {
     return events.filter(ev => {
+      const evDate = new Date(ev.date)
+      if (!showPast && evDate < today) return false           // ← NEW: hide past unless toggled
       if (filterType !== 'all' && ev.type !== filterType) return false
       if (filterPriority !== 'all' && ev.priority !== filterPriority) return false
       if (filterCourse && !ev.course.toLowerCase().includes(filterCourse.toLowerCase())) return false
       return true
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [events, filterType, filterPriority, filterCourse])
+  }, [events, filterType, filterPriority, filterCourse, showPast])
+
+  const pastCount = React.useMemo(() => events.filter(ev => new Date(ev.date) < today).length , [events])
 
   const hasActiveFilters = filterType !== 'all' || filterPriority !== 'all' || filterCourse !== ''
+  
 
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-semibold text-gray-900">Upcoming Events</h3>
-        <button onClick={() => setShowFilters(v => !v)}
-          className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${hasActiveFilters ? 'bg-[#6B8E23]/10 text-[#6B8E23]' : 'text-gray-600 hover:bg-gray-100'}`}>
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-          {hasActiveFilters && (
-            <span className="w-5 h-5 bg-[#6B8E23] text-white rounded-full text-xs flex items-center justify-center">
-              {[filterType !== 'all', filterPriority !== 'all', filterCourse !== ''].filter(Boolean).length}
-            </span>
+        <div className="flex items-center gap-3">
+          {pastCount > 0 && (
+            <button
+              onClick={() => setShowPast(v => !v)}
+              className={`text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors ${showPast ? 'bg-gray-200 text-gray-700 border-gray-300' : 'text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'}`}
+            >
+              {showPast ? `Hide past (${pastCount})` : `Show past (${pastCount})`}
+            </button>
           )}
-          <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-        </button>
+          <button onClick={() => setShowFilters(v => !v)}
+            className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${hasActiveFilters ? 'bg-[#6B8E23]/10 text-[#6B8E23]' : 'text-gray-600 hover:bg-gray-100'}`}>
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+            {hasActiveFilters && (
+              <span className="w-5 h-5 bg-[#6B8E23] text-white rounded-full text-xs flex items-center justify-center">
+                {[filterType !== 'all', filterPriority !== 'all', filterCourse !== ''].filter(Boolean).length}
+              </span>
+            )}
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -95,7 +114,7 @@ export function UpcomingEvents({ events, eventsLoading, onDeleteEvent }: Upcomin
         <div className="text-center py-12 text-gray-400">
           <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p className="font-medium">No events found</p>
-          <p className="text-sm mt-1">{hasActiveFilters ? 'Try adjusting your filters' : 'Add your first event above'}</p>
+          <p className="text-sm mt-1">{hasActiveFilters ? 'Try adjusting your filters' : !showPast && pastCount > 0 ? `${pastCount} past event${pastCount > 1 ? 's' : ''} hidden — click "Show past" above` : 'Add your first event above'}</p>
         </div>
       ) : (
         <div className="space-y-3">

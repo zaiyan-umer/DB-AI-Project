@@ -1,36 +1,20 @@
-import { Brain, CheckCircle, FileText, Loader2, RefreshCw, RotateCcw, Sparkles, XCircle } from 'lucide-react'
+import { Brain, CheckCircle, FileText, Loader2, RefreshCw, RotateCcw, Sparkles, Volume2, XCircle } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '../Button'
-import {
-    useFinishFlashcardSession,
-    useFlashcards,
-    useFiles,
-    useProcessFilesForFlashcards,
-    useRegenerateFlashcards,
-    useStartFlashcardSession,
-} from '../../hooks/useNotes'
+import { useFinishFlashcardSession, useFlashcards, useFiles, useProcessFilesForFlashcards, useRegenerateFlashcards, useStartFlashcardSession,} from '../../hooks/useNotes'
 import { TabPanel } from './Shared'
 
 type ViewState = 'idle' | 'study' | 'done'
 
-export function FlashcardsTab({ courseId }: { courseId: string }) {
+export function FlashcardsTab({ courseId, isActive }: { courseId: string; isActive: boolean }) {
     const { data: files = [] } = useFiles(courseId)
 
-    const {
-        data: cards = [],
-        isLoading,
-    } = useFlashcards(courseId)
+    const { data: cards = [], isLoading, } = useFlashcards(courseId)
 
-    const {
-        mutate: processFiles,
-        isPending: processing,
-    } = useProcessFilesForFlashcards(courseId)
+    const { mutate: processFiles, isPending: processing, } = useProcessFilesForFlashcards(courseId)
 
-    const {
-        mutate: regenerate,
-        isPending: regenerating,
-    } = useRegenerateFlashcards(courseId)
+    const { mutate: regenerate, isPending: regenerating, } = useRegenerateFlashcards(courseId)
 
     const { mutate: startSession } = useStartFlashcardSession(courseId)
 
@@ -38,6 +22,21 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
 
     const hasFiles = files.length > 0
     const hasCards = cards.length > 0
+    
+    const stopSpeaking = () => {
+        window.speechSynthesis.cancel()
+    }
+
+    const speakText = (text: string) => {
+        stopSpeaking()
+
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.rate = 0.95
+        utterance.pitch = 1
+        utterance.lang = 'en-US'
+
+        window.speechSynthesis.speak(utterance)
+    }
 
     // Track file count at last successful processFiles to detect deletions
     const [lastProcessedFileCount, setLastProcessedFileCount] = useState(() => hasCards ? files.length : -1)
@@ -48,13 +47,24 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
     const hasNewerFiles = hasFiles && hasCards && (newestFileAt > newestCardAt || files.length !== lastProcessedFileCount)
 
     const [view, setView] = useState<ViewState>('idle')
-    const [sessionId, setSessionId] = useState<string | null>(null)
 
     const [familiar, setFamiliar] = useState(0)
     const [unfamiliar, setUnfamiliar] = useState(0)
 
     const [currentIdx, setCurrentIdx] = useState(0)
     const [flipped, setFlipped] = useState(false)
+    
+    useEffect(() => { stopSpeaking()}, [view])
+    
+    useEffect(() => { if (!isActive) stopSpeaking() }, [isActive])
+    
+    useEffect(() => { return () => stopSpeaking() }, [])
+
+    const speakCard = () => {
+        if (!card) return
+        const text = flipped ? card.answer : card.question
+        speakText(text)
+    }
 
     const handleProcessFiles = () => {
         processFiles(undefined, {
@@ -66,24 +76,15 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
     }
 
     const handleStart = () => {
-        startSession(undefined, {
-            onSuccess: (session) => {
-                setSessionId(session.id)
-
-                setFamiliar(0)
-                setUnfamiliar(0)
-
-                setCurrentIdx(0)
-                setFlipped(false)
-
-                setView('study')
-            },
-        })
+        setFamiliar(0)
+        setUnfamiliar(0)
+        setCurrentIdx(0)
+        setFlipped(false)
+        setView('study')
     }
 
     const handleReview = (known: boolean) => {
-        if (!sessionId) return
-
+        stopSpeaking()
         if (known) {
             setFamiliar((f) => f + 1)
         } else {
@@ -95,14 +96,17 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
         if (isLast) {
             const finalFamiliar = familiar + (known ? 1 : 0)
             const finalUnfamiliar = unfamiliar + (known ? 0 : 1)
-
-            finishSession({
-                sessionId,
-                familiarCount: finalFamiliar,
-                unfamiliarCount: finalUnfamiliar,
-                totalCards: cards.length,
+        
+            startSession(undefined, {
+                onSuccess: (session) => {
+                    finishSession({
+                        sessionId: session.id,
+                        familiarCount: finalFamiliar,
+                        unfamiliarCount: finalUnfamiliar,
+                        totalCards: cards.length,
+                    })
+                }
             })
-
             setView('done')
         } else {
             setFlipped(false)
@@ -111,25 +115,15 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
     }
 
     const handleStudyAgain = () => {
-        startSession(undefined, {
-            onSuccess: (session) => {
-                setSessionId(session.id)
-
-                setFamiliar(0)
-                setUnfamiliar(0)
-
-                setCurrentIdx(0)
-                setFlipped(false)
-
-                setView('study')
-            },
-        })
+        setFamiliar(0)
+        setUnfamiliar(0)
+        setCurrentIdx(0)
+        setFlipped(false)
+        setView('study')
     }
 
     const handleRegenerate = () => {
-        regenerate(undefined, {
-            onSuccess: () => setView('idle'),
-        })
+        regenerate(undefined, { onSuccess: () => setView('idle'), })
     }
 
     if (isLoading || processing || regenerating) {
@@ -308,11 +302,26 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                         {remaining} remaining
                     </span>
                 </div>
+                <div className="w-full max-w-lg flex justify-end">
+                    <button
+                        onClick={speakCard}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-full
+                        bg-white border border-gray-200 shadow-sm
+                        text-gray-500 hover:text-[#6B8E23] hover:border-[#6B8E23]/30 cursor-pointer
+                        transition-colors text-xs font-medium"
+                    >
+                        <Volume2 className="w-3.5 h-3.5" />
 
+                        Read Aloud
+                    </button>
+                </div>
                 <div
                     className="w-full max-w-lg cursor-pointer select-none"
                     style={{ perspective: 1200 }}
-                    onClick={() => setFlipped((f) => !f)}
+                    onClick={() => {
+                        stopSpeaking()
+                        setFlipped((f) => !f)
+                    }}
                 >
                     <motion.div
                         animate={{ rotateY: flipped ? 180 : 0 }}
@@ -367,7 +376,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
 
                 <div className="flex gap-3 w-full max-w-lg">
                     <button
-                        onClick={() => handleReview(false)}
+                        onClick={() => { handleReview(false)}}
                         disabled={!flipped}
                         className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 font-semibold transition-colors
                             ${flipped
@@ -380,7 +389,7 @@ export function FlashcardsTab({ courseId }: { courseId: string }) {
                     </button>
 
                     <button
-                        onClick={() => handleReview(true)}
+                        onClick={() => {handleReview(true)}}
                         disabled={!flipped}
                         className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 font-semibold transition-colors
                             ${flipped

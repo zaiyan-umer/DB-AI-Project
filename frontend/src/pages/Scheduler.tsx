@@ -5,21 +5,7 @@ import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Modal } from '../components/Modal'
-import {
-  useConnectGCal,
-  useCreateEvent,
-  useDeleteCourseData,
-  useDeleteEvent,
-  useDisconnectGCal,
-  useEvents,
-  useGCalStatus,
-  useGenerateAISchedule,
-  usePlanLogs,
-  useSavePlanLogs,
-  useSaveStudyPlan,
-  useStudyPlan,
-  useSyncGCal,
-} from '../hooks/useScheduler'
+import { useConnectGCal, useCreateEvent, useDeleteCourseData, useDeleteEvent, useDisconnectGCal, useEvents, useGCalStatus, useGenerateAISchedule, usePlanLogs, useSavePlanLogs, useSaveStudyPlan, useStudyPlan, useSyncGCal,} from '../hooks/useScheduler'
 import type { CourseEntry, DayStatus, EventType, Priority, StudyStatus } from '../services/scheduler.service'
 
 // Components
@@ -127,6 +113,20 @@ export default function SchedulerPage() {
   // Handlers
   const handleAddEvent = () => {
     if (!newEvent.title || !newEvent.course || !newEvent.date) return
+
+    // Guard: block exact duplicate (same title + course + date, both have no time)
+    const isDuplicate = events.some(ev =>
+      ev.title.toLowerCase() === newEvent.title.toLowerCase() &&
+      ev.course.toLowerCase() === newEvent.course.toLowerCase() &&
+      new Date(ev.date).toDateString() === new Date(newEvent.date).toDateString() &&
+      !ev.time &&
+      !newEvent.time
+    )
+
+    if (isDuplicate) {
+      toast.error('An identical event already exists on this date. Add a time to distinguish them.')
+      return
+    }
     createEvent({ ...newEvent, date: new Date(newEvent.date).toISOString() }, {
       onSuccess: () => { setShowEventModal(false); setNewEvent(emptyEvent) },
     })
@@ -224,12 +224,26 @@ export default function SchedulerPage() {
   const handleConfirmRegen = (course: CourseEntry) => {
     const newPlan = regenPreviews[course.course]
     if (!newPlan) return
+
+    // 0=Mon … 6=Sun — only replace hours for today and future days
+    const todayIndex = (new Date().getDay() + 6) % 7
+
+    const mergedPlan = course.weeklyPlan.map((originalDay, di) => {
+      if (di < todayIndex) return originalDay          // past day → keep original hours
+      return newPlan[di] ?? originalDay               // today/future → use AI hours
+    })
+
     const updated: CourseEntry[] = confirmedCourses.map(c =>
-      c.course === course.course ? { ...c, weeklyPlan: newPlan } : c
+      c.course === course.course ? { ...c, weeklyPlan: mergedPlan } : c
     )
     setConfirmedCourses(updated)
     const statusKey = course.id ?? course.course
-    setCourseStatuses(prev => ({ ...prev, [statusKey]: Array(7).fill(null) }))
+    // Only wipe statuses for future days — past day statuses are already saved
+    setCourseStatuses(prev => {
+      const current = prev[statusKey] ?? Array(7).fill(null)
+      const merged = current.map((s, di) => di < todayIndex ? s : null)
+      return { ...prev, [statusKey]: merged }
+    })
     setUnsavedCourses(prev => new Set(prev).add(course.course))
     setRegenPreviews(prev => { const n = { ...prev }; delete n[course.course]; return n })
     savePlan({ courses: updated })
@@ -238,6 +252,14 @@ export default function SchedulerPage() {
 
   const handleCancelRegen = (courseName: string) => {
     setRegenPreviews(prev => { const n = { ...prev }; delete n[courseName]; return n })
+  }
+
+  const handleUpdatePreparation = (course: CourseEntry, newPrep: number) => {
+    const updated = confirmedCourses.map(c =>
+      c.course === course.course ? { ...c, preparation: newPrep } : c
+    )
+    setConfirmedCourses(updated)
+    savePlan({ courses: updated })
   }
 
   const toggleExpand = (course: string) => {
@@ -286,14 +308,18 @@ export default function SchedulerPage() {
 
   const handleSaveStatus = (course: CourseEntry) => {
     if (!course.id) return
+
     const statuses = courseStatuses[course.id] ?? Array(7).fill(null)
-    saveLog({
-      studyPlanCourseId: course.id,
-      scheduledHours: course.weeklyPlan.map(d => d.hours),
-      dayStatuses: statuses,
-    }, {
+    const hours = Array(7).fill(0).map((_, i) => course.weeklyPlan[i]?.hours ?? 0)
+
+    saveLog({ studyPlanCourseId: course.id, scheduledHours: hours, dayStatuses: statuses },{
       onSuccess: () => {
-        setUnsavedCourses(prev => { const n = new Set(prev); n.delete(course.course); return n })
+        setUnsavedCourses(prev => {
+          const n = new Set(prev)
+          n.delete(course.course)
+          return n
+        })
+
         if (unsavedCourses.size <= 1) captureSavedState()
       },
     })
@@ -393,6 +419,7 @@ export default function SchedulerPage() {
                   onConfirmRegen={handleConfirmRegen}
                   onCancelRegen={handleCancelRegen}
                   onSetDeleteTarget={setDeleteTarget}
+                  onUpdatePreparation={handleUpdatePreparation}
                 />
               </motion.div>
             ))}
@@ -446,7 +473,8 @@ export default function SchedulerPage() {
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Date" type="date" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} required />
+            {/* The date input's min is set to today to prevent selecting past dates */}
+            <Input label="Date" type="date" value={newEvent.date} min={new Date().toISOString().split('T')[0]} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} required />
             <Input label="Time (optional)" type="time" value={newEvent.time} onChange={e => setNewEvent({ ...newEvent, time: e.target.value })} />
           </div>
           <div>

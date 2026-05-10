@@ -68,7 +68,7 @@ export default function CourseDetailPage() {
                 {/* Tab Content */}
                 <div className="p-6">
                     <div style={{ display: activeTab === 'files' ? 'block' : 'none' }}><FilesTab courseId={courseId} /></div>
-                    <div style={{ display: activeTab === 'flashcards' ? 'block' : 'none' }}><FlashcardsTab courseId={courseId} /></div>
+                    <div style={{ display: activeTab === 'flashcards' ? 'block' : 'none' }}><FlashcardsTab courseId={courseId} isActive={activeTab === 'flashcards'} /></div>
                     <div style={{ display: activeTab === 'mcq' ? 'block' : 'none' }}><McqTab courseId={courseId} /></div>
                 </div>
             </div>
