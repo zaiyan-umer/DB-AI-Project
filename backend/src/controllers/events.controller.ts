@@ -215,7 +215,7 @@ export const savePlanLogs = async (req: Request, res: Response) => {
         }
 
         const weekStart = getCurrentWeekStart()
-        const saved     = await upsertWeeklyLog(userId, studyPlanCourseId, weekStart, scheduledHours, dayStatuses)
+        const saved     = await upsertWeeklyLog(studyPlanCourseId, weekStart, scheduledHours, dayStatuses)
         return res.status(200).json(saved)
     } catch (err) {
         console.error(err)

@@ -152,9 +152,8 @@ export const uploadFile = async (req: Request, res: Response) => {
         if (!course) return res.status(404).json({ message: 'Course not found' })
 
 
-        const file = await insertFile({
+                const file = await insertFile({
             courseId,
-            userId,
             originalName: multerFile.originalname,
             storagePath:  `/uploads/${multerFile.filename}`,
             mimeType:     multerFile.mimetype,
@@ -181,7 +180,7 @@ export const uploadFile = async (req: Request, res: Response) => {
         
         const embeddings = await generateEmbeddings(chunks);
 
-        await storeEmbeddingsIntoDB({ chunks, embeddings, userId, fileId: file.id });
+        await storeEmbeddingsIntoDB({ chunks, embeddings, fileId: file.id });
 
         console.log("EMBEDDINGS STORED SUCCESSFULLY");
 
@@ -355,7 +354,7 @@ export const processFiles = async (req: Request, res: Response) => {
             const allCards = generatedPerFile.flatMap(g => g.arr.map(c => ({ ...c, sourceFileId: g.fileId })))
             flashcardsResult = await Promise.all(
                 allCards.slice(0, 5).map(c =>
-                    insertFlashcard({ courseId, userId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId })
+                    insertFlashcard({ courseId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId })
                 )
             )
         }
@@ -395,12 +394,7 @@ export const processFiles = async (req: Request, res: Response) => {
             const allQuestions = generatedPerFile.flatMap(g => g.arr.map(q => ({ ...q, sourceFileId: g.fileId })))
             mcqsResult = await Promise.all(
                 allQuestions.slice(0, 5).map(q =>
-                    insertMcqWithOptions({
-                        courseId, userId,
-                        question: q.question, options: q.options, correctOption: q.correctOption,
-                        explanation: q.explanation ?? null, difficulty: q.difficulty ?? 'medium',
-                        aiGenerated: true, sourceFileId: q.sourceFileId,
-                    })
+                    insertMcqWithOptions({ courseId, question: q.question, options: q.options, correctOption: q.correctOption, explanation: q.explanation ?? null, difficulty: q.difficulty ?? 'medium', aiGenerated: true, sourceFileId: q.sourceFileId })
                 )
             )
         }
@@ -455,7 +449,7 @@ export const generateFlashcards = async (req: Request, res: Response) => {
 
         const inserted = await Promise.all(
             trimmed.map(c =>
-                insertFlashcard({ courseId, userId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId })
+                insertFlashcard({ courseId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId })
             )
         )
 
@@ -501,7 +495,7 @@ export const regenerateFlashcards = async (req: Request, res: Response) => {
             const allCards = generatedPerFile.flatMap(g => g.arr.map(c => ({ ...c, sourceFileId: g.fileId })))
             const trimmed = allCards.slice(0, 5)
             const inserted = await Promise.all(
-                trimmed.map(c => insertFlashcard({ courseId, userId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId }))
+                trimmed.map(c => insertFlashcard({ courseId, question: c.question, answer: c.answer, aiGenerated: true, sourceFileId: c.sourceFileId }))
             )
             return res.status(201).json(inserted)
         }
@@ -608,7 +602,7 @@ export const generateMcqs = async (req: Request, res: Response) => {
         const inserted = await Promise.all(
             trimmed.map(q =>
                 insertMcqWithOptions({
-                    courseId, userId, question: q.question, options: q.options, correctOption: q.correctOption, explanation: q.explanation ?? null,
+                        courseId, question: q.question, options: q.options, correctOption: q.correctOption, explanation: q.explanation ?? null,
                     difficulty: q.difficulty ?? 'medium', aiGenerated: true, sourceFileId: q.sourceFileId,
                 })
             )
@@ -656,7 +650,7 @@ export const regenerateMcqs = async (req: Request, res: Response) => {
             const trimmed = allQuestions.slice(0, 5)
             const inserted = await Promise.all(
                 trimmed.map(q =>
-                    insertMcqWithOptions({ courseId, userId, question: q.question, options: q.options, correctOption: q.correctOption,
+                    insertMcqWithOptions({ courseId, question: q.question, options: q.options, correctOption: q.correctOption,
                         explanation: q.explanation ?? null, difficulty: q.difficulty ?? 'medium', aiGenerated: true, sourceFileId: q.sourceFileId,
                     })
                 )
