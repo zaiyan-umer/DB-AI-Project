@@ -1,7 +1,6 @@
 import { useUpdateWhiteboard, useWhiteboard } from '@/hooks/useWhiteboard'
-import { api } from '@/lib/axios'
 import { useEffect, useRef, useState } from 'react'
-import { createTLStore, getSnapshot, loadSnapshot, Tldraw, type TLAssetStore, type TLStoreWithStatus } from 'tldraw'
+import { createTLStore, getSnapshot, loadSnapshot, Tldraw, type TLStoreWithStatus } from 'tldraw'
 import 'tldraw/tldraw.css'
 
 type WhiteboardProps = {
