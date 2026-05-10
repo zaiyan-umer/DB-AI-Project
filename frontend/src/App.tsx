@@ -12,7 +12,6 @@ import CourseDetailPage from './pages/CourseDetail'
 import ProgressPage from './pages/Progress'
 import { ChatPage } from './pages/ChatPage'
 
-
 const NotFoundPage = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[60vh]">
     <div className="text-center">
@@ -49,7 +48,6 @@ const router = createBrowserRouter([
     path: '/verify-email',
     element: <ChangePassword />,
   },
-
   {
     path: '/dashboard',
     element: (

@@ -1,7 +1,7 @@
-import { and, eq, sql, lt, asc } from 'drizzle-orm'
+import { and, asc, eq, lt, sql } from 'drizzle-orm'
 import db from '../../db/connection'
-import { courses, courseFiles, flashcards, mcqs, mcqOptions, mcqAttempts, flashcardSessions } from '../../db/schema'
-import type { NewCourse, NewCourseFile, NewFlashcard, NewMcq, NewMcqAttempt, NewFlashcardSession, Mcq, McqOption } from '../../db/schema/notes.schema'
+import { courseFiles, courses, flashcards, flashcardSessions, mcqAttempts, mcqOptions, mcqs } from '../../db/schema'
+import type { Mcq, McqOption, NewCourse, NewCourseFile, NewFlashcard, NewFlashcardSession, NewMcqAttempt } from '../../db/schema/notes.schema'
 
 // ---- Courses --------------------------------------------------------------
 
@@ -51,21 +51,21 @@ export const touchCourse = async (courseId: string, userId: string) => {
 export const getCourseCounts = async (userId: string) => {
     const rows = await db
         .select({
-            courseId:        courses.id,
-            filesCount:      sql<number>`count(distinct ${courseFiles.id})::int`,
+            courseId: courses.id,
+            filesCount: sql<number>`count(distinct ${courseFiles.id})::int`,
             flashcardsCount: sql<number>`count(distinct ${flashcards.id})::int`,
-            mcqsCount:       sql<number>`count(distinct ${mcqs.id})::int`,
+            mcqsCount: sql<number>`count(distinct ${mcqs.id})::int`,
         })
         .from(courses)
         .leftJoin(courseFiles, eq(courseFiles.courseId, courses.id))
-        .leftJoin(flashcards,  eq(flashcards.courseId,  courses.id))
-        .leftJoin(mcqs,        eq(mcqs.courseId,        courses.id))
+        .leftJoin(flashcards, eq(flashcards.courseId, courses.id))
+        .leftJoin(mcqs, eq(mcqs.courseId, courses.id))
         .where(eq(courses.userId, userId))
         .groupBy(courses.id)
 
-    const fileMap      = Object.fromEntries(rows.map(r => [r.courseId, r.filesCount]))
+    const fileMap = Object.fromEntries(rows.map(r => [r.courseId, r.filesCount]))
     const flashcardMap = Object.fromEntries(rows.map(r => [r.courseId, r.flashcardsCount]))
-    const mcqMap       = Object.fromEntries(rows.map(r => [r.courseId, r.mcqsCount]))
+    const mcqMap = Object.fromEntries(rows.map(r => [r.courseId, r.mcqsCount]))
 
     return { fileMap, flashcardMap, mcqMap }
 }
@@ -156,10 +156,10 @@ export const replaceFlashcardContent = async (
     const [updated] = await db
         .update(flashcards)
         .set({
-            question:     data.question,
-            answer:       data.answer,
+            question: data.question,
+            answer: data.answer,
             sourceFileId: data.sourceFileId ?? null,
-            updatedAt:    new Date(),
+            updatedAt: new Date(),
         })
         .where(eq(flashcards.id, flashcardId))
         .returning()
@@ -195,8 +195,8 @@ export const insertFlashcardSession = async (payload: Omit<NewFlashcardSession, 
 
 export const completeFlashcardSession = async (
     sessionId: string,
-    userId:    string,
-    counts:    { familiarCount: number; unfamiliarCount: number; totalCards: number }
+    userId: string,
+    counts: { familiarCount: number; unfamiliarCount: number; totalCards: number }
 ) => {
     const [updated] = await db
         .update(flashcardSessions)
@@ -310,11 +310,11 @@ export const insertMcqWithOptions = async (payload: McqInput): Promise<McqWithOp
         const [created] = await tx
             .insert(mcqs)
             .values({
-                courseId:     payload.courseId,
-                question:     payload.question,
-                explanation:  payload.explanation,
-                difficulty:   payload.difficulty,
-                aiGenerated:  payload.aiGenerated,
+                courseId: payload.courseId,
+                question: payload.question,
+                explanation: payload.explanation,
+                difficulty: payload.difficulty,
+                aiGenerated: payload.aiGenerated,
                 sourceFileId: payload.sourceFileId ?? null,
             })
             .returning()
@@ -361,11 +361,11 @@ export const replaceMcqContent = async (
         const [updated] = await tx
             .update(mcqs)
             .set({
-                question:     data.question,
-                explanation:  data.explanation,
-                difficulty:   data.difficulty,
+                question: data.question,
+                explanation: data.explanation,
+                difficulty: data.difficulty,
                 sourceFileId: data.sourceFileId ?? null,
-                updatedAt:    new Date(),
+                updatedAt: new Date(),
             })
             .where(eq(mcqs.id, mcqId))
             .returning()

@@ -10,6 +10,7 @@ import schedulerRoutes from "./routes/scheduler.routes";
 import groupRoutes from "./routes/group.routes";
 import chatbotRoutes from "./routes/chatbot.routes";
 import progressRoutes from './routes/progress.routes'
+import boardRoutes from "./routes/board.routes"
 
 
 const app = express();
@@ -41,5 +42,6 @@ app.use('/api/notes', notesRoutes);
 app.use('/api/chat/groups', groupRoutes)
 app.use('/api/ai/chatbot', chatbotRoutes)
 app.use('/api/progress', progressRoutes)
+app.use('/api/board', boardRoutes)
 
 export default app;
