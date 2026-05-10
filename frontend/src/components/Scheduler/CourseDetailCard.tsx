@@ -47,7 +47,13 @@ export function CourseDetailCard({
   const [prepDirty, setPrepDirty] = React.useState(false)
   React.useEffect(() => { setLocalPrep(plan.preparation); setPrepDirty(false) }, [plan.preparation])
   
-  const displayPlan = regenPreview ? DAYS.map((dayOfWeek, i) => ({ dayOfWeek, hours: regenPreview[i]?.hours ?? 0 })) : plan.weeklyPlan
+  const todayIndex = (new Date().getDay() + 6) % 7  // 0=Mon … 6=Sun
+  const displayPlan = regenPreview
+    ? plan.weeklyPlan.map((originalDay, i) => {
+        if (i < todayIndex) return { ...originalDay, isPast: true, isLocked: true }
+        return { dayOfWeek: originalDay.dayOfWeek, hours: regenPreview[i]?.hours ?? 0, isPast: false, isLocked: false }
+      })
+    : plan.weeklyPlan.map((d, i) => ({ ...d, isPast: i < todayIndex, isLocked: false }))
 
   return (
     <Card>
@@ -91,21 +97,34 @@ export function CourseDetailCard({
           const status = regenPreview ? null : statuses[di]
           const statusCfg = status ? STATUS_CONFIG[status] : null
           const barCol = statusCfg ? statusCfg.color : plan.color
+          
           const todayIndex = (new Date().getDay() + 6) % 7  // 0=Mon…6=Sun
           const isPastOrToday = di <= todayIndex
+
+          const isPastLocked = regenPreview && (dayPlan as any).isLocked
 
           return (
             <div key={di} className="group/dayrow flex items-center gap-3">
               <span className="text-sm text-gray-500 w-10 flex-shrink-0">{dayPlan.dayOfWeek}</span>
 
-              <div className="ml-8 flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
+              <div className={`ml-8 flex-1 h-8 rounded-lg overflow-hidden ${isPastLocked ? 'bg-gray-50' : 'bg-gray-100'}`}>
                 <motion.div initial={{ width: 0 }}
                   animate={{ width: `${Math.min((dayPlan.hours / 4) * 100, 100)}%` }}
                   className="h-full flex items-center justify-end px-2 rounded-lg"
-                  style={{ backgroundColor: barCol }}>
+                  style={{ backgroundColor: isPastLocked ? '#d1d5db' : barCol, opacity: isPastLocked ? 0.6 : 1 }}>
                   <span className="text-xs font-semibold text-white">{dayPlan.hours}h</span>
                 </motion.div>
               </div>
+
+              {/* Lock badge for past days during regen preview */}
+              {isPastLocked && (
+                <span className="text-xs text-gray-400 flex-shrink-0 flex items-center gap-1 ml-1">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  kept
+                </span>
+              )}
 
               {!regenPreview && isPastOrToday && (
                 <div className="flex items-center gap-1 opacity-0 group-hover/dayrow:opacity-100 transition-opacity flex-shrink-0">
