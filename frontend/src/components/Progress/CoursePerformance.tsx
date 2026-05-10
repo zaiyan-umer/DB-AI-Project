@@ -71,7 +71,7 @@ export const CoursePerformanceTable = ({ courseBreakdown }: CoursePerformanceTab
       <table className="w-full min-w-[720px] text-left text-sm">
         <thead>
           <tr className="border-b" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-            {['Course', 'Files', 'Flashcards', 'MCQs', 'Attempts', 'Accuracy'].map((h) => (
+            {['Course', 'Files', 'Flashcards', 'Flashcard Mastery', 'MCQs', 'Attempts', 'Accuracy'].map((h) => (
               <th key={h} className="py-3 pr-4 font-medium">{h}</th>
             ))}
           </tr>
@@ -83,6 +83,7 @@ export const CoursePerformanceTable = ({ courseBreakdown }: CoursePerformanceTab
               <td className="py-3 pr-4 font-medium">{course.courseName}</td>
               <td className="py-3 pr-4">{course.filesCount}</td>
               <td className="py-3 pr-4">{course.flashcardsCount}</td>
+              <td className="py-3 pr-4">{course.flashcardMastery}%</td>
               <td className="py-3 pr-4">{course.mcqsCount}</td>
               <td className="py-3 pr-4">{course.mcqAttempts}</td>
               <td className="py-3 pr-4">{course.mcqAccuracy}%</td>
