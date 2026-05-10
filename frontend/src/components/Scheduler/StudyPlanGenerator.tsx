@@ -6,6 +6,7 @@ import { Button } from '../Button'
 import { Card } from '../Card'
 import { Input } from '../Input'
 import { COURSE_COLORS, PRIORITY_OPTIONS } from './constants'
+import { toast } from 'sonner'
 
 interface StudyPlanGeneratorProps {
   confirmedCourses: CourseEntry[]
@@ -27,6 +28,10 @@ export function StudyPlanGenerator({
   const handleAddCourse = () => {
     if (!courseForm.course) return
     if (pendingCourses.find(c => c.course.toLowerCase() === courseForm.course.toLowerCase())) return
+    if (confirmedCourses.find(c => c.course.toLowerCase() === courseForm.course.toLowerCase())) {   // Make sure no duplicates in either list
+      toast.error('This course is already in your plan')
+      return
+    }
     const colorIndex = (confirmedCourses.length + pendingCourses.length) % COURSE_COLORS.length
     setPendingCourses(prev => [...prev, { ...courseForm, color: COURSE_COLORS[colorIndex], weeklyPlan: [] }])
     setCourseForm({ course: '', preparation: 30, priority: 'medium' as Priority })
