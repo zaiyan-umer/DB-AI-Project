@@ -5,5 +5,6 @@ export const useProgress = () =>
   useQuery({
     queryKey: ['progress-overview'],
     queryFn: fetchProgressOverview,
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   })
