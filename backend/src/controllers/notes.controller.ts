@@ -4,6 +4,7 @@ import path from 'path'
 import { completeFlashcardSession, getCourseById, getCourseCounts, getCoursesByUser, getFileByCourse, getFileById, getFilesByCourse, getFlashcardsByCourse, getMcqById, getMcqsByCourse, insertCourse, insertFile, insertFlashcard, insertFlashcardSession, insertMcqAttempt, insertMcqWithOptions, removeCourse, removeFile, replaceFlashcardContent, replaceMcqContent, updateCourse, deleteMcqOnly, deleteFlashcardOnly, touchCourse } from '../services/dal/notes.dal'
 import { deleteEmbeddingsByFile, extractTextFromPdf, extractTextFromDocx, generateChunks, generateEmbeddings, storeEmbeddingsIntoDB } from '../utils/rag.utils'
 import { extractTextFromFile, generateFlashcardsFromText, generateMcqsFromText } from '../services/handlers/ai-notes'
+import { emitProgressStale } from '../lib/emitProgressStale'
 
 // ---- Helpers --------------------------------------------------------------
 
@@ -48,6 +49,8 @@ export const createCourse = async (req: Request, res: Response) => {
             name: name.trim(),
         })
 
+        emitProgressStale(userId)
+        
         return res.status(201).json({ ...course, filesCount: 0, flashcardsCount: 0, mcqsCount: 0 })
     } catch (err: any) {
         if (err?.cause?.code === '23505') {
@@ -72,6 +75,8 @@ export const deleteCourse = async (req: Request, res: Response) => {
 
         const deleted = await removeCourse(courseId, userId)
         if (!deleted) return res.status(404).json({ message: 'Course not found' })
+
+        emitProgressStale(userId)
 
         return res.status(200).json({ message: 'Course deleted' })
     } catch (err) {
@@ -176,7 +181,6 @@ export const uploadFile = async (req: Request, res: Response) => {
         const chunks = await generateChunks(text)
 
         console.log("CHUNKS LENGTH: ", chunks.length);
-        // console.log("CHUNKS: ", chunks);
         
         const embeddings = await generateEmbeddings(chunks);
 
@@ -185,6 +189,8 @@ export const uploadFile = async (req: Request, res: Response) => {
         console.log("EMBEDDINGS STORED SUCCESSFULLY");
 
         await touchCourse(courseId, userId)
+
+        emitProgressStale(userId)
 
         return res.status(201).json(file)
     } catch (err) {
@@ -232,7 +238,7 @@ export const previewFile = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Failed to preview file' })
     }
 }
-// ...existing code...
+
 export const deleteFile = async (req: Request, res: Response) => {
     try {
         const userId = req.user!.id
@@ -248,6 +254,8 @@ export const deleteFile = async (req: Request, res: Response) => {
         await deleteEmbeddingsByFile(fileId)
 
         await touchCourse(file.courseId, userId)
+
+        emitProgressStale(userId)
 
         return res.status(200).json({ message: 'File deleted' })
     } catch (err) {
@@ -719,6 +727,8 @@ export const finishFlashcardSession = async (req: Request, res: Response) => {
         const session = await completeFlashcardSession(sessionId, userId, { familiarCount, unfamiliarCount, totalCards })
         if (!session) return res.status(404).json({ message: 'Session not found' })
 
+        emitProgressStale(userId)
+
         return res.status(200).json(session)
     } catch (err) {
         console.error(err)
@@ -768,6 +778,8 @@ export const submitMcqAttempt = async (req: Request, res: Response) => {
         const isCorrect = selectedOption.isCorrect
         const attempt   = await insertMcqAttempt({ mcqId, userId, selectedOptionId, isCorrect })
 
+        emitProgressStale(userId)
+        
         return res.status(201).json({ ...attempt, isCorrect, correctOptionId: correctOption?.id ?? null })
     } catch (err) {
         console.error(err)

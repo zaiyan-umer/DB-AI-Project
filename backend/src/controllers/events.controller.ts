@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { getEventsByUser, getNotificationsWithEventDetails, getStudyPlanByUser, getCurrentWeekStart, getLogsByUser, insertEvent, markNotificationAsRead, removeAllNotifications, removeEvent, removeNotification, upsertStudyPlan, upsertWeeklyLog, type CourseInput, } from '../services/dal/scheduler.dal'
 import { generateAISchedule } from '../services/handlers/ai-scheduler'
+import { emitProgressStale } from '../lib/emitProgressStale'
 
 // ---- Events ---------------------------------------------------------------
 
@@ -216,6 +217,7 @@ export const savePlanLogs = async (req: Request, res: Response) => {
 
         const weekStart = getCurrentWeekStart()
         const saved     = await upsertWeeklyLog(studyPlanCourseId, weekStart, scheduledHours, dayStatuses)
+        emitProgressStale(userId)
         return res.status(200).json(saved)
     } catch (err) {
         console.error(err)
