@@ -215,7 +215,18 @@ export const savePlanLogs = async (req: Request, res: Response) => {
             })
         }
 
-        const weekStart = getCurrentWeekStart()
+        // Use the weekStart sent by the client (computed in local time) so that
+        // users in non-UTC timezones (e.g. UTC+5 at 12:15am) store logs under
+        // the correct local week rather than the UTC week which may differ by a day.
+        // Fall back to server UTC calculation only if client didn't send it.
+        let weekStart: Date
+        if (req.body.weekStart) {
+            // Parse the YYYY-MM-DD string as midnight UTC so the stored timestamp
+            // matches what the frontend's startsWith() filter expects.
+            weekStart = new Date(req.body.weekStart + 'T00:00:00.000Z')
+        } else {
+            weekStart = getCurrentWeekStart()
+        }
         const saved     = await upsertWeeklyLog(studyPlanCourseId, weekStart, scheduledHours, dayStatuses)
         emitProgressStale(userId)
         return res.status(200).json(saved)

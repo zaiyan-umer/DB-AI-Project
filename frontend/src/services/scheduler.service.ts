@@ -119,12 +119,29 @@ export const fetchPlanLogs = async (): Promise<StudyPlanLog[]> => {
  * studyPlanCourseId: the uuid of the study_plan_courses row (from CourseEntry.id)
  * scheduledHours and dayStatuses are 7-element arrays indexed 0=Mon … 6=Sun.
  */
+/** Returns the Monday of the current week as "YYYY-MM-DD" using LOCAL date (not UTC). */
+function getLocalWeekStart(): string {
+  const now = new Date()
+  const day = now.getDay()                    // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day      // shift to Monday
+  const monday = new Date(now)
+  monday.setDate(now.getDate() + diff)
+  // Format as YYYY-MM-DD in local time (NOT toISOString which gives UTC)
+  const y = monday.getFullYear()
+  const m = String(monday.getMonth() + 1).padStart(2, '0')
+  const d = String(monday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export const savePlanLogs = async (payload: {
   studyPlanCourseId: string
   scheduledHours: number[]
   dayStatuses: DayStatus[]
 }): Promise<StudyPlanLog[]> => {
-  const res = await api.post('/scheduler/plan-logs', payload)
+  const res = await api.post('/scheduler/plan-logs', {
+    ...payload,
+    weekStart: getLocalWeekStart(),   // send local week start so backend stores under the right key
+  })
   return res.data
 }
 

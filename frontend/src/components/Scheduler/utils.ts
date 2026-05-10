@@ -11,12 +11,18 @@ export function generateWeeklyPlan(priority: Priority, preparation: number) {
   }))
 }
 
-/** Returns the Monday of the current week as "YYYY-MM-DD" */
+/** Returns the Monday of the current week as "YYYY-MM-DD" in LOCAL time.
+ *  Uses local date math (not UTC) so users in UTC+ timezones past midnight
+ *  get the correct local week start instead of the previous UTC day. */
 export function getCurrentWeekStart(): string {
   const now = new Date()
-  const day = now.getDay()
-  const diff = day === 0 ? -6 : 1 - day
+  const day = now.getDay()                    // 0=Sun, local
+  const diff = day === 0 ? -6 : 1 - day      // shift to Monday
   const monday = new Date(now)
   monday.setDate(now.getDate() + diff)
-  return monday.toISOString().split('T')[0]
+  // Format in LOCAL time — NOT toISOString() which gives UTC date
+  const y = monday.getFullYear()
+  const m = String(monday.getMonth() + 1).padStart(2, '0')
+  const d = String(monday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
