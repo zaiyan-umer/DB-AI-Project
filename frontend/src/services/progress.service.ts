@@ -43,6 +43,7 @@ export interface CourseProgressBreakdown {
   courseName: string
   filesCount: number
   flashcardsCount: number
+  flashcardMastery: number
   mcqsCount: number
   mcqAttempts: number
   mcqAccuracy: number
