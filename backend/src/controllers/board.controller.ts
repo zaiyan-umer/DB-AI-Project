@@ -23,6 +23,23 @@ export const getWhiteboard = async (req: Request, res: Response) => {
     }
 }
 
+export const getWhiteboardByGroupId = async (groupId: string) => {
+    try {
+        const [board] = await db.select().from(whiteboards).where(eq(whiteboards.groupId, groupId));
+
+        return {
+            success: true,
+            data: board || null
+        };
+    } catch (err) {
+        console.log(err);
+        return {
+            success: false,
+            error: "Internal server error"
+        };
+    }
+}
+
 
 export const updateWhiteboard = async (req: Request, res: Response) => {
 

@@ -129,27 +129,12 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, currentUserName,
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {showWhiteboard ? (
-          <motion.div
-            key="whiteboard"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex-1 relative"
-          >
-            <Whiteboard groupId={groupId} userId={currentUserId} userName={currentUserName} userColor={currentUserColor} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="chat"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex-1 flex flex-col min-h-0"
-          >
+      {showWhiteboard ? (
+        <div className="flex-1 relative">
+          <Whiteboard groupId={groupId} userId={currentUserId} userName={currentUserName} userColor={currentUserColor} />
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col min-h-0">
             <MessagesWindow
               scrollContainerRef={scrollContainerRef}
               bottomRef={bottomRef}
@@ -167,9 +152,8 @@ export const ChatWindow = ({ groupId, groupName, currentUserId, currentUserName,
               handleKeyDown={handleKeyDown}
               isSending={sendMessage.isPending}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
 
     </div>
