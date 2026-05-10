@@ -2,7 +2,7 @@ import { Check, Clock, Loader2, RefreshCw, Save, Trash2, X } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { CourseEntry, DayStatus, StudyStatus } from '../../services/scheduler.service'
 import { Card } from '../Card'
-import { DAYS, STATUS_CONFIG, STATUS_OPTIONS } from './constants'
+import { STATUS_CONFIG, STATUS_OPTIONS } from './constants'
 import React from 'react'
 
 interface CourseDetailCardProps {
