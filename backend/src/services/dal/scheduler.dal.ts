@@ -1,6 +1,6 @@
 import { and, eq, gte, lte, lt, inArray } from 'drizzle-orm'
 import db from '../../db/connection'
-import { events, notifications, studyPlans, studyPlanCourses, studyPlanSchedule, studyPlanLogDays,} from '../../db/schema'
+import { events, notifications, studyPlans, studyPlanCourses, studyPlanSchedule, studyPlanLogDays } from '../../db/schema'
 import type { NewEvent } from '../../db/schema/event.schema'
 import type { DayStatus } from '../../db/schema/study_plan_log.schema'
 
@@ -296,7 +296,6 @@ export const getLogsByUser = async (userId: string) => {
     return db
         .select({
             id:                studyPlanLogDays.id,
-            userId:            studyPlanLogDays.userId,
             studyPlanCourseId: studyPlanLogDays.studyPlanCourseId,
             weekStart:         studyPlanLogDays.weekStart,
             dayOfWeek:         studyPlanLogDays.dayOfWeek,
@@ -311,7 +310,11 @@ export const getLogsByUser = async (userId: string) => {
             studyPlanCourses,
             eq(studyPlanLogDays.studyPlanCourseId, studyPlanCourses.id)
         )
-        .where(eq(studyPlanLogDays.userId, userId))
+        .innerJoin(
+            studyPlans,
+            eq(studyPlanCourses.studyPlanId, studyPlans.id)
+        )
+        .where(eq(studyPlans.userId, userId))
 }
 
 /**
@@ -323,7 +326,6 @@ export const getLogsByUser = async (userId: string) => {
  * idempotent and avoids 7 individual upsert round-trips.
  */
 export const upsertWeeklyLog = async (
-    userId:            string,
     studyPlanCourseId: string,
     weekStart:         Date,
     scheduledHours:    number[],       // length 7, index 0=Mon
@@ -342,7 +344,6 @@ export const upsertWeeklyLog = async (
 
         // Insert one row per day
         const values = scheduledHours.map((hours, dayIndex) => ({
-            userId,
             studyPlanCourseId,
             weekStart,
             dayOfWeek:      dayIndex,                // 0=Mon … 6=Sun

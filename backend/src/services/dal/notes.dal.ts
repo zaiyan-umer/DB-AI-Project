@@ -2,7 +2,7 @@ import { and, eq, sql, lt, asc } from 'drizzle-orm'
 import db from '../../db/connection'
 import { courses, courseFiles, flashcards, mcqs, mcqOptions, mcqAttempts, flashcardSessions } from '../../db/schema'
 import type { NewCourse, NewCourseFile, NewFlashcard, NewMcq, NewMcqAttempt, NewFlashcardSession, Mcq, McqOption } from '../../db/schema/notes.schema'
- 
+
 // ---- Courses --------------------------------------------------------------
 
 export const getCoursesByUser = async (userId: string) => {
@@ -46,18 +46,18 @@ export const touchCourse = async (courseId: string, userId: string) => {
         .set({ updatedAt: new Date() })
         .where(and(eq(courses.id, courseId), eq(courses.userId, userId)))
 }
+
 // Gets counts of files, flashcards, and MCQs for each course of a user.
-// Returns 3 maps: { courseId -> filesCount }, { courseId -> flashcardsCount }, { courseId -> mcqsCount }.
 export const getCourseCounts = async (userId: string) => {
     const rows = await db
         .select({
-            courseId:       courses.id,
-            filesCount:     sql<number>`count(distinct ${courseFiles.id})::int`, // count distinct file IDs to avoid double-counting when joining with flashcards and MCQs
+            courseId:        courses.id,
+            filesCount:      sql<number>`count(distinct ${courseFiles.id})::int`,
             flashcardsCount: sql<number>`count(distinct ${flashcards.id})::int`,
-            mcqsCount:      sql<number>`count(distinct ${mcqs.id})::int`,
+            mcqsCount:       sql<number>`count(distinct ${mcqs.id})::int`,
         })
         .from(courses)
-        .leftJoin(courseFiles, eq(courseFiles.courseId, courses.id)) // left join so courses with no files are included with count 0
+        .leftJoin(courseFiles, eq(courseFiles.courseId, courses.id))
         .leftJoin(flashcards,  eq(flashcards.courseId,  courses.id))
         .leftJoin(mcqs,        eq(mcqs.courseId,        courses.id))
         .where(eq(courses.userId, userId))
@@ -71,33 +71,39 @@ export const getCourseCounts = async (userId: string) => {
 }
 
 // ---- Course Files ---------------------------------------------------------
+// Ownership is always verified by joining back to courses and checking courses.user_id.
 
 export const getFilesByCourse = async (courseId: string, userId: string) => {
     return db
-        .select()
+        .select({ file: courseFiles })
         .from(courseFiles)
-        .where(and(eq(courseFiles.courseId, courseId), eq(courseFiles.userId, userId)))
+        .innerJoin(courses, eq(courses.id, courseFiles.courseId))
+        .where(and(eq(courseFiles.courseId, courseId), eq(courses.userId, userId)))
+        .then(rows => rows.map(r => r.file))
 }
 
 export const getFileByCourse = async (fileId: string, courseId: string, userId: string) => {
     return db
-        .select()
+        .select({ file: courseFiles })
         .from(courseFiles)
+        .innerJoin(courses, eq(courses.id, courseFiles.courseId))
         .where(
             and(
                 eq(courseFiles.id, fileId),
                 eq(courseFiles.courseId, courseId),
-                eq(courseFiles.userId, userId)
+                eq(courses.userId, userId)
             )
         )
+        .then(rows => rows.map(r => r.file))
 }
 
 export const getFileById = async (fileId: string, userId: string) => {
-    const [file] = await db
-        .select()
+    const [row] = await db
+        .select({ file: courseFiles })
         .from(courseFiles)
-        .where(and(eq(courseFiles.id, fileId), eq(courseFiles.userId, userId)))
-    return file ?? null
+        .innerJoin(courses, eq(courses.id, courseFiles.courseId))
+        .where(and(eq(courseFiles.id, fileId), eq(courses.userId, userId)))
+    return row?.file ?? null
 }
 
 export const insertFile = async (payload: NewCourseFile) => {
@@ -106,21 +112,27 @@ export const insertFile = async (payload: NewCourseFile) => {
 }
 
 export const removeFile = async (fileId: string, userId: string) => {
+    // Verify ownership via courses join before deleting
+    const file = await getFileById(fileId, userId)
+    if (!file) return undefined
     const [deleted] = await db
         .delete(courseFiles)
-        .where(and(eq(courseFiles.id, fileId), eq(courseFiles.userId, userId)))
+        .where(eq(courseFiles.id, fileId))
         .returning()
     return deleted
 }
 
 // ---- Flashcards -----------------------------------------------------------
+// Ownership is verified by joining courses and checking courses.user_id.
 
 export const getFlashcardsByCourse = async (courseId: string, userId: string) => {
     return db
-        .select()
+        .select({ card: flashcards })
         .from(flashcards)
-        .where(and(eq(flashcards.courseId, courseId), eq(flashcards.userId, userId)))
-        .orderBy(asc(flashcards.createdAt)) // order by creation time (oldest first)
+        .innerJoin(courses, eq(courses.id, flashcards.courseId))
+        .where(and(eq(flashcards.courseId, courseId), eq(courses.userId, userId)))
+        .orderBy(asc(flashcards.createdAt))
+        .then(rows => rows.map(r => r.card))
 }
 
 export const insertFlashcard = async (payload: NewFlashcard) => {
@@ -128,24 +140,19 @@ export const insertFlashcard = async (payload: NewFlashcard) => {
     return created
 }
 
-export const updateFlashcard = async (
-    flashcardId: string,
-    userId: string,
-    data: { question?: string; answer?: string }
-) => {
-    const [updated] = await db
-        .update(flashcards)
-        .set({ ...data, updatedAt: new Date() })
-        .where(and(eq(flashcards.id, flashcardId), eq(flashcards.userId, userId)))
-        .returning()
-    return updated
-}
-
 export const replaceFlashcardContent = async (
     flashcardId: string,
     userId: string,
     data: { question: string; answer: string; sourceFileId?: string | null }
 ) => {
+    // Verify ownership via courses join
+    const [existing] = await db
+        .select({ id: flashcards.id })
+        .from(flashcards)
+        .innerJoin(courses, eq(courses.id, flashcards.courseId))
+        .where(and(eq(flashcards.id, flashcardId), eq(courses.userId, userId)))
+    if (!existing) return null
+
     const [updated] = await db
         .update(flashcards)
         .set({
@@ -154,21 +161,28 @@ export const replaceFlashcardContent = async (
             sourceFileId: data.sourceFileId ?? null,
             updatedAt:    new Date(),
         })
-        .where(and(eq(flashcards.id, flashcardId), eq(flashcards.userId, userId)))
+        .where(eq(flashcards.id, flashcardId))
         .returning()
     return updated ?? null
 }
 
 export const removeFlashcard = async (flashcardId: string, userId: string) => {
+    const [existing] = await db
+        .select({ id: flashcards.id })
+        .from(flashcards)
+        .innerJoin(courses, eq(courses.id, flashcards.courseId))
+        .where(and(eq(flashcards.id, flashcardId), eq(courses.userId, userId)))
+    if (!existing) return undefined
+
     const [deleted] = await db
         .delete(flashcards)
-        .where(and(eq(flashcards.id, flashcardId), eq(flashcards.userId, userId)))
+        .where(eq(flashcards.id, flashcardId))
         .returning()
     return deleted
 }
 
 // ---- Flashcard Sessions ---------------------------------------------------
-// Creates a new session row when user starts studying.
+
 export const insertFlashcardSession = async (payload: Omit<NewFlashcardSession, 'expiresAt'>) => {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 30)
@@ -178,8 +192,7 @@ export const insertFlashcardSession = async (payload: Omit<NewFlashcardSession, 
         .returning()
     return created
 }
- 
-// Called when user finishes all cards — writes the final counts and completedAt.
+
 export const completeFlashcardSession = async (
     sessionId: string,
     userId:    string,
@@ -193,15 +206,12 @@ export const completeFlashcardSession = async (
     return updated
 }
 
-// Deletes sessions older than 30 days
 export const deleteExpiredSessions = async () => {
     await db
         .delete(flashcardSessions)
         .where(lt(flashcardSessions.expiresAt, new Date()))
 }
 
-// For progress tab — gets all completed sessions for a course.
-// Used to compute: overall familiarity %, last studied date, sessions completed count.
 export const getSessionsByCourse = async (courseId: string, userId: string) => {
     return db
         .select()
@@ -223,7 +233,6 @@ export type McqWithOptions = Mcq & {
 
 type McqInput = {
     courseId: string
-    userId: string
     question: string
     options: string[]
     correctOption: number
@@ -246,7 +255,7 @@ const toMcqWithOptions = (
         if (!existing) {
             map.set(row.mcq.id, {
                 ...row.mcq,
-                options: row.option ? [{ id: row.option.id, optionIndex: row.option.optionIndex, optionText: row.option.optionText, isCorrect: row.option.isCorrect, }] : [],
+                options: row.option ? [{ id: row.option.id, optionIndex: row.option.optionIndex, optionText: row.option.optionText, isCorrect: row.option.isCorrect }] : [],
             })
             continue
         }
@@ -268,8 +277,9 @@ export const getMcqsByCourse = async (courseId: string, userId: string) => {
     const rows = await db
         .select({ mcq: mcqs, option: mcqOptions })
         .from(mcqs)
+        .innerJoin(courses, eq(courses.id, mcqs.courseId))
         .leftJoin(mcqOptions, eq(mcqOptions.mcqId, mcqs.id))
-        .where(and(eq(mcqs.courseId, courseId), eq(mcqs.userId, userId)))
+        .where(and(eq(mcqs.courseId, courseId), eq(courses.userId, userId)))
         .orderBy(asc(mcqs.createdAt), asc(mcqOptions.optionIndex))
 
     return toMcqWithOptions(rows)
@@ -279,8 +289,9 @@ export const getMcqById = async (mcqId: string, userId: string) => {
     const rows = await db
         .select({ mcq: mcqs, option: mcqOptions })
         .from(mcqs)
+        .innerJoin(courses, eq(courses.id, mcqs.courseId))
         .leftJoin(mcqOptions, eq(mcqOptions.mcqId, mcqs.id))
-        .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
+        .where(and(eq(mcqs.id, mcqId), eq(courses.userId, userId)))
 
     const [mcq] = toMcqWithOptions(rows)
     return mcq ?? null
@@ -298,13 +309,25 @@ export const insertMcqWithOptions = async (payload: McqInput): Promise<McqWithOp
     return db.transaction(async (tx) => {
         const [created] = await tx
             .insert(mcqs)
-            .values({ courseId: payload.courseId, userId: payload.userId, question: payload.question, explanation: payload.explanation, difficulty: payload.difficulty, aiGenerated: payload.aiGenerated, sourceFileId: payload.sourceFileId ?? null, })
+            .values({
+                courseId:     payload.courseId,
+                question:     payload.question,
+                explanation:  payload.explanation,
+                difficulty:   payload.difficulty,
+                aiGenerated:  payload.aiGenerated,
+                sourceFileId: payload.sourceFileId ?? null,
+            })
             .returning()
 
         const insertedOptions = await tx
             .insert(mcqOptions)
             .values(
-                options.map((optionText, optionIndex) => ({ mcqId: created.id, optionIndex, optionText, isCorrect: optionIndex === correctOption,}))
+                options.map((optionText, optionIndex) => ({
+                    mcqId: created.id,
+                    optionIndex,
+                    optionText,
+                    isCorrect: optionIndex === correctOption,
+                }))
             )
             .returning()
 
@@ -312,22 +335,9 @@ export const insertMcqWithOptions = async (payload: McqInput): Promise<McqWithOp
             ...created,
             options: insertedOptions
                 .sort((a, b) => a.optionIndex - b.optionIndex)
-                .map((o) => ({ id: o.id, optionIndex: o.optionIndex, optionText: o.optionText, isCorrect: o.isCorrect, })),
+                .map((o) => ({ id: o.id, optionIndex: o.optionIndex, optionText: o.optionText, isCorrect: o.isCorrect })),
         }
     })
-}
-
-export const updateMcq = async (
-    mcqId: string,
-    userId: string,
-    data: Partial<Pick<NewMcq, 'question' | 'explanation' | 'difficulty'>>
-) => {
-    const [updated] = await db
-        .update(mcqs)
-        .set({ ...data, updatedAt: new Date() })
-        .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
-        .returning()
-    return updated
 }
 
 export const replaceMcqContent = async (
@@ -339,6 +349,14 @@ export const replaceMcqContent = async (
     if (!Array.isArray(options) || options.length === 0) throw new Error('options array is required')
     if (correctOption < 0 || correctOption >= options.length) throw new Error('correctOption is out of range')
 
+    // Verify ownership
+    const [existing] = await db
+        .select({ id: mcqs.id })
+        .from(mcqs)
+        .innerJoin(courses, eq(courses.id, mcqs.courseId))
+        .where(and(eq(mcqs.id, mcqId), eq(courses.userId, userId)))
+    if (!existing) return null
+
     return db.transaction(async (tx) => {
         const [updated] = await tx
             .update(mcqs)
@@ -349,12 +367,11 @@ export const replaceMcqContent = async (
                 sourceFileId: data.sourceFileId ?? null,
                 updatedAt:    new Date(),
             })
-            .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
+            .where(eq(mcqs.id, mcqId))
             .returning()
 
         if (!updated) return null
 
-        // Update existing option rows in-place so attempts keep referencing them
         const existingOptions = await tx
             .select()
             .from(mcqOptions)
@@ -382,9 +399,16 @@ export const replaceMcqContent = async (
 }
 
 export const removeMcq = async (mcqId: string, userId: string) => {
+    const [existing] = await db
+        .select({ id: mcqs.id })
+        .from(mcqs)
+        .innerJoin(courses, eq(courses.id, mcqs.courseId))
+        .where(and(eq(mcqs.id, mcqId), eq(courses.userId, userId)))
+    if (!existing) return undefined
+
     const [deleted] = await db
         .delete(mcqs)
-        .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
+        .where(eq(mcqs.id, mcqId))
         .returning()
     return deleted
 }
@@ -395,22 +419,33 @@ export const insertMcqAttempt = async (payload: NewMcqAttempt) => {
     return created
 }
 
-// Delete flashcard without cascading to sessions/attempts
 export const deleteFlashcardOnly = async (flashcardId: string, userId: string) => {
+    const [existing] = await db
+        .select({ id: flashcards.id })
+        .from(flashcards)
+        .innerJoin(courses, eq(courses.id, flashcards.courseId))
+        .where(and(eq(flashcards.id, flashcardId), eq(courses.userId, userId)))
+    if (!existing) return undefined
+
     const [deleted] = await db
         .delete(flashcards)
-        .where(and(eq(flashcards.id, flashcardId), eq(flashcards.userId, userId)))
+        .where(eq(flashcards.id, flashcardId))
         .returning()
     return deleted
 }
 
-// Delete MCQ without cascading to attempts
 export const deleteMcqOnly = async (mcqId: string, userId: string) => {
-    // remove option rows first
+    const [existing] = await db
+        .select({ id: mcqs.id })
+        .from(mcqs)
+        .innerJoin(courses, eq(courses.id, mcqs.courseId))
+        .where(and(eq(mcqs.id, mcqId), eq(courses.userId, userId)))
+    if (!existing) return undefined
+
     await db.delete(mcqOptions).where(eq(mcqOptions.mcqId, mcqId))
     const [deleted] = await db
         .delete(mcqs)
-        .where(and(eq(mcqs.id, mcqId), eq(mcqs.userId, userId)))
+        .where(eq(mcqs.id, mcqId))
         .returning()
     return deleted
 }

@@ -103,20 +103,18 @@ type ActivityStats = {
 const getActivityStats = async (userId: string): Promise<ActivityStats> => {
     const weekStart = getCurrentWeekStart()
 
-    // FIX: completedScheduled = complete + greater_than (both mean the session was honoured)
-    //      missedScheduled = missed
-    //      lessThanScheduled = less_than
-    //      totalScheduled = all rows (regardless of status, including null = not yet marked)
     const [schedule] = rowsOf(await db.execute(sql`
         select
             count(*)::int as total_scheduled,
-            count(*) filter (where status in ('complete', 'greater_than'))::int as completed_scheduled,
-            count(*) filter (where status = 'missed')::int as missed_scheduled,
-            count(*) filter (where status = 'less_than')::int as less_than_scheduled,
-            count(*) filter (where week_start = ${weekStart})::int as current_week_scheduled,
-            count(*) filter (where week_start = ${weekStart} and status in ('complete', 'greater_than'))::int as current_week_completed
-        from study_plan_log_days
-        where user_id = ${userId}
+            count(*) filter (where spld.status in ('complete', 'greater_than'))::int as completed_scheduled,
+            count(*) filter (where spld.status = 'missed')::int as missed_scheduled,
+            count(*) filter (where spld.status = 'less_than')::int as less_than_scheduled,
+            count(*) filter (where spld.week_start = ${weekStart})::int as current_week_scheduled,
+            count(*) filter (where spld.week_start = ${weekStart} and spld.status in ('complete', 'greater_than'))::int as current_week_completed
+        from study_plan_log_days spld
+        join study_plan_courses spc on spc.id = spld.study_plan_course_id
+        join study_plans sp on sp.id = spc.study_plan_id
+        where sp.user_id = ${userId}
     `))
 
     const [mcq] = rowsOf(await db.execute(sql`
@@ -137,32 +135,21 @@ const getActivityStats = async (userId: string): Promise<ActivityStats> => {
 
     const [engagement] = rowsOf(await db.execute(sql`
         select
-            (select count(*)::int from course_files where user_id = ${userId}) as files_uploaded,
+            (select count(cf.id)::int from course_files cf join courses c on c.id = cf.course_id where c.user_id = ${userId}) as files_uploaded,
             (select count(*)::int from courses where user_id = ${userId}) as courses_created
     `))
 
-    // FIX: Streak is now based purely on study plan log days.
-    //
-    // A day "counts" for the streak only if:
-    //   - There is at least one session scheduled for that day (week_start + day_of_week)
-    //   - ALL sessions for that (date) are status = 'complete' OR 'greater_than'
-    //   - There must be NO session on that date that is 'missed' or 'less_than'
-    //
-    // We derive the calendar date of each log row as:
-    //   week_start + (day_of_week * interval '1 day')
-    // (day_of_week 0 = Monday, so week_start itself is Monday)
-    //
-    // A date is a "streak day" only when the total sessions == the honoured sessions
-    // (i.e. every session is complete or greater_than).
     const streakDayRows = rowsOf<{ day: string }>(await db.execute(sql`
-        select (week_start::date + (day_of_week * interval '1 day'))::date::text as day
-        from study_plan_log_days
-        where user_id = ${userId}
-          and status is not null
+        select (spld.week_start::date + (spld.day_of_week * interval '1 day'))::date::text as day
+        from study_plan_log_days spld
+        join study_plan_courses spc on spc.id = spld.study_plan_course_id
+        join study_plans sp on sp.id = spc.study_plan_id
+        where sp.user_id = ${userId}
+          and spld.status is not null
         group by day
         having
             count(*) > 0
-            and count(*) filter (where status in ('complete', 'greater_than')) = count(*)
+            and count(*) filter (where spld.status in ('complete', 'greater_than')) = count(*)
         order by day desc
     `))
 
@@ -219,7 +206,6 @@ const computeBadgeProgress = (slug: string, stats: ActivityStats) => {
 
     switch (slug) {
         case 'weekly-schedule-perfect': return stats.currentWeekScheduled > 0 ? currentWeekCompletion : 0
-        // FIX: schedule completion counts complete + greater_than
         case 'schedule-25-completions': return stats.completedScheduled
         case 'mcq-80-accuracy': return stats.mcqAttempts >= 20 ? mcqAccuracy : Math.min(79, Math.round((stats.mcqAttempts / 20) * 80))
         case 'mcq-100-attempts': return stats.mcqAttempts
@@ -270,7 +256,6 @@ export const getProgressOverview = async (userId: string) => {
 
     const months = previousMonths(6)
 
-    // FIX: monthly completed also counts complete + greater_than
     const monthlyRows = rowsOf<any>(await db.execute(sql`
         with months as (
             select to_char(generate_series(
@@ -279,12 +264,14 @@ export const getProgressOverview = async (userId: string) => {
                 interval '1 month'
             ), 'YYYY-MM') as month
         ), schedule as (
-            select to_char(week_start, 'YYYY-MM') as month,
+            select to_char(spld.week_start, 'YYYY-MM') as month,
                    count(*)::int as scheduled,
-                   count(*) filter (where status in ('complete', 'greater_than'))::int as completed,
-                   count(*) filter (where status = 'missed')::int as missed
-            from study_plan_log_days
-            where user_id = ${userId}
+                   count(*) filter (where spld.status in ('complete', 'greater_than'))::int as completed,
+                   count(*) filter (where spld.status = 'missed')::int as missed
+            from study_plan_log_days spld
+            join study_plan_courses spc on spc.id = spld.study_plan_course_id
+            join study_plans sp on sp.id = spc.study_plan_id
+            where sp.user_id = ${userId}
             group by 1
         ), mcq as (
             select to_char(attempted_at, 'YYYY-MM') as month,
@@ -353,7 +340,7 @@ export const getProgressOverview = async (userId: string) => {
         left join course_files cf on cf.course_id = c.id
         left join flashcards f on f.course_id = c.id
         left join mcqs m on m.course_id = c.id
-        left join mcq_attempts ma on ma.mcq_id = m.id and ma.user_id = c.user_id
+        left join mcq_attempts ma on ma.mcq_id = m.id
         where c.user_id = ${userId}
         group by c.id, c.name
         order by c.created_at desc
@@ -367,9 +354,11 @@ export const getProgressOverview = async (userId: string) => {
                 interval '1 day'
             )::date as day
         ), activity as (
-            select date_trunc('day', updated_at)::date as day, count(*)::int as events
-            from study_plan_log_days
-            where user_id = ${userId} and status is not null
+            select date_trunc('day', spld.updated_at)::date as day, count(*)::int as events
+            from study_plan_log_days spld
+            join study_plan_courses spc on spc.id = spld.study_plan_course_id
+            join study_plans sp on sp.id = spc.study_plan_id
+            where sp.user_id = ${userId} and spld.status is not null
             group by 1
             union all
             select date_trunc('day', attempted_at)::date as day, count(*)::int as events
@@ -428,7 +417,6 @@ export const getProgressOverview = async (userId: string) => {
 
     return {
         summary: {
-            // FIX: rate is (complete + greater_than) / total
             scheduleCompletionRate: percent(stats.completedScheduled, stats.totalScheduled),
             completedScheduledSessions: stats.completedScheduled,   // complete + greater_than
             totalScheduledSessions: stats.totalScheduled,
