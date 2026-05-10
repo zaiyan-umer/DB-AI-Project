@@ -61,6 +61,8 @@ export const initSocket = (httpServer: HttpServer) => {
   io.on('connection', (socket: AuthenticatedSocket) => {
     console.log(`User connected: ${socket.data.user.username}`);
 
+    socket.join(`user:${socket.data.user.id}`);
+    
     registerPresenceHandlers(io, socket);
     registerMessageHandlers(io, socket);
 
