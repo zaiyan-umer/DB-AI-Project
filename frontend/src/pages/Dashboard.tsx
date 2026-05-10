@@ -62,7 +62,7 @@ function StatCard({
   accent?: string
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 p-5 flex flex-col gap-3 shadow-sm dark:shadow-none">
+    <div className="rounded-2xl border p-5 flex flex-col gap-3 shadow-sm" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
         style={{ background: `${accent}20`, color: accent }}
@@ -97,8 +97,7 @@ function QuickLink({
   return (
     <button
       onClick={() => navigate(to)}
-      className="cursor-pointer flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors group w-full shadow-sm dark:shadow-none"
-    >
+      className="cursor-pointer flex flex-col items-center gap-2 p-4 rounded-2xl border transition-colors group w-full shadow-sm" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}    >
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
         style={{ background: `${accent}20`, color: accent }}
@@ -197,7 +196,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* My Groups */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 p-5 shadow-sm dark:shadow-none">
+        <div className="rounded-2xl border p-5 shadow-sm" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">My Groups</h2>
             <button
@@ -253,7 +252,7 @@ export default function Dashboard() {
         </div>
 
         {/* Upcoming Events */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/4 p-5 shadow-sm dark:shadow-none">
+        <div className="rounded-2xl border p-5 shadow-sm" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Upcoming Events</h2>
             <button

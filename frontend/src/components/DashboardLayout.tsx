@@ -75,7 +75,7 @@ export function DashboardLayout() {
                 {/* ── Fixed top header ── */}
                 <header style={{
                     flexShrink: 0,
-                    height: '48px',
+                    height: '77px',
                     backgroundColor: surface,
                     borderBottom: `1px solid ${border}`,
                     display: 'flex',
@@ -91,7 +91,7 @@ export function DashboardLayout() {
                         >
                             <Menu style={{ width: '18px', height: '18px', color: textPri }} />
                         </button>
-                        <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 500, color: textPri }}>
+                        <h2 style={{ margin: 0, fontSize: '19px', fontWeight: 500, color: textPri }}>
                             {currentPage}
                         </h2>
                     </div>
