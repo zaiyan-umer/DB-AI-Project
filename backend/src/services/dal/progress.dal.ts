@@ -156,11 +156,16 @@ const getActivityStats = async (userId: string): Promise<ActivityStats> => {
     const streakDays = streakDayRows.map((row) => row.day)
     const streakSet = new Set(streakDays)
 
-    // Current streak: walk backwards from today
+    // Current streak: walk backwards from today — use local date string, not UTC
     let currentStreak = 0
     const cursor = new Date()
-    cursor.setHours(0, 0, 0, 0)
-    while (streakSet.has(cursor.toISOString().slice(0, 10))) {
+    const toLocalDateStr = (d: Date) => {
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${y}-${m}-${day}`
+    }
+    while (streakSet.has(toLocalDateStr(cursor))) {
         currentStreak += 1
         cursor.setDate(cursor.getDate() - 1)
     }
@@ -168,17 +173,19 @@ const getActivityStats = async (userId: string): Promise<ActivityStats> => {
     // Longest streak: walk the sorted-asc list
     let longestStreak = 0
     let running = 0
-    let prev: Date | null = null
-    for (const day of [...streakDays].reverse()) {       // reverse → ascending order
-        const d = new Date(`${day}T00:00:00.000Z`)
+    let prev: string | null = null
+    for (const day of [...streakDays].reverse()) {   // reverse → ascending order
         if (!prev) {
             running = 1
         } else {
-            const diffDays = Math.round((d.getTime() - prev.getTime()) / 86_400_000)
+            // Compare date strings directly — no UTC conversion needed
+            const prevDate = new Date(prev + 'T12:00:00')  // noon avoids DST issues
+            const currDate = new Date(day + 'T12:00:00')
+            const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / 86_400_000)
             running = diffDays === 1 ? running + 1 : 1
         }
         longestStreak = Math.max(longestStreak, running)
-        prev = d
+        prev = day
     }
 
     return {
@@ -335,12 +342,15 @@ export const getProgressOverview = async (userId: string) => {
             count(distinct f.id)::int as flashcards_count,
             count(distinct m.id)::int as mcqs_count,
             count(distinct ma.id)::int as mcq_attempts,
-            count(distinct ma.id) filter (where ma.is_correct = true)::int as mcq_correct
+            count(distinct ma.id) filter (where ma.is_correct = true)::int as mcq_correct,
+            coalesce(sum(fs.familiar_count), 0)::int as familiar_count,
+            coalesce(sum(fs.total_cards), 0)::int as flashcard_reviewed
         from courses c
         left join course_files cf on cf.course_id = c.id
         left join flashcards f on f.course_id = c.id
         left join mcqs m on m.course_id = c.id
-        left join mcq_attempts ma on ma.mcq_id = m.id
+        left join mcq_attempts ma on ma.mcq_id = m.id and ma.user_id = c.user_id
+        left join flashcard_sessions fs on fs.course_id = c.id and fs.user_id = c.user_id and fs.completed_at is not null
         where c.user_id = ${userId}
         group by c.id, c.name
         order by c.created_at desc
@@ -444,6 +454,7 @@ export const getProgressOverview = async (userId: string) => {
             mcqsCount: num(row.mcqs_count),
             mcqAttempts: num(row.mcq_attempts),
             mcqAccuracy: percent(num(row.mcq_correct), num(row.mcq_attempts)),
+            flashcardMastery: percent(num(row.familiar_count), num(row.flashcard_reviewed)), // ← ADD
         })),
         badges,
     }
