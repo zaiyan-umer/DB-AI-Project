@@ -236,10 +236,10 @@ export default function Dashboard() {
                       {initials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">
                         {group.name}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                      <p className="text-xs text-[var(--text-muted)]">
                         {group.role === 'admin' ? 'Admin' : 'Member'}
                       </p>
                     </div>
@@ -284,7 +284,7 @@ export default function Dashboard() {
                     {event.type}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">
                       {event.title}
                     </p>
                     {event.course && (

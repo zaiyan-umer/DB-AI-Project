@@ -16,40 +16,48 @@ export default function LoginPage() {
     const { mutate: login, isPending, apiError, register, handleSubmit, errors } = useLogin()
 
     return (
-        <div className="h-screen w-screen flex bg-gray-50 overflow-hidden font-sans">
+        <div className="h-screen w-screen flex bg-[var(--bg-page)] overflow-hidden font-sans">
             
-            {/* Left Graphic - Sophisticated Minimalist */}
-            <div className="hidden lg:flex lg:w-1/2 bg-gray-900 relative items-center justify-center overflow-hidden">
-                {/* Subtle glassmorphism/geometric background touches */}
+            {/* Left Graphic - Sophisticated Minimalist Olive Theme */}
+            <div className="hidden lg:flex lg:w-1/2 bg-[#0B0B0B] relative items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-20">
-                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500 blur-[120px]" />
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gray-600 blur-[100px]" />
+                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#6B8E23] blur-[140px] opacity-40" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#556B2F] blur-[120px] opacity-30" />
                 </div>
-                {/* Geometric lines */}
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgNDBoNDBWMEgwem0yMCAwdjIwaDIwdjIweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30 z-0"></div>
+                {/* Subtle grid pattern */}
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgNDBoNDBWMEgwem0yMCAwdjIwaDIwdjIweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDEwNywxNDIsMzUsMC4wNykiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybi48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMS0wJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-40 z-0"></div>
                 
-                <div className="relative z-10 p-12 max-w-xl text-white">
-                    <h2 className="text-4xl font-light tracking-wide mb-6">Smarter Learning.</h2>
-                    <p className="text-gray-400 text-lg font-light leading-relaxed">
-                        An intelligent, minimal approach to your educational journey. Focus on what matters, without the noise.
-                    </p>
+                <div className="relative z-10 p-16 max-w-xl">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                    >
+                        <h2 className="text-5xl font-extralight tracking-tight text-white mb-8 leading-tight">
+                            Focus on your <br />
+                            <span className="font-normal text-[#A9BA9D]">growth.</span>
+                        </h2>
+                        <p className="text-gray-400 text-lg font-light leading-relaxed max-w-md">
+                            A minimal, intelligent space designed to help you master your curriculum without the noise.
+                        </p>
+                    </motion.div>
                 </div>
             </div>
 
             {/* Right Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white relative z-10 shadow-[-20px_0_40px_-15px_rgba(0,0,0,0.05)]">
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[var(--bg-surface)] relative z-10 shadow-[-20px_0_60px_-15px_rgba(0,0,0,0.03)] border-l border-[var(--border)]">
                 <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
                     className="w-full max-w-md"
                 >
                     <div className="mb-10">
                         <Logo />
-                        <h2 className="text-3xl font-semibold text-gray-900 tracking-wide mt-8 mb-2">
+                        <h2 className="text-3xl font-medium text-[var(--text-primary)] tracking-tight mt-10 mb-2">
                             Welcome back
                         </h2>
-                        <p className="text-gray-500 text-sm tracking-wide">
+                        <p className="text-[var(--text-muted)] text-[15px] font-light">
                             Sign in to continue your smarter learning journey.
                         </p>
                     </div>
@@ -63,10 +71,10 @@ export default function LoginPage() {
                         apiError={apiError}
                     />
 
-                    <div className="mt-8 text-center text-sm">
-                        <p className="text-gray-500">
+                    <div className="mt-10 text-center">
+                        <p className="text-[var(--text-muted)] text-sm font-light">
                             Don't have an account?{" "}
-                            <Link to="/signup" className="text-indigo-600 font-medium hover:text-indigo-500 transition-colors duration-200">
+                            <Link to="/signup" className="text-[#6B8E23] font-medium hover:text-[#556B2F] transition-colors duration-200 ml-1">
                                 Sign up
                             </Link>
                         </p>
@@ -81,27 +89,27 @@ export default function LoginPage() {
 const AuthInput = ({ 
     label, icon, error, ...props 
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string, icon?: ReactNode, error?: string }) => (
-    <div className="w-full">
-        <label className="block text-xs font-medium text-gray-700 uppercase tracking-wider mb-2">
+    <div className="w-full group">
+        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.1em] mb-2 transition-colors group-focus-within:text-[#6B8E23]">
             {label}
         </label>
         <div className="relative">
             {icon && (
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--text-faint)] group-focus-within:text-[#6B8E23] transition-colors">
                     {icon}
                 </div>
             )}
             <input
                 {...props}
                 className={`
-                    block w-full rounded-xl border ${error ? 'border-red-300' : 'border-gray-200'} 
-                    bg-gray-50 px-4 py-3 ${icon ? 'pl-11' : ''} text-gray-900 placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white
-                    transition-all duration-200 sm:text-sm
+                    block w-full rounded-xl border ${error ? 'border-red-300' : 'border-[var(--border)]'} 
+                    bg-[var(--bg-subtle)] px-4 py-3 ${icon ? 'pl-11' : ''} text-[var(--text-primary)] placeholder-[var(--text-faint)]
+                    focus:outline-none focus:ring-2 focus:ring-[#6B8E23]/20 focus:border-[#6B8E23] focus:bg-[var(--bg-surface)]
+                    transition-all duration-200 text-[15px]
                 `}
             />
         </div>
-        {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+        {error && <p className="mt-1.5 text-xs text-red-500 font-medium ml-1">{error}</p>}
     </div>
 );
 
@@ -110,9 +118,14 @@ const AuthButton = ({ children, isPending, ...props }: React.ButtonHTMLAttribute
     <button
         {...props}
         disabled={isPending || props.disabled}
-        className="cursor-pointer w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+        className="cursor-pointer w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-[#6B8E23] hover:bg-[#556B2F] focus:outline-none focus:ring-4 focus:ring-[#6B8E23]/20 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed mt-4 active:scale-[0.98]"
     >
-        {children}
+        {isPending ? (
+            <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Signing In...</span>
+            </div>
+        ) : children}
     </button>
 );
 
@@ -136,12 +149,12 @@ const Form = ({
 
             {/* API Error Display */}
             {apiError && (
-                <div className="p-4 bg-red-50/50 border border-red-100 rounded-xl text-sm text-red-600">
+                <div className="p-4 bg-red-50/50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
                     {apiError || 'Login failed. Please try again.'}
                 </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-5">
                 <AuthInput
                     label="Email"
                     type="email"
@@ -166,7 +179,7 @@ const Form = ({
             <div className="flex justify-end pt-1">
                 <Link
                     to="/forgot-password"
-                    className="cursor-pointer text-xs text-gray-500 hover:text-indigo-600 transition-colors duration-200"
+                    className="cursor-pointer text-xs font-medium text-[var(--text-muted)] hover:text-[#6B8E23] transition-colors duration-200"
                 >
                     Forgot password?
                 </Link>
@@ -174,7 +187,7 @@ const Form = ({
 
             <div className="pt-2">
                 <AuthButton type="submit" isPending={isPending}>
-                    {isPending ? 'Signing In...' : 'Sign In'}
+                    Sign In
                 </AuthButton>
             </div>
         </form>
