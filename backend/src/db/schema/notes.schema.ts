@@ -30,23 +30,18 @@ export default courses
 
 // ---- course_files ---------------------------------------------------------
 // Metadata for each file a user uploads to a course.
-// Actual bytes live on disk/object-storage; this table stores the reference.
 // FK: course_id → courses.id (cascade delete)
-// FK: user_id   → users.id  (cascade delete)
+// User is derived via: course_files.course_id → courses.user_id
 
 export const courseFiles = pgTable('course_files', {
     id:           uuid('id').primaryKey().defaultRandom(),
     courseId:     uuid('course_id')
                       .references(() => courses.id, { onDelete: 'cascade' })
                       .notNull(),
-    userId:       uuid('user_id')
-                      .references(() => users.id, { onDelete: 'cascade' })
-                      .notNull(),
     originalName: varchar('original_name', { length: 255 }).notNull(),
     storagePath:  varchar('storage_path', { length: 500 }).notNull(),
     mimeType:     varchar('mime_type', { length: 100 }).notNull(),
     sizeBytes:    integer('size_bytes').notNull().default(0),
-    // set true once AI processes this file
     aiProcessed:  boolean('ai_processed').notNull().default(false),
     createdAt:    timestamp('created_at').notNull().defaultNow(),
 })
@@ -59,18 +54,14 @@ export const selectCourseFileSchema = createSelectSchema(courseFiles)
 
 // ---- flashcards -----------------------------------------------------------
 // One row per flashcard.
-// FK: course_id      → courses.id     (cascade delete)
-// FK: user_id        → users.id       (cascade delete)
+// FK: course_id      → courses.id      (cascade delete)
 // FK: source_file_id → course_files.id (set null if file deleted)
-//     for AI — tracks which file generated this card
+// User is derived via: flashcards.course_id → courses.user_id
 
 export const flashcards = pgTable('flashcards', {
     id:           uuid('id').primaryKey().defaultRandom(),
     courseId:     uuid('course_id')
                       .references(() => courses.id, { onDelete: 'cascade' })
-                      .notNull(),
-    userId:       uuid('user_id')
-                      .references(() => users.id, { onDelete: 'cascade' })
                       .notNull(),
     sourceFileId: uuid('source_file_id')
                       .references(() => courseFiles.id, { onDelete: 'set null' }),
@@ -88,8 +79,7 @@ export const insertFlashcardSchema = createInsertSchema(flashcards)
 export const selectFlashcardSchema = createSelectSchema(flashcards)
 
 // ---- flashcard_sessions ---------------------------------------------------
-// One row per study session (created when user starts, closed when done).
-// Counts are written when the session ends. Auto-deleted after 30 days via expiresAt (cleanup job / cron).
+// One row per study session.
 // FK: course_id → courses.id (cascade delete)
 // FK: user_id   → users.id   (cascade delete)
  
@@ -105,8 +95,8 @@ export const flashcardSessions = pgTable('flashcard_sessions', {
     unfamiliarCount: integer('unfamiliar_count').notNull().default(0),
     totalCards:      integer('total_cards').notNull().default(0),
     startedAt:   timestamp('started_at').notNull().defaultNow(),
-    completedAt: timestamp('completed_at'),         // null = session still in progress
-    expiresAt:   timestamp('expires_at').notNull(), // startedAt + 30 days — used for cleanup
+    completedAt: timestamp('completed_at'),
+    expiresAt:   timestamp('expires_at').notNull(),
 })
 
 export type FlashcardSession    = typeof flashcardSessions.$inferSelect
@@ -117,17 +107,14 @@ export const selectFlashcardSessionSchema = createSelectSchema(flashcardSessions
  
 // ---- mcqs -----------------------------------------------------------------
 // Multiple-choice questions.
-// FK: course_id      → courses.id     (cascade delete)
-// FK: user_id        → users.id       (cascade delete)
+// FK: course_id      → courses.id      (cascade delete)
 // FK: source_file_id → course_files.id (set null if file deleted)
+// User is derived via: mcqs.course_id → courses.user_id
 
 export const mcqs = pgTable('mcqs', {
     id:            uuid('id').primaryKey().defaultRandom(),
     courseId:      uuid('course_id')
                        .references(() => courses.id, { onDelete: 'cascade' })
-                       .notNull(),
-    userId:        uuid('user_id')
-                       .references(() => users.id, { onDelete: 'cascade' })
                        .notNull(),
     sourceFileId:  uuid('source_file_id')
                        .references(() => courseFiles.id, { onDelete: 'set null' }),
@@ -146,8 +133,7 @@ export const insertMcqSchema = createInsertSchema(mcqs)
 export const selectMcqSchema = createSelectSchema(mcqs)
 
 // ---- mcq_options ---------------------------------------------------------
-// One row per MCQ option. optionIndex preserves display order.
-// isCorrect marks the canonical correct option row.
+// One row per MCQ option.
 // FK: mcq_id → mcqs.id (cascade delete)
 
 export const mcqOptions = pgTable('mcq_options', {
@@ -170,10 +156,10 @@ export const insertMcqOptionSchema = createInsertSchema(mcqOptions)
 export const selectMcqOptionSchema = createSelectSchema(mcqOptions)
 
 // ---- mcq_attempts ---------------------------------------------------------
-// Tracks each time a user answers an MCQ. Used for progress analytics in future iterations.
-// FK: mcq_id  → mcqs.id  (cascade delete)
-// FK: selected_option_id → mcq_options.id
-// FK: user_id → users.id (cascade delete)
+// Tracks each time a user answers an MCQ.
+// FK: mcq_id             → mcqs.id        (cascade delete)
+// FK: selected_option_id → mcq_options.id (cascade delete)
+// FK: user_id            → users.id       (cascade delete)
 
 export const mcqAttempts = pgTable('mcq_attempts', {
     id:             uuid('id').primaryKey().defaultRandom(),
