@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Upload, Download, Trash2, FileText, Loader2, Sparkles, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Upload, Download, Trash2, FileText, Loader2, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import mammoth from 'mammoth'
 import { api } from '../../lib/axios'

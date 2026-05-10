@@ -352,7 +352,10 @@ export function McqTab({ courseId }: { courseId: string }) {
                                 disabled={!hasFiles || regenerating}
                                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:text-[#6B8E23] hover:border-[#6B8E23]/40 hover:bg-[#6B8E23]/10 disabled:hover:bg-transparent"
                             >
-                                <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : '' }`} />
+                                <RefreshCw
+                                    className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''
+                                        }`}
+                                />
 
                                 {regenerating ? 'Regenerating…' : 'Regenerate Questions'}
                             </button>
