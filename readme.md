@@ -3,7 +3,7 @@
 **SynapseFlow** is a high-fidelity, intelligent academic platform designed to bridge the gap between note-taking, active recall, and collaborative study. By integrating Retrieval-Augmented Generation (RAG), CRDT-based collaborative whiteboards, and AI-powered scheduling, SynapseFlow provides a unified, real-time workspace for modern students.
 
 <br />
-<img width="1919" height="925" alt="dashboard" src="https://github.com/user-attachments/assets/4f54f0bb-7392-4786-b531-08cf002a8463" />
+<img width="1920" height="1280" alt="synapse-dashboard" src="https://github.com/user-attachments/assets/ab039d01-aee1-4d5c-8a18-98a23b5ab715" />
 <br />
 
 ---
