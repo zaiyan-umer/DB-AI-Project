@@ -8,7 +8,7 @@
 
 ---
 
-## 🚀 Core Modules & Features
+## Core Modules & Features
 
 ### 1. Secure Authentication & Identity
 *   **Real-time Validation**: Every input is audited in real-time during registration; users receive immediate hints/feedback (e.g., password complexity, email formatting) via reactive UI states.
@@ -87,6 +87,10 @@
 *   **History Awareness**: AI reponds to user queries using full message history for contextual continuity.
 *   **Strict Guardrailing**: Prompt engineering strictly enforces an "Educational Only" policy; the assistant will refuse to answer non-academic or irrelevant queries.
 *   **Streaming UI**: Responses are streamed to the client for a responsive, natural feel.
+  
+  <br />
+  <img width="405" height="788" alt="chatbot" src="https://github.com/user-attachments/assets/44450327-aef9-420e-91b4-67d45fe25513" />
+<br />
 
 ### Performance & Networking
 *   **Rate Limiting**: Custom **Token Bucket** strategy (Capacity: 3, Refill: 1/10s). Background jobs prune idle sessions to maintain memory efficiency.
