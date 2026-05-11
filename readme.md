@@ -2,8 +2,9 @@
 
 **SynapseFlow** is a high-fidelity, intelligent academic platform designed to bridge the gap between note-taking, active recall, and collaborative study. By integrating Retrieval-Augmented Generation (RAG), CRDT-based collaborative whiteboards, and AI-powered scheduling, SynapseFlow provides a unified, real-time workspace for modern students.
 
-<img width="1919" height="925" alt="dashboard" src="https://github.com/user-attachments/assets/3f327b24-e78b-4431-8d22-353c8697c8bb" />
-
+<br />
+<img width="1919" height="925" alt="dashboard" src="https://github.com/user-attachments/assets/4f54f0bb-7392-4786-b531-08cf002a8463" />
+<br />
 
 ---
 
@@ -18,8 +19,9 @@
 *   **Account Recovery**: Secure password reset flow via email; sends a unique token to the user’s provided email address for verified credential updates.
 
 ### 2. Knowledge Workspace (Notes & RAG)
-<img width="1639" height="847" alt="rag" src="https://github.com/user-attachments/assets/21d9bc7f-2bbf-40fb-a4fb-8134a9120f15" />
-
+<br />
+<img width="1639" height="847" alt="rag" src="https://github.com/user-attachments/assets/2d728f61-7a2d-496c-93b0-ce886b92d817" />
+<br />
 
 *   **Multi-Format Ingestion**: Supports high-fidelity uploads of **PDF** and **DOCX** materials.
 *   **Advanced RAG Pipeline**:
@@ -33,8 +35,9 @@
 *   **File Management**: Full CRUD operations with the ability to preview and download documents locally.
 
 ### 3. Active Recall System (Flashcards & Tests)
-<img width="1629" height="840" alt="flashcard" src="https://github.com/user-attachments/assets/4446e45f-d9c8-475d-8ab5-eb64ca53cfbf" />
-
+<br />
+<img width="1629" height="840" alt="flashcard" src="https://github.com/user-attachments/assets/7ade0ea0-aea6-42da-81a7-c1a89f64960f" />
+<br />
 
 *   **AI-Generated Flashcards**: Automatically generates flashcards from uploaded notes using the Gemini API.
     *   **Study Interface**: Animated flip-card UI powered by **Framer Motion**.
@@ -46,7 +49,11 @@
     *   Final score summaries include score percentages and a per-question breakdown (user answer vs. correct answer).
 
 ### 4. Real-Time Collaboration (Chat & Whiteboard)
-![Collaboration — CRDT-based whiteboard and intelligent group chat](screenshots/collaboration.png)
+<br />
+<img width="1919" height="966" alt="whiteboard" src="https://github.com/user-attachments/assets/f6a783ea-ced2-4ccd-90c9-65bfbdaa9a5f" />
+<br />
+
+
 *   **Collaborative Whiteboard**:
     *   Built on **tldraw v5** with `@tldraw/sync-core`.
     *   **Binary Sync**: Uses raw WebSockets (`ws` library) for optimized binary frame transmission.
@@ -59,7 +66,9 @@
     *   **Presence**: Real-time member count updates via WebSocket heartbeats.
 
 ### 5. AI Study Planner & Scheduler
-![Scheduler — AI-generated weekly study plans and academic event tracking](screenshots/scheduler.png)
+<br />
+<img width="1041" height="694" alt="scheduler" src="https://github.com/user-attachments/assets/184a17ef-fae7-4400-a4a5-0c5740fac5a2" />
+<br />
 
 *   **Academic Events**: CRUD operations for Assignments, Quizzes, Projects, and Sessions with priority levels (Low/Medium/High).
 *   **AI-Generated Study Plan**:
@@ -98,4 +107,4 @@
 
 ---
 
-**SynapseFlow** — *Architecting the future of academic productivity.*
+**SynapseFlow** | *Architecting the future of academic productivity.*
