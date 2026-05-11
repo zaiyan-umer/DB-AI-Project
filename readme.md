@@ -2,7 +2,7 @@
 
 **SynapseFlow** is a high-fidelity, intelligent academic platform designed to bridge the gap between note-taking, active recall, and collaborative study. By integrating Retrieval-Augmented Generation (RAG), CRDT-based collaborative whiteboards, and AI-powered scheduling, SynapseFlow provides a unified, real-time workspace for modern students.
 
-![SynapseFlow Dashboard — The intelligent hub for your academic life](screenshots/dashboard_hero.png)
+<img width="1919" height="925" alt="dashboard" src="https://github.com/user-attachments/assets/3f327b24-e78b-4431-8d22-353c8697c8bb" />
 
 
 ---
@@ -18,7 +18,8 @@
 *   **Account Recovery**: Secure password reset flow via email; sends a unique token to the user’s provided email address for verified credential updates.
 
 ### 2. Knowledge Workspace (Notes & RAG)
-![Knowledge Workspace — AI-powered document interrogation and RAG workspace](screenshots/knowledge_workspace.png)
+<img width="1639" height="847" alt="rag" src="https://github.com/user-attachments/assets/21d9bc7f-2bbf-40fb-a4fb-8134a9120f15" />
+
 
 *   **Multi-Format Ingestion**: Supports high-fidelity uploads of **PDF** and **DOCX** materials.
 *   **Advanced RAG Pipeline**:
@@ -32,7 +33,8 @@
 *   **File Management**: Full CRUD operations with the ability to preview and download documents locally.
 
 ### 3. Active Recall System (Flashcards & Tests)
-![Active Recall — Flashcards and MCQ tests generated from your materials](screenshots/active_recall.png)
+<img width="1629" height="840" alt="flashcard" src="https://github.com/user-attachments/assets/4446e45f-d9c8-475d-8ab5-eb64ca53cfbf" />
+
 
 *   **AI-Generated Flashcards**: Automatically generates flashcards from uploaded notes using the Gemini API.
     *   **Study Interface**: Animated flip-card UI powered by **Framer Motion**.
