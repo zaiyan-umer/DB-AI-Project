@@ -47,5 +47,5 @@ export default function Whiteboard({ groupId, userId, userName, userColor }: Whi
         return <div>Failed to connect: {store.error.message}</div>;
     }
 
-    return <Tldraw store={store.store} />;
+    return <Tldraw store={store.store} licenseKey={import.meta.env.VITE_TLDRAW_LICENSE_KEY}/>;
 }   
